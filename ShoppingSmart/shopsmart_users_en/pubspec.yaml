@@ -49,6 +49,7 @@ dependencies:
   image_picker: ^1.1.2
   # Utils
   uuid: ^4.5.1
+  http: ^1.1.0
   
 
 dev_dependencies:

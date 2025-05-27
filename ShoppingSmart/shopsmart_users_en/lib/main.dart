@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
 import 'package:shopsmart_users_en/providers/theme_provider.dart';
+import 'package:shopsmart_users_en/providers/categories_provider.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
+import 'package:shopsmart_users_en/screens/inner_screen/blog_detail.dart';
+import 'package:shopsmart_users_en/screens/all_products_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -37,6 +40,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) {
             return ProductsProvider();
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            return CategoriesProvider();
           },
         ),
         ChangeNotifierProvider(
@@ -79,6 +87,9 @@ class MyApp extends StatelessWidget {
               ForgotPasswordScreen.routeName:
                   (context) => const ForgotPasswordScreen(),
               SearchScreen.routeName: (context) => const SearchScreen(),
+              AllProductsScreen.routeName:
+                  (context) => const AllProductsScreen(),
+              BlogDetailScreen.routeName: (context) => const BlogDetailScreen(),
             },
           );
         },

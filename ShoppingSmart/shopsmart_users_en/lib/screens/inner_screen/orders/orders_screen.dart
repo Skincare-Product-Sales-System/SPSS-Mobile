@@ -7,7 +7,7 @@ import 'orders_widget.dart';
 class OrdersScreenFree extends StatefulWidget {
   static const routeName = '/OrderScreen';
 
-  const OrdersScreenFree({Key? key}) : super(key: key);
+  const OrdersScreenFree({super.key});
 
   @override
   State<OrdersScreenFree> createState() => _OrdersScreenFreeState();

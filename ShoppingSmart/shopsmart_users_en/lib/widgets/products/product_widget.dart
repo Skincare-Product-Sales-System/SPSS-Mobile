@@ -82,10 +82,28 @@ class _ProductWidgetState extends State<ProductWidget> {
                     children: [
                       Flexible(
                         flex: 1,
-                        child: SubtitleTextWidget(
-                          label: "${getCurrProduct.productPrice}\$",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SubtitleTextWidget(
+                              label: "${getCurrProduct.formattedPrice} VND",
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue,
+                              fontSize: 14,
+                            ),
+                            if (getCurrProduct.marketPrice >
+                                getCurrProduct.price) ...[
+                              const SizedBox(height: 2),
+                              SubtitleTextWidget(
+                                label:
+                                    "${getCurrProduct.formattedMarketPrice} VND",
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey,
+                                fontSize: 12,
+                                textDecoration: TextDecoration.lineThrough,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       Flexible(
