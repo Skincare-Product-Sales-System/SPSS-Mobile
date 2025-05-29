@@ -81,20 +81,28 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Error',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -112,7 +120,14 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                 ),
               )
               : _detailedBlog == null
-              ? const Center(child: Text('Blog not found'))
+              ? Center(
+                child: Text(
+                  'Blog not found',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
+              )
               : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,8 +141,14 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                       errorWidget: Container(
                         height: size.height * 0.3,
                         width: double.infinity,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.article, size: 64),
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                        child: Icon(
+                          Icons.article,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).iconTheme.color?.withOpacity(0.5),
+                        ),
                       ),
                     ),
 
@@ -139,10 +160,11 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           // Blog Title
                           Text(
                             _detailedBlog!.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                               height: 1.3,
                             ),
                           ),
@@ -152,16 +174,22 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[300]!),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withOpacity(0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
                                   Icons.person,
                                   size: 20,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withOpacity(0.7),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -169,21 +197,29 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.grey[700],
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
                                   ),
                                 ),
                                 const Spacer(),
                                 Icon(
                                   Icons.calendar_today,
                                   size: 20,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withOpacity(0.7),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _detailedBlog!.formattedDate,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey[700],
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
                                   ),
                                 ),
                               ],
@@ -195,27 +231,39 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.blue[200]!),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.3),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Summary',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   _detailedBlog!.description,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
-                                    color: Colors.black87,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
                                     height: 1.5,
                                   ),
                                 ),
@@ -225,12 +273,13 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           const SizedBox(height: 24),
 
                           // Blog Sections
-                          const Text(
+                          Text(
                             'Article Content',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -260,10 +309,10 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
             if (section.subtitle.isNotEmpty) ...[
               Text(
                 section.subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   height: 1.3,
                 ),
               ),
@@ -271,9 +320,9 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
             ],
             Text(
               section.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: Colors.black87,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 height: 1.6,
               ),
             ),
@@ -297,10 +346,14 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.image_not_supported, size: 48),
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 48,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+                  ),
                 ),
               ),
             ),
@@ -310,7 +363,9 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                 section.subtitle,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[600],
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.color?.withOpacity(0.7),
                   fontStyle: FontStyle.italic,
                 ),
                 textAlign: TextAlign.center,
@@ -325,27 +380,29 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               section.subtitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               section.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.black87,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 height: 1.4,
               ),
             ),

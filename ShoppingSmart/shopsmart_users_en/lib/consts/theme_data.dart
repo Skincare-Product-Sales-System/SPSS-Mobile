@@ -16,6 +16,34 @@ class Styles {
               ? const Color.fromARGB(255, 13, 6, 37)
               : AppColors.lightCardColor,
       brightness: isDarkTheme ? Brightness.dark : Brightness.light,
+
+      // Set different primary colors for light and dark themes
+      primarySwatch: Colors.purple,
+      primaryColor:
+          isDarkTheme
+              ? const Color(0xFF9C88FF) // Light purple for dark theme
+              : AppColors.lightPrimary, // Dark purple for light theme
+      // Disable default shadows
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          shadowColor: Colors.transparent,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color:
+                isDarkTheme
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
+
       appBarTheme: AppBarTheme(
         iconTheme: IconThemeData(
           color: isDarkTheme ? Colors.white : Colors.black,
@@ -25,13 +53,14 @@ class Styles {
                 ? AppColors.darkScaffoldColor
                 : AppColors.lightScaffoldColor,
         elevation: 0,
+        shadowColor: Colors.transparent,
         titleTextStyle: TextStyle(
           color: isDarkTheme ? Colors.white : Colors.black,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        contentPadding: EdgeInsets.all(10),
+        contentPadding: const EdgeInsets.all(10),
         enabledBorder: OutlineInputBorder(
           borderSide: const BorderSide(width: 1, color: Colors.transparent),
           borderRadius: BorderRadius.circular(12),

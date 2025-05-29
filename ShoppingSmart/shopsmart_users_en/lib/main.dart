@@ -16,6 +16,7 @@ import 'providers/wishlist_provider.dart';
 import 'screens/auth/forgot_password.dart';
 import 'screens/auth/login.dart';
 import 'screens/auth/register.dart';
+import 'screens/auth/change_password.dart';
 import 'screens/inner_screen/orders/orders_screen.dart';
 import 'screens/inner_screen/wishlist.dart';
 import 'screens/search_screen.dart';
@@ -90,6 +91,8 @@ class MyApp extends StatelessWidget {
               AllProductsScreen.routeName:
                   (context) => const AllProductsScreen(),
               BlogDetailScreen.routeName: (context) => const BlogDetailScreen(),
+              ChangePasswordScreen.routeName:
+                  (context) => const ChangePasswordScreen(),
             },
           );
         },

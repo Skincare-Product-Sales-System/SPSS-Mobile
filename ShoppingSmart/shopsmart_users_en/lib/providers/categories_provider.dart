@@ -20,6 +20,12 @@ class CategoriesProvider with ChangeNotifier {
     return _findCategoryById(_selectedCategoryId!);
   }
 
+  // Get selected category name
+  String getSelectedCategoryName() {
+    final category = selectedCategory;
+    return category?.categoryName ?? 'Unknown Category';
+  }
+
   // Find category by ID (including nested categories)
   CategoryModel? _findCategoryById(String categoryId) {
     for (var category in _categories) {

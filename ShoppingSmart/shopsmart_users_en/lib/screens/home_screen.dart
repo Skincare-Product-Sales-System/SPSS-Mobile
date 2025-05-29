@@ -218,22 +218,45 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 20),
 
                   // Best Sellers section (moved below categories)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const TitlesTextWidget(label: "Best Sellers"),
-                        if (productsProvider.getProducts.isNotEmpty)
-                          Text(
-                            '${productsProvider.getProducts.length > 10 ? 10 : productsProvider.getProducts.length} products',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
+                  Consumer<CategoriesProvider>(
+                    builder: (context, categoriesProvider, child) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TitlesTextWidget(
+                              label:
+                                  categoriesProvider.selectedCategoryId != null
+                                      ? "Products in ${categoriesProvider.getSelectedCategoryName()}"
+                                      : "Best Sellers",
                             ),
-                          ),
-                      ],
-                    ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  SearchScreen.routeName,
+                                  arguments:
+                                      categoriesProvider.selectedCategoryId !=
+                                              null
+                                          ? categoriesProvider
+                                              .getSelectedCategoryName()
+                                          : "All",
+                                );
+                              },
+                              child: Text(
+                                'See All',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 15.0),
 
@@ -273,34 +296,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const TitlesTextWidget(label: "All Products"),
-                        Row(
-                          children: [
-                            if (productsProvider.getProducts.isNotEmpty)
-                              Text(
-                                '${productsProvider.getProducts.length > 10 ? 10 : productsProvider.getProducts.length} of ${productsProvider.totalCount}',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  SearchScreen.routeName,
-                                  arguments: "All",
-                                );
-                              },
-                              child: const Text(
-                                'See All',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              SearchScreen.routeName,
+                              arguments: "All",
+                            );
+                          },
+                          child: Text(
+                            'See All',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).primaryColor,
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -321,8 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
                               childAspectRatio: 0.85,
                             ),
                         itemCount:

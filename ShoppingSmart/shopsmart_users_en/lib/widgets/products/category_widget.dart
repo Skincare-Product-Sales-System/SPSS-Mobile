@@ -8,11 +8,13 @@ import '../../screens/search_screen.dart';
 class CategoryWidget extends StatelessWidget {
   final CategoryModel category;
   final bool isSelected;
+  final bool? navigateToSearch; // Optional parameter to control navigation
 
   const CategoryWidget({
     super.key,
     required this.category,
     this.isSelected = false,
+    this.navigateToSearch,
   });
 
   @override
@@ -33,13 +35,6 @@ class CategoryWidget extends StatelessWidget {
           categoriesProvider.clearSelection();
           // Load all products when no category is selected
           productsProvider.loadProducts(refresh: true);
-
-          // Navigate to search screen with "All" argument
-          Navigator.pushNamed(
-            context,
-            SearchScreen.routeName,
-            arguments: "All",
-          );
         } else {
           categoriesProvider.selectCategory(category.id);
 
@@ -54,12 +49,14 @@ class CategoryWidget extends StatelessWidget {
             // This is the "All" category
             productsProvider.loadProducts(refresh: true);
           }
+        }
 
-          // Navigate to search screen to show filtered results
+        // Navigate to search screen only if navigateToSearch is true
+        if (navigateToSearch == true) {
           Navigator.pushNamed(
             context,
             SearchScreen.routeName,
-            arguments: category.categoryName,
+            arguments: isSelected ? "All" : category.categoryName,
           );
         }
       },
@@ -72,29 +69,35 @@ class CategoryWidget extends StatelessWidget {
               isSelected
                   ? LinearGradient(
                     colors: [
-                      Colors.blue[600]!,
-                      Colors.blue[500]!,
-                      Colors.blue[400]!,
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withOpacity(0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
                   : LinearGradient(
-                    colors: [Colors.white, Colors.grey[50]!],
+                    colors: [
+                      Theme.of(context).cardColor,
+                      Theme.of(context).cardColor.withOpacity(0.8),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: isSelected ? Colors.blue[700]! : Colors.grey[200]!,
+            color:
+                isSelected
+                    ? Theme.of(context).primaryColor.withOpacity(0.8)
+                    : Theme.of(context).dividerColor.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color:
                   isSelected
-                      ? Colors.blue.withOpacity(0.25)
-                      : Colors.grey.withOpacity(0.1),
+                      ? Theme.of(context).primaryColor.withOpacity(0.25)
+                      : Theme.of(context).shadowColor.withOpacity(0.1),
               spreadRadius: isSelected ? 2 : 1,
               blurRadius: isSelected ? 8 : 4,
               offset: Offset(0, isSelected ? 3 : 2),
@@ -112,7 +115,10 @@ class CategoryWidget extends StatelessWidget {
             Text(
               category.categoryName,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color:
+                    isSelected
+                        ? Colors.white
+                        : Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 13,
                 letterSpacing: 0.3,
@@ -126,7 +132,9 @@ class CategoryWidget extends StatelessWidget {
 }
 
 class CategorySection extends StatelessWidget {
-  const CategorySection({super.key});
+  final bool? navigateToSearch; // Optional parameter for navigation
+
+  const CategorySection({super.key, this.navigateToSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +153,7 @@ class CategorySection extends StatelessWidget {
             child: Center(
               child: Text(
                 'Error loading categories',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
           );
@@ -158,16 +166,39 @@ class CategorySection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                "Categories",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                  letterSpacing: 0.3,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Categories",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  if (navigateToSearch != true)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          SearchScreen.routeName,
+                          arguments: "All",
+                        );
+                      },
+                      child: Text(
+                        'See All',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -189,6 +220,7 @@ class CategorySection extends StatelessWidget {
                         children: [],
                       ),
                       isSelected: categoriesProvider.selectedCategoryId == null,
+                      navigateToSearch: navigateToSearch,
                     );
                   }
 
@@ -198,6 +230,7 @@ class CategorySection extends StatelessWidget {
                     category: category,
                     isSelected:
                         categoriesProvider.selectedCategoryId == category.id,
+                    navigateToSearch: navigateToSearch,
                   );
                 },
               ),

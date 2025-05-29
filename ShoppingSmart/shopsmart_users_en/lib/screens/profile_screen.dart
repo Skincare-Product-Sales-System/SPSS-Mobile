@@ -2,18 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/screens/auth/login.dart';
+import 'package:shopsmart_users_en/screens/auth/change_password.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/wishlist.dart';
 import 'package:shopsmart_users_en/services/assets_manager.dart';
+import 'package:shopsmart_users_en/services/auth_service.dart';
+import 'package:shopsmart_users_en/services/my_app_function.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
+import 'package:shopsmart_users_en/models/auth_models.dart';
 
 import '../providers/theme_provider.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
 import 'inner_screen/orders/orders_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggedIn = false;
+  UserInfo? _userInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    final userInfo = await AuthService.getStoredUserInfo();
+
+    if (mounted) {
+      setState(() {
+        _isLoggedIn = isLoggedIn;
+        _userInfo = userInfo;
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    await MyAppFunctions.showErrorOrWarningDialog(
+      context: context,
+      subtitle: "Are you sure you want to logout?",
+      fct: () async {
+        await AuthService.logout();
+        if (mounted) {
+          setState(() {
+            _isLoggedIn = false;
+            _userInfo = null;
+          });
+        }
+      },
+      isError: false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +78,9 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Visibility(
-              visible: false,
-              child: Padding(
+            Visibility(
+              visible: !_isLoggedIn,
+              child: const Padding(
                 padding: EdgeInsets.all(18.0),
                 child: TitlesTextWidget(
                   label: "Please login to have unlimited access",
@@ -41,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             Visibility(
-              visible: true,
+              visible: _isLoggedIn,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -68,12 +115,14 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TitlesTextWidget(label: "Hadi Kachmar"),
-                        SizedBox(height: 6),
-                        SubtitleTextWidget(label: "Coding.with.hadi@gmail.com"),
+                        TitlesTextWidget(label: _userInfo?.userName ?? "User"),
+                        const SizedBox(height: 6),
+                        SubtitleTextWidget(
+                          label: _userInfo?.email ?? "user@example.com",
+                        ),
                       ],
                     ),
                   ],
@@ -119,6 +168,17 @@ class ProfileScreen extends StatelessWidget {
                     imagePath: AssetsManager.address,
                     function: () {},
                   ),
+                  if (_isLoggedIn)
+                    CustomListTile(
+                      text: "Change Password",
+                      imagePath: AssetsManager.orderSvg,
+                      function: () {
+                        Navigator.pushNamed(
+                          context,
+                          ChangePasswordScreen.routeName,
+                        );
+                      },
+                    ),
                   const SizedBox(height: 6),
                   const Divider(thickness: 1),
                   const SizedBox(height: 6),
@@ -140,20 +200,23 @@ class ProfileScreen extends StatelessWidget {
             Center(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: _isLoggedIn ? Colors.red : Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0),
                   ),
                 ),
-                icon: const Icon(Icons.login),
-                label: const Text("Login"),
+                icon: Icon(_isLoggedIn ? Icons.logout : Icons.login),
+                label: Text(_isLoggedIn ? "Logout" : "Login"),
                 onPressed: () async {
-                  Navigator.pushNamed(context, LoginScreen.routeName);
-                  // await MyAppFunctions.showErrorOrWarningDialog(
-                  //     context: context,
-                  //     subtitle: "Are you sure you want to signout",
-                  //     fct: () {},
-                  //     isError: false,);
+                  if (_isLoggedIn) {
+                    await _logout();
+                  } else {
+                    Navigator.pushNamed(context, LoginScreen.routeName).then((
+                      _,
+                    ) {
+                      _checkLoginStatus();
+                    });
+                  }
                 },
               ),
             ),

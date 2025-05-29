@@ -21,11 +21,15 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    
+
     // Add listener for pagination
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-        final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        final productsProvider = Provider.of<ProductsProvider>(
+          context,
+          listen: false,
+        );
         if (productsProvider.hasMoreData && !productsProvider.isLoadingMore) {
           productsProvider.loadMoreProducts();
         }
@@ -34,7 +38,10 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
 
     // Load initial products if empty
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+      final productsProvider = Provider.of<ProductsProvider>(
+        context,
+        listen: false,
+      );
       if (productsProvider.getProducts.isEmpty) {
         productsProvider.loadProducts();
       }
@@ -57,9 +64,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
         ),
         title: Consumer<ProductsProvider>(
           builder: (context, productsProvider, child) {
-            return TitlesTextWidget(
-              label: "All Products (${productsProvider.totalCount})",
-            );
+            return TitlesTextWidget(label: "All Products");
           },
         ),
         actions: [
@@ -75,22 +80,18 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       ),
       body: Consumer<ProductsProvider>(
         builder: (context, productsProvider, child) {
-          if (productsProvider.isLoading && productsProvider.getProducts.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (productsProvider.isLoading &&
+              productsProvider.getProducts.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          if (productsProvider.errorMessage != null && productsProvider.getProducts.isEmpty) {
+          if (productsProvider.errorMessage != null &&
+              productsProvider.getProducts.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
                     'Error: ${productsProvider.errorMessage}',
@@ -108,13 +109,21 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
           }
 
           if (productsProvider.getProducts.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  TitlesTextWidget(label: "No products available"),
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  const TitlesTextWidget(label: "No products available"),
+                  const SizedBox(height: 16),
+                  const Text("Pull to refresh or try again later"),
                 ],
               ),
             );
@@ -124,38 +133,14 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
             onRefresh: () => productsProvider.refreshProducts(),
             child: Column(
               children: [
-                // Progress indicator for pagination info
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Page ${productsProvider.currentPage} of ${productsProvider.totalPages}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (productsProvider.hasMoreData)
-                        Text(
-                          'Scroll down for more',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                
                 // Products grid
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: DynamicHeightGridView(
                       controller: _scrollController,
-                      itemCount: productsProvider.getProducts.length + 
+                      itemCount:
+                          productsProvider.getProducts.length +
                           (productsProvider.isLoadingMore ? 1 : 0),
                       crossAxisCount: 2,
                       mainAxisSpacing: 12,
@@ -172,7 +157,8 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                         }
 
                         return ProductWidget(
-                          productId: productsProvider.getProducts[index].productId,
+                          productId:
+                              productsProvider.getProducts[index].productId,
                         );
                       },
                     ),
@@ -180,7 +166,8 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                 ),
 
                 // Load more button (alternative to infinite scroll)
-                if (productsProvider.hasMoreData && !productsProvider.isLoadingMore)
+                if (productsProvider.hasMoreData &&
+                    !productsProvider.isLoadingMore)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -191,7 +178,8 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                   ),
 
                 // End of list indicator
-                if (!productsProvider.hasMoreData && productsProvider.getProducts.isNotEmpty)
+                if (!productsProvider.hasMoreData &&
+                    productsProvider.getProducts.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Text(
@@ -210,4 +198,4 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
       ),
     );
   }
-} 
+}

@@ -26,7 +26,7 @@ class ProductsProvider with ChangeNotifier {
   bool get hasMoreData => _hasMoreData;
 
   // Load initial products
-  Future<void> loadProducts({bool refresh = false, String? categoryId}) async {
+  Future<void> loadProducts({bool refresh = false, String? sortBy}) async {
     if (refresh) {
       _products.clear();
       _currentPage = 1;
@@ -41,7 +41,7 @@ class ProductsProvider with ChangeNotifier {
       final response = await ApiService.getProducts(
         pageNumber: _currentPage,
         pageSize: _pageSize,
-        categoryId: categoryId,
+        sortBy: sortBy,
       );
 
       if (response.success && response.data != null) {
@@ -112,6 +112,7 @@ class ProductsProvider with ChangeNotifier {
   Future<void> loadProductsByCategory({
     required String categoryId,
     bool refresh = false,
+    String? sortBy,
   }) async {
     if (refresh) {
       _products.clear();
@@ -124,10 +125,11 @@ class ProductsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getProductsByCategory(
+      final response = await ApiService.getProducts(
         categoryId: categoryId,
         pageNumber: _currentPage,
         pageSize: _pageSize,
+        sortBy: sortBy,
       );
 
       if (response.success && response.data != null) {

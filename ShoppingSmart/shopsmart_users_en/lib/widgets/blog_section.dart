@@ -62,19 +62,24 @@ class _BlogSectionState extends State<BlogSection> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Latest Blogs",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   letterSpacing: 0.3,
                 ),
               ),
               if (_blogs.isNotEmpty)
                 Text(
                   '${_blogs.length} articles',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
                 ),
             ],
           ),
@@ -94,11 +99,17 @@ class _BlogSectionState extends State<BlogSection> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Failed to load blogs',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
@@ -112,11 +123,18 @@ class _BlogSectionState extends State<BlogSection> {
         else if (_blogs.isEmpty)
           SizedBox(
             height: size.height * 0.25,
-            child: const Center(child: Text('No blogs available')),
+            child: Center(
+              child: Text(
+                'No blogs available',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ),
           )
         else
           SizedBox(
-            height: size.height * 0.25,
+            height: size.height * 0.28,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -144,122 +162,155 @@ class BlogCard extends StatelessWidget {
       width: size.width * 0.75,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                BlogDetailScreen.routeName,
-                arguments: blog.id,
-              );
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Blog Image
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
+          elevation: 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Blog Image
+              Expanded(
+                flex: 3,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FancyShimmerImage(
+                    imageUrl: blog.thumbnail,
                     width: double.infinity,
-                    child: FancyShimmerImage(
-                      imageUrl: blog.thumbnail,
+                    height: double.infinity,
+                    boxFit: BoxFit.cover,
+                    errorWidget: Container(
                       width: double.infinity,
                       height: double.infinity,
-                      boxFit: BoxFit.cover,
-                      errorWidget: Container(
-                        width: double.infinity,
-                        height: double.infinity,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.article,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      child: Icon(
+                        Icons.article,
+                        size: 48,
+                        color: Theme.of(
+                          context,
+                        ).iconTheme.color?.withOpacity(0.5),
                       ),
                     ),
                   ),
                 ),
+              ),
 
-                // Blog Content
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Blog Title
-                        Expanded(
-                          child: Text(
-                            blog.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
+              // Blog Content
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Blog Title
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          blog.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Author and Date
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person,
+                            size: 12,
+                            color: Theme.of(
+                              context,
+                            ).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              blog.author,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 12,
+                            color: Theme.of(
+                              context,
+                            ).iconTheme.color?.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            blog.formattedDate,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Read More Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              BlogDetailScreen.routeName,
+                              arguments: blog.id,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xFF9C88FF,
+                            ), // Light purple
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Read More',
+                            style: TextStyle(
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                              height: 1.3,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-
-                        // Author and Date
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.person,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                blog.author,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              blog.formattedDate,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

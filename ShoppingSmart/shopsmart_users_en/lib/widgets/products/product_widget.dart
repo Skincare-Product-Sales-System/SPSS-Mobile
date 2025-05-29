@@ -29,120 +29,132 @@ class _ProductWidgetState extends State<ProductWidget> {
 
     return getCurrProduct == null
         ? const SizedBox.shrink()
-        : Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: GestureDetector(
-            onTap: () async {
-              viewedProdProvider.addViewedProd(
-                productId: getCurrProduct.productId,
-              );
-              await Navigator.pushNamed(
-                context,
-                ProductDetailsScreen.routName,
-                arguments: getCurrProduct.productId,
-              );
-            },
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: FancyShimmerImage(
-                    imageUrl: getCurrProduct.productImage,
-                    height: size.height * 0.22,
-                    width: double.infinity,
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Row(
-                    children: [
-                      Flexible(
-                        flex: 5,
-                        child: TitlesTextWidget(
-                          label: getCurrProduct.productTitle,
-                          fontSize: 18,
-                          maxLines: 2,
+        : Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                viewedProdProvider.addViewedProd(
+                  productId: getCurrProduct.productId,
+                );
+                await Navigator.pushNamed(
+                  context,
+                  ProductDetailsScreen.routName,
+                  arguments: getCurrProduct.productId,
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FancyShimmerImage(
+                      imageUrl: getCurrProduct.productImage,
+                      height: size.height * 0.22,
+                      width: double.infinity,
+                    ),
+                    const SizedBox(height: 12.0),
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 5,
+                          child: TitlesTextWidget(
+                            label: getCurrProduct.productTitle,
+                            fontSize: 18,
+                            maxLines: 2,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        flex: 2,
-                        child: HeartButtonWidget(
-                          productId: getCurrProduct.productId,
+                        Flexible(
+                          flex: 2,
+                          child: HeartButtonWidget(
+                            productId: getCurrProduct.productId,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6.0),
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SubtitleTextWidget(
-                              label: "${getCurrProduct.formattedPrice} VND",
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue,
-                              fontSize: 14,
-                            ),
-                            if (getCurrProduct.marketPrice >
-                                getCurrProduct.price) ...[
-                              const SizedBox(height: 2),
+                      ],
+                    ),
+                    const SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               SubtitleTextWidget(
-                                label:
-                                    "${getCurrProduct.formattedMarketPrice} VND",
-                                fontWeight: FontWeight.w400,
-                                color: Colors.grey,
-                                fontSize: 12,
-                                textDecoration: TextDecoration.lineThrough,
+                                label: "${getCurrProduct.formattedPrice} VND",
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 16,
                               ),
+                              if (getCurrProduct.marketPrice >
+                                  getCurrProduct.price) ...[
+                                const SizedBox(height: 4),
+                                SubtitleTextWidget(
+                                  label:
+                                      "${getCurrProduct.formattedMarketPrice} VND",
+                                  fontWeight: FontWeight.w400,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.6),
+                                  fontSize: 13,
+                                  textDecoration: TextDecoration.lineThrough,
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        child: Material(
-                          borderRadius: BorderRadius.circular(12.0),
-                          color: Colors.lightBlue,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12.0),
-                            onTap: () {
-                              if (cartProvider.isProdinCart(
-                                productId: getCurrProduct.productId,
-                              )) {
-                                return;
-                              }
-                              cartProvider.addProductToCart(
-                                productId: getCurrProduct.productId,
-                              );
-                            },
-                            splashColor: Colors.red,
-                            child: Padding(
-                              padding: const EdgeInsets.all(6.0),
-                              child: Icon(
+                        Flexible(
+                          child: Material(
+                            borderRadius: BorderRadius.circular(8.0),
+                            color:
                                 cartProvider.isProdinCart(
                                       productId: getCurrProduct.productId,
                                     )
-                                    ? Icons.check
-                                    : Icons.add_shopping_cart_outlined,
-                                size: 20,
-                                color: Colors.white,
+                                    ? Colors.green
+                                    : Theme.of(context).primaryColor,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8.0),
+                              onTap: () {
+                                if (cartProvider.isProdinCart(
+                                  productId: getCurrProduct.productId,
+                                )) {
+                                  return;
+                                }
+                                cartProvider.addProductToCart(
+                                  productId: getCurrProduct.productId,
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  cartProvider.isProdinCart(
+                                        productId: getCurrProduct.productId,
+                                      )
+                                      ? Icons.check
+                                      : Icons.add_shopping_cart_outlined,
+                                  size: 22,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12.0),
-              ],
+              ),
             ),
           ),
         );

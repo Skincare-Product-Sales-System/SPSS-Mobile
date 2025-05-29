@@ -6,6 +6,7 @@ import '../models/product_model.dart';
 import '../models/category_model.dart';
 import '../models/detailed_product_model.dart';
 import '../models/blog_model.dart';
+import '../models/review_models.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -25,7 +26,6 @@ class ApiService {
 
   static const Duration timeout = Duration(seconds: 30);
 
-  // Get products with pagination and optional sorting
   static Future<ApiResponse<PaginatedResponse<ProductModel>>> getProducts({
     int pageNumber = 1,
     int pageSize = 10,
@@ -50,8 +50,6 @@ class ApiService {
         '$baseUrl/products',
       ).replace(queryParameters: queryParams);
 
-      print('Making API request to: $uri'); // Debug log
-
       final response = await http
           .get(
             uri,
@@ -61,9 +59,6 @@ class ApiService {
             },
           )
           .timeout(timeout);
-
-      print('API Response Status: ${response.statusCode}'); // Debug log
-      print('API Response Body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -87,7 +82,6 @@ class ApiService {
         );
       }
     } on SocketException catch (e) {
-      print('SocketException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'Connection failed: ${e.message}',
@@ -98,21 +92,18 @@ class ApiService {
         ],
       );
     } on HttpException catch (e) {
-      print('HttpException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'HTTP error occurred: ${e.message}',
         errors: ['HTTP request failed', e.toString()],
       );
     } on FormatException catch (e) {
-      print('FormatException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'Invalid response format: ${e.message}',
         errors: ['Server returned invalid data', e.toString()],
       );
     } catch (e) {
-      print('Generic Exception: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'An unexpected error occurred: ${e.toString()}',
@@ -144,8 +135,6 @@ class ApiService {
         },
       );
 
-      print('Making best-sellers API request to: $uri'); // Debug log
-
       final response = await http
           .get(
             uri,
@@ -155,11 +144,6 @@ class ApiService {
             },
           )
           .timeout(timeout);
-
-      print(
-        'Best-sellers API Response Status: ${response.statusCode}',
-      ); // Debug log
-      print('Best-sellers API Response Body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -183,7 +167,6 @@ class ApiService {
         );
       }
     } on SocketException catch (e) {
-      print('Best-sellers SocketException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'Connection failed: ${e.message}',
@@ -194,7 +177,6 @@ class ApiService {
         ],
       );
     } catch (e) {
-      print('Best-sellers Exception: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
         message: 'Failed to load best sellers: ${e.toString()}',
@@ -216,8 +198,6 @@ class ApiService {
         },
       );
 
-      print('Making categories API request to: $uri'); // Debug log
-
       final response = await http
           .get(
             uri,
@@ -227,11 +207,6 @@ class ApiService {
             },
           )
           .timeout(timeout);
-
-      print(
-        'Categories API Response Status: ${response.statusCode}',
-      ); // Debug log
-      print('Categories API Response Body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -255,7 +230,6 @@ class ApiService {
         );
       }
     } on SocketException catch (e) {
-      print('Categories SocketException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<CategoryModel>>(
         success: false,
         message: 'Connection failed: ${e.message}',
@@ -266,7 +240,6 @@ class ApiService {
         ],
       );
     } catch (e) {
-      print('Categories Exception: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<CategoryModel>>(
         success: false,
         message: 'Failed to load categories: ${e.toString()}',
@@ -289,22 +262,22 @@ class ApiService {
     );
   }
 
-  // Search products with pagination
+  // Search products by name
   static Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
     required String searchQuery,
     int pageNumber = 1,
-    int pageSize = 10,
+    int pageSize = 20,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/products').replace(
-        queryParameters: {
-          'name': searchQuery,
-          'pageNumber': pageNumber.toString(),
-          'pageSize': pageSize.toString(),
-        },
-      );
+      Map<String, String> queryParams = {
+        'name': searchQuery,
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
 
-      print('Making search API request to: $uri'); // Debug log
+      final uri = Uri.parse(
+        '$baseUrl/products',
+      ).replace(queryParameters: queryParams);
 
       final response = await http
           .get(
@@ -329,8 +302,7 @@ class ApiService {
       } else {
         return ApiResponse<PaginatedResponse<ProductModel>>(
           success: false,
-          message:
-              'Failed to search products. Status code: ${response.statusCode}',
+          message: 'Search failed. Status code: ${response.statusCode}',
           errors: [
             'HTTP Error: ${response.statusCode}',
             'Response: ${response.body}',
@@ -343,13 +315,26 @@ class ApiService {
         message: 'Connection failed: ${e.message}',
         errors: [
           'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
           'Error: ${e.toString()}',
         ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
       );
     } catch (e) {
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
-        message: 'Search failed: ${e.toString()}',
+        message: 'An unexpected error occurred: ${e.toString()}',
         errors: [e.toString()],
       );
     }
@@ -409,8 +394,6 @@ class ApiService {
         },
       );
 
-      print('Making blogs API request to: $uri'); // Debug log
-
       final response = await http
           .get(
             uri,
@@ -420,9 +403,6 @@ class ApiService {
             },
           )
           .timeout(timeout);
-
-      print('Blogs API Response Status: ${response.statusCode}'); // Debug log
-      print('Blogs API Response Body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -445,7 +425,6 @@ class ApiService {
         );
       }
     } on SocketException catch (e) {
-      print('Blogs SocketException: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<BlogModel>>(
         success: false,
         message: 'Connection failed: ${e.message}',
@@ -456,7 +435,6 @@ class ApiService {
         ],
       );
     } catch (e) {
-      print('Blogs Exception: ${e.toString()}'); // Debug log
       return ApiResponse<PaginatedResponse<BlogModel>>(
         success: false,
         message: 'Failed to load blogs: ${e.toString()}',
@@ -508,13 +486,9 @@ class ApiService {
   // Test API connectivity
   static Future<ApiResponse<String>> testConnection() async {
     try {
-      print('Testing connection to: $baseUrl');
-
       final uri = Uri.parse(
         '$baseUrl/products',
       ).replace(queryParameters: {'pageNumber': '1', 'pageSize': '1'});
-
-      print('Test request URL: $uri');
 
       final response = await http
           .get(
@@ -525,12 +499,6 @@ class ApiService {
             },
           )
           .timeout(const Duration(seconds: 10));
-
-      print('Test Response Status: ${response.statusCode}');
-      print('Test Response Headers: ${response.headers}');
-      print(
-        'Test Response Body (first 200 chars): ${response.body.length > 200 ? "${response.body.substring(0, 200)}..." : response.body}',
-      );
 
       if (response.statusCode == 200) {
         return ApiResponse<String>(
@@ -547,7 +515,6 @@ class ApiService {
         );
       }
     } on SocketException catch (e) {
-      print('Test SocketException: ${e.toString()}');
       return ApiResponse<String>(
         success: false,
         data: null,
@@ -559,11 +526,65 @@ class ApiService {
         ],
       );
     } catch (e) {
-      print('Test Exception: ${e.toString()}');
       return ApiResponse<String>(
         success: false,
         data: null,
         message: 'Connection test failed',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get product reviews
+  static Future<ApiResponse<ReviewResponse>> getProductReviews(
+    String productId, {
+    int? ratingFilter,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (ratingFilter != null) {
+        queryParams['ratingFilter'] = ratingFilter.toString();
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/reviews/product/$productId',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => ReviewResponse.fromJson(data),
+        );
+      } else {
+        return ApiResponse<ReviewResponse>(
+          success: false,
+          message:
+              'Failed to load reviews. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<ReviewResponse>(
+        success: false,
+        message: 'Failed to load reviews: ${e.toString()}',
         errors: [e.toString()],
       );
     }
