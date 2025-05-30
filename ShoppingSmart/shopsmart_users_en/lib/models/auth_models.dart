@@ -95,6 +95,15 @@ class UserInfo {
     );
   }
 
+  factory UserInfo.fromTokenData(Map<String, dynamic> tokenData) {
+    return UserInfo(
+      id: tokenData['id'] ?? '',
+      userName: tokenData['userName'] ?? '',
+      email: tokenData['email'] ?? '',
+      roles: tokenData['role'] != null ? [tokenData['role']] : null,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {'id': id, 'userName': userName, 'email': email, 'roles': roles};
   }

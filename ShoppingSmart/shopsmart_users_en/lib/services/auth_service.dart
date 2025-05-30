@@ -48,20 +48,46 @@ class AuthService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
-        final authResponse = ApiResponse.fromJson(
-          jsonData,
-          (data) => AuthResponse.fromJson(data),
-        );
+        // Check if the response contains accessToken and refreshToken
+        if (jsonData.containsKey('accessToken') &&
+            jsonData.containsKey('refreshToken')) {
+          final accessToken = jsonData['accessToken'] as String;
+          final refreshToken = jsonData['refreshToken'] as String;
 
-        // Store token in SharedPreferences if login is successful
-        if (authResponse.success && authResponse.data?.token != null) {
-          await _storeToken(authResponse.data!.token!);
-          if (authResponse.data!.user != null) {
-            await _storeUserInfo(authResponse.data!.user!);
+          // Store tokens using JWT service
+          await _storeTokens(accessToken, refreshToken);
+
+          // Store user info from JWT token
+          final userInfo = _getUserInfoFromToken(accessToken);
+          if (userInfo != null) {
+            await _storeUserInfoFromToken(userInfo);
           }
-        }
 
-        return authResponse;
+          return ApiResponse<AuthResponse>(
+            success: true,
+            message: 'Login successful',
+            data: AuthResponse(
+              token: accessToken,
+              user: userInfo != null ? UserInfo.fromTokenData(userInfo) : null,
+            ),
+          );
+        } else {
+          // Fallback to old format
+          final authResponse = ApiResponse.fromJson(
+            jsonData,
+            (data) => AuthResponse.fromJson(data),
+          );
+
+          // Store token in SharedPreferences if login is successful
+          if (authResponse.success && authResponse.data?.token != null) {
+            await _storeToken(authResponse.data!.token!);
+            if (authResponse.data!.user != null) {
+              await _storeUserInfo(authResponse.data!.user!);
+            }
+          }
+
+          return authResponse;
+        }
       } else {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         return ApiResponse<AuthResponse>(
@@ -285,9 +311,49 @@ class AuthService {
     await prefs.setString('auth_token', token);
   }
 
+  static Future<void> _storeTokens(
+    String accessToken,
+    String refreshToken,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', accessToken);
+    await prefs.setString('refresh_token', refreshToken);
+  }
+
+  static Map<String, dynamic>? _getUserInfoFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        return null;
+      }
+
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final Map<String, dynamic> tokenData = json.decode(decoded);
+
+      return {
+        'id': tokenData['Id'],
+        'userName': tokenData['UserName'],
+        'email': tokenData['Email'],
+        'avatarUrl': tokenData['AvatarUrl'],
+        'role': tokenData['Role'],
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<void> _storeUserInfo(UserInfo user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_info', json.encode(user.toJson()));
+  }
+
+  static Future<void> _storeUserInfoFromToken(
+    Map<String, dynamic> userInfo,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_info', json.encode(userInfo));
   }
 
   static Future<String?> getStoredToken() async {

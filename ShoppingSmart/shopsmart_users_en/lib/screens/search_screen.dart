@@ -69,7 +69,7 @@ class _SearchScreenState extends State<SearchScreen> {
         }
       });
     } else {
-      // Load all products if no specific category
+      // Load basic products with pagination for "All" products
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final productsProvider = Provider.of<ProductsProvider>(
           context,
@@ -80,10 +80,9 @@ class _SearchScreenState extends State<SearchScreen> {
           listen: false,
         );
 
-        if (productsProvider.getProducts.isEmpty) {
-          categoriesProvider.clearSelection();
-          productsProvider.loadProducts(refresh: true);
-        }
+        categoriesProvider.clearSelection();
+        // Load products with pagination of 12 items for "All" products
+        productsProvider.loadProducts(refresh: true);
       });
     }
   }
@@ -206,6 +205,7 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

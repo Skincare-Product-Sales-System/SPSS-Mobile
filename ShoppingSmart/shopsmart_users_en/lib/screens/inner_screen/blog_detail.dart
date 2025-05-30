@@ -44,7 +44,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = response.message ?? 'Failed to load blog details';
+          _errorMessage = response.message;
           _isLoading = false;
         });
       }

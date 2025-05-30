@@ -23,7 +23,8 @@ class CategoriesProvider with ChangeNotifier {
   // Get selected category name
   String getSelectedCategoryName() {
     final category = selectedCategory;
-    return category?.categoryName ?? 'Unknown Category';
+    if (_selectedCategoryId == null) return 'All';
+    return category?.categoryName ?? 'All';
   }
 
   // Find category by ID (including nested categories)

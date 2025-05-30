@@ -6,6 +6,7 @@ import 'package:shopsmart_users_en/models/cart_model.dart';
 import 'package:shopsmart_users_en/screens/cart/quantity_btm_sheet.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
 import 'package:shopsmart_users_en/widgets/title_text.dart';
+import 'package:shopsmart_users_en/services/currency_formatter.dart';
 
 import '../../providers/cart_provider.dart';
 import '../../providers/products_provider.dart';
@@ -75,7 +76,9 @@ class CartWidget extends StatelessWidget {
                           // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SubtitleTextWidget(
-                              label: "${getCurrProduct.productPrice}\$",
+                              label: CurrencyFormatter.formatVNDFromString(
+                                getCurrProduct.productPrice,
+                              ),
                               color: Colors.blue,
                             ),
                             const Spacer(),

@@ -8,6 +8,8 @@ import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/blog_detail.dart';
 import 'package:shopsmart_users_en/screens/all_products_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
+import 'package:shopsmart_users_en/services/jwt_service.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -25,10 +27,44 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.detached:
+        // App is being terminated
+        await JwtService.clearAllUserData();
+        break;
+      case AppLifecycleState.paused:
+        // App is in background - optionally clear tokens here too for extra security
+        // await JwtService.clearAllUserData();
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -93,6 +129,7 @@ class MyApp extends StatelessWidget {
               BlogDetailScreen.routeName: (context) => const BlogDetailScreen(),
               ChangePasswordScreen.routeName:
                   (context) => const ChangePasswordScreen(),
+              CheckoutScreen.routeName: (context) => const CheckoutScreen(),
             },
           );
         },
