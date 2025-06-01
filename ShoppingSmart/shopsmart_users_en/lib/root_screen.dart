@@ -6,6 +6,7 @@ import 'package:shopsmart_users_en/screens/cart/cart_screen.dart';
 import 'package:shopsmart_users_en/screens/home_screen.dart';
 import 'package:shopsmart_users_en/screens/profile_screen.dart';
 import 'package:shopsmart_users_en/screens/search_screen.dart';
+import 'package:shopsmart_users_en/screens/quiz_screen.dart';
 
 class RootScreen extends StatefulWidget {
   static const routeName = '/RootScreen';
@@ -25,6 +26,7 @@ class _RootScreenState extends State<RootScreen> {
     screens = const [
       HomeScreen(),
       SearchScreen(),
+      QuizScreen(),
       CartScreen(),
       ProfileScreen(),
     ];
@@ -61,6 +63,11 @@ class _RootScreenState extends State<RootScreen> {
             selectedIcon: Icon(IconlyBold.search),
             icon: Icon(IconlyLight.search),
             label: "Search",
+          ),
+          const NavigationDestination(
+            selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
+            icon: Icon(Icons.quiz_outlined),
+            label: "Quiz",
           ),
           NavigationDestination(
             selectedIcon: const Icon(IconlyBold.bag_2),
