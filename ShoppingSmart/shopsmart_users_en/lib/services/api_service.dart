@@ -7,6 +7,8 @@ import '../models/category_model.dart';
 import '../models/detailed_product_model.dart';
 import '../models/blog_model.dart';
 import '../models/review_models.dart';
+import '../models/order_models.dart';
+import '../services/jwt_service.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -585,6 +587,195 @@ class ApiService {
       return ApiResponse<ReviewResponse>(
         success: false,
         message: 'Failed to load reviews: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Create new order
+  static Future<ApiResponse<OrderResponse>> createOrder(
+    CreateOrderRequest request,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/orders');
+
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(request.toJson()),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderResponse.fromJson(data),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to create order',
+          errors: jsonData['errors'] != null
+              ? List<String>.from(jsonData['errors'])
+              : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get orders with pagination
+  static Future<ApiResponse<PaginatedResponse<OrderModel>>> getOrders({
+    required int pageNumber,
+    required int pageSize,
+    String? status,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        print('No token found'); // Debug log
+        return ApiResponse<PaginatedResponse<OrderModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+      
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final uri = Uri.parse('$baseUrl/orders/user').replace(
+        queryParameters: queryParams,
+      );
+
+      print('Request URL: ${uri.toString()}'); // Debug log
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      print('Response Status Code: ${response.statusCode}'); // Debug log
+      print('Response Body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        print('Parsed JSON Data: $jsonData'); // Debug log
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => OrderModel.fromJson(item),
+          ),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          print('Error response data: $jsonData'); // Debug log
+          return ApiResponse<PaginatedResponse<OrderModel>>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get orders',
+            errors: jsonData['errors'] != null
+                ? List<String>.from(jsonData['errors'])
+                : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          print('Error parsing error response: $e'); // Debug log
+          return ApiResponse<PaginatedResponse<OrderModel>>(
+            success: false,
+            message: 'Failed to get orders',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      print('Socket Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      print('HTTP Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      print('Format Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e, stackTrace) {
+      print('Unexpected Error: $e'); // Debug log
+      print('Stack trace: $stackTrace'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
         errors: [e.toString()],
       );
     }

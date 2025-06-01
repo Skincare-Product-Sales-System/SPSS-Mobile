@@ -24,6 +24,8 @@ class _BlogSectionState extends State<BlogSection> {
   }
 
   Future<void> _loadBlogs() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -31,6 +33,8 @@ class _BlogSectionState extends State<BlogSection> {
 
     try {
       final response = await ApiService.getBlogs(pageNumber: 1, pageSize: 10);
+      if (!mounted) return;
+      
       if (response.success && response.data != null) {
         setState(() {
           _blogs = response.data!.items;
@@ -43,6 +47,8 @@ class _BlogSectionState extends State<BlogSection> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _errorMessage = 'Error loading blogs: ${e.toString()}';
         _isLoading = false;

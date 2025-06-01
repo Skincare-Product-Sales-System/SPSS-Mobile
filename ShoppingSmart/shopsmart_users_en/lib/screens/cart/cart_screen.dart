@@ -6,6 +6,7 @@ import 'package:shopsmart_users_en/services/assets_manager.dart';
 import 'package:shopsmart_users_en/services/my_app_function.dart';
 import 'package:shopsmart_users_en/widgets/empty_bag.dart';
 import 'package:shopsmart_users_en/widgets/title_text.dart';
+import 'package:shopsmart_users_en/models/order_models.dart';
 
 import 'bottom_checkout.dart';
 
@@ -41,7 +42,6 @@ class CartScreen extends StatelessWidget {
               IconButton(
                 onPressed: () {
                   MyAppFunctions.showErrorOrWarningDialog(
-                    isError: false,
                     context: context,
                     subtitle: "Clear cart?",
                     fct: () {

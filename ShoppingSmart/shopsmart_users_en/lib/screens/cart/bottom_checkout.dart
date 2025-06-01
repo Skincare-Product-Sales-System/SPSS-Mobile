@@ -6,6 +6,7 @@ import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
 import 'package:shopsmart_users_en/widgets/title_text.dart';
 import 'package:shopsmart_users_en/services/currency_formatter.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
+import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/auth/login.dart';
 import 'package:shopsmart_users_en/services/my_app_function.dart';
@@ -172,6 +173,37 @@ class CartBottomSheetWidget extends StatelessWidget {
                             ? 'Checkout • ${CurrencyFormatter.formatVND(totalAmount)}'
                             : 'Cart is Empty',
                         style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // View Orders Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          OrdersScreen.routeName,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      icon: const Icon(Icons.history, size: 20),
+                      label: const Text(
+                        'View Orders',
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),

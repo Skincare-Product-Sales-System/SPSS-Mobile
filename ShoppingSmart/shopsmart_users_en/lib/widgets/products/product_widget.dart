@@ -133,6 +133,8 @@ class _ProductWidgetState extends State<ProductWidget> {
                                 }
                                 cartProvider.addProductToCart(
                                   productId: getCurrProduct.productId,
+                                  title: getCurrProduct.productTitle,
+                                  price: double.parse(getCurrProduct.productPrice),
                                 );
                               },
                               child: Padding(

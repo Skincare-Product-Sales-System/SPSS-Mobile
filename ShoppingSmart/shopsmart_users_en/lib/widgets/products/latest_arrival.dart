@@ -186,6 +186,8 @@ class LatestArrivalProductsWidget extends StatelessWidget {
                           }
                           cartProvider.addProductToCart(
                             productId: productsModel.productId,
+                            title: productsModel.productTitle,
+                            price: double.parse(productsModel.productPrice),
                           );
                         },
                         icon: Icon(

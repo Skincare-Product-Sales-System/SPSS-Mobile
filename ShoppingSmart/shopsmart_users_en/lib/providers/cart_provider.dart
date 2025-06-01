@@ -9,12 +9,15 @@ class CartProvider with ChangeNotifier {
     return _cartItems;
   }
 
-  void addProductToCart({required String productId}) {
+  void addProductToCart({required String productId, required String title, required double price}) {
     _cartItems.putIfAbsent(
       productId,
       () => CartModel(
         cartId: const Uuid().v4(),
         productId: productId,
+        id: productId,
+        title: title,
+        price: price,
         quantity: 1,
       ),
     );
@@ -22,15 +25,21 @@ class CartProvider with ChangeNotifier {
   }
 
   void updateQty({required String productId, required int qty}) {
-    _cartItems.update(
-      productId,
-      (cartItem) => CartModel(
-        cartId: cartItem.cartId,
-        productId: productId,
-        quantity: qty,
-      ),
-    );
-    notifyListeners();
+    final cartItem = _cartItems[productId];
+    if (cartItem != null) {
+      _cartItems.update(
+        productId,
+        (cartItem) => CartModel(
+          cartId: cartItem.cartId,
+          productId: productId,
+          id: cartItem.id,
+          title: cartItem.title,
+          price: cartItem.price,
+          quantity: qty,
+        ),
+      );
+      notifyListeners();
+    }
   }
 
   bool isProdinCart({required String productId}) {
@@ -41,12 +50,7 @@ class CartProvider with ChangeNotifier {
     double total = 0.0;
 
     _cartItems.forEach((key, value) {
-      final getCurrProduct = productsProvider.findByProdId(value.productId);
-      if (getCurrProduct == null) {
-        total += 0;
-      } else {
-        total += double.parse(getCurrProduct.productPrice) * value.quantity;
-      }
+      total += value.price * value.quantity;
     });
     return total;
   }

@@ -10,11 +10,11 @@ import 'package:shopsmart_users_en/services/auth_service.dart';
 import 'package:shopsmart_users_en/services/my_app_function.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
 import 'package:shopsmart_users_en/models/auth_models.dart';
+import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 
 import '../providers/theme_provider.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
-import 'inner_screen/orders/orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -143,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     text: "All Order",
                     imagePath: AssetsManager.orderSvg,
                     function: () {
-                      Navigator.pushNamed(context, OrdersScreenFree.routeName);
+                      Navigator.pushNamed(context, OrdersScreen.routeName);
                     },
                   ),
                   CustomListTile(
