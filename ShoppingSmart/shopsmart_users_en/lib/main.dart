@@ -7,9 +7,11 @@ import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/blog_detail.dart';
+import 'package:shopsmart_users_en/screens/inner_screen/offers_screen.dart';
 import 'package:shopsmart_users_en/screens/all_products_screen.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
+import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -121,6 +123,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               RegisterScreen.routName: (context) => const RegisterScreen(),
               LoginScreen.routeName: (context) => const LoginScreen(),
               OrdersScreenFree.routeName: (context) => const OrdersScreenFree(),
+              OrdersScreen.routeName: (context) => const OrdersScreen(),
               ForgotPasswordScreen.routeName:
                   (context) => const ForgotPasswordScreen(),
               SearchScreen.routeName: (context) => const SearchScreen(),
@@ -130,6 +133,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               ChangePasswordScreen.routeName:
                   (context) => const ChangePasswordScreen(),
               CheckoutScreen.routeName: (context) => const CheckoutScreen(),
+              OffersScreen.routeName: (context) => const OffersScreen(),
             },
           );
         },
