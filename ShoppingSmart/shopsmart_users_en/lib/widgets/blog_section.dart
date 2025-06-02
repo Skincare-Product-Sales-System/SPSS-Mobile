@@ -25,7 +25,7 @@ class _BlogSectionState extends State<BlogSection> {
 
   Future<void> _loadBlogs() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -34,7 +34,7 @@ class _BlogSectionState extends State<BlogSection> {
     try {
       final response = await ApiService.getBlogs(pageNumber: 1, pageSize: 10);
       if (!mounted) return;
-      
+
       if (response.success && response.data != null) {
         setState(() {
           _blogs = response.data!.items;
@@ -48,7 +48,7 @@ class _BlogSectionState extends State<BlogSection> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() {
         _errorMessage = 'Error loading blogs: ${e.toString()}';
         _isLoading = false;
@@ -91,7 +91,7 @@ class _BlogSectionState extends State<BlogSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Latest Articles",
+                          "📰 Latest Articles",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
@@ -99,13 +99,15 @@ class _BlogSectionState extends State<BlogSection> {
                             letterSpacing: 0.5,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
-                          "Discover our latest insights",
+                          "Discover our latest insights & tips",
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(
                               context,
                             ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -259,7 +261,7 @@ class _BlogSectionState extends State<BlogSection> {
 
   Widget _buildShimmerCard() {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
+      width: MediaQuery.of(context).size.width * 0.65,
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -316,7 +318,7 @@ class BlogCard extends StatelessWidget {
     Size size = MediaQuery.of(context).size;
 
     return Container(
-      width: size.width * 0.8,
+      width: size.width * 0.65,
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -346,7 +348,7 @@ class BlogCard extends StatelessWidget {
               children: [
                 // Blog Image
                 Expanded(
-                  flex: 3,
+                  flex: 2,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -411,48 +413,41 @@ class BlogCard extends StatelessWidget {
 
                 // Blog Content
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Blog Title
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            blog.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                              height: 1.3,
-                              letterSpacing: 0.3,
-                            ),
+                        Text(
+                          blog.title,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            height: 1.3,
+                            letterSpacing: 0.3,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
 
                         // Blog Description
-                        Expanded(
-                          flex: 1,
-                          child: Text(
-                            blog.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color?.withOpacity(0.8),
-                              height: 1.4,
-                            ),
+                        Text(
+                          blog.description,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                            height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const Spacer(),
 
                         // Author and Date Row
                         Row(
@@ -461,21 +456,21 @@ class BlogCard extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 32,
-                                    height: 32,
+                                    width: 28,
+                                    height: 28,
                                     decoration: BoxDecoration(
                                       color: Theme.of(
                                         context,
                                       ).primaryColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Icon(
                                       IconlyBold.profile,
-                                      size: 16,
+                                      size: 14,
                                       color: Theme.of(context).primaryColor,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -484,7 +479,7 @@ class BlogCard extends StatelessWidget {
                                         Text(
                                           blog.author,
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.w600,
                                             color:
                                                 Theme.of(context).primaryColor,
@@ -494,7 +489,7 @@ class BlogCard extends StatelessWidget {
                                         Text(
                                           blog.formattedDate,
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 10,
                                             color: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall

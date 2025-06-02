@@ -632,9 +632,10 @@ class ApiService {
         return ApiResponse<OrderResponse>(
           success: false,
           message: jsonData['message'] ?? 'Failed to create order',
-          errors: jsonData['errors'] != null
-              ? List<String>.from(jsonData['errors'])
-              : ['Failed with status code: ${response.statusCode}'],
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
         );
       }
     } on SocketException catch (e) {
@@ -689,14 +690,14 @@ class ApiService {
         'pageNumber': pageNumber.toString(),
         'pageSize': pageSize.toString(),
       };
-      
+
       if (status != null) {
         queryParams['status'] = status;
       }
 
-      final uri = Uri.parse('$baseUrl/orders/user').replace(
-        queryParameters: queryParams,
-      );
+      final uri = Uri.parse(
+        '$baseUrl/orders/user',
+      ).replace(queryParameters: queryParams);
 
       print('Request URL: ${uri.toString()}'); // Debug log
 
@@ -732,9 +733,10 @@ class ApiService {
           return ApiResponse<PaginatedResponse<OrderModel>>(
             success: false,
             message: jsonData['message'] ?? 'Failed to get orders',
-            errors: jsonData['errors'] != null
-                ? List<String>.from(jsonData['errors'])
-                : ['Failed with status code: ${response.statusCode}'],
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
           );
         } catch (e) {
           print('Error parsing error response: $e'); // Debug log
@@ -776,6 +778,128 @@ class ApiService {
       return ApiResponse<PaginatedResponse<OrderModel>>(
         success: false,
         message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Post a review
+  static Future<ApiResponse<Map<String, dynamic>>> postReview({
+    required String productItemId,
+    required List<String> reviewImages,
+    required int ratingValue,
+    required String comment,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final requestBody = {
+        'productItemId': productItemId,
+        'reviewImages': reviewImages,
+        'ratingValue': ratingValue,
+        'comment': comment,
+      };
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/reviews'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(requestBody),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          message: 'Review posted successfully',
+          data: jsonData,
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Failed to post review. Status code: ${response.statusCode}',
+          errors:
+              errorData?['errors'] ?? ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Failed to post review: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Upload image for review (if you have a separate endpoint for image upload)
+  static Future<ApiResponse<String>> uploadReviewImage(File imageFile) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<String>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload/review-image'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imageFile.path),
+      );
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<String>(
+          success: true,
+          message: 'Image uploaded successfully',
+          data: jsonData['imageUrl'] ?? jsonData['url'] ?? '',
+        );
+      } else {
+        return ApiResponse<String>(
+          success: false,
+          message:
+              'Failed to upload image. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<String>(
+        success: false,
+        message: 'Failed to upload image: ${e.toString()}',
         errors: [e.toString()],
       );
     }

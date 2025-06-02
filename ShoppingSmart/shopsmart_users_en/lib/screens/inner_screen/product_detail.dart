@@ -2,6 +2,8 @@ import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../../providers/cart_provider.dart';
 import '../../widgets/app_name_text.dart';
@@ -1153,80 +1155,178 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
   void _showWriteReviewDialog() {
     int selectedRating = 5;
     final TextEditingController reviewController = TextEditingController();
+    List<XFile> selectedImages = [];
+    List<String> uploadedImageUrls = [];
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            Future<void> _pickImages() async {
+              final ImagePicker picker = ImagePicker();
+              final List<XFile> images = await picker.pickMultiImage();
+              if (images.isNotEmpty) {
+                setState(() {
+                  selectedImages.addAll(images);
+                  // Limit to 5 images
+                  if (selectedImages.length > 5) {
+                    selectedImages = selectedImages.take(5).toList();
+                  }
+                });
+              }
+            }
+
+            Future<void> _removeImage(int index) async {
+              setState(() {
+                selectedImages.removeAt(index);
+              });
+            }
+
+            Future<void> _submitReview() async {
+              if (reviewController.text.trim().isEmpty ||
+                  _selectedProductItemId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please enter a review comment"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              setState(() {
+                isSubmitting = true;
+              });
+
+              try {
+                // Upload images first if any are selected
+                uploadedImageUrls.clear();
+                for (XFile imageFile in selectedImages) {
+                  final uploadResponse = await ApiService.uploadReviewImage(
+                    File(imageFile.path),
+                  );
+                  if (uploadResponse.success && uploadResponse.data != null) {
+                    uploadedImageUrls.add(uploadResponse.data!);
+                  }
+                }
+
+                // Submit review with uploaded image URLs
+                final response = await ApiService.postReview(
+                  productItemId: _selectedProductItemId!,
+                  reviewImages: uploadedImageUrls,
+                  ratingValue: selectedRating,
+                  comment: reviewController.text.trim(),
+                );
+
+                if (response.success) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Thank you for your review!"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+
+                  // Refresh reviews
+                  final String? productId =
+                      ModalRoute.of(context)!.settings.arguments as String?;
+                  if (productId != null) {
+                    _loadReviews(productId);
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        response.message ?? "Failed to submit review",
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Error: ${e.toString()}"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } finally {
+                setState(() {
+                  isSubmitting = false;
+                });
+              }
+            }
+
             return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.rate_review,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Write a Review",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Product info
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              color: Theme.of(
-                                context,
-                              ).dividerColor.withOpacity(0.2),
-                              child: Icon(
-                                Icons.image,
-                                color: Theme.of(context).primaryColor,
-                              ),
+                          Icon(
+                            Icons.rate_review,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Write a Review",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Product info
+                      if (_detailedProduct != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: FancyShimmerImage(
+                                  imageUrl: _detailedProduct!.thumbnail,
+                                  width: 50,
+                                  height: 50,
+                                  boxFit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
                                   _detailedProduct!.name,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
@@ -1238,137 +1338,280 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _detailedProduct!.brand.name,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Rating selector
-                    Text(
-                      "Your Rating",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedRating = index + 1;
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Icon(
-                              index < selectedRating
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              color: Colors.amber,
-                              size: 32,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Review text field
-                    Text(
-                      "Your Review",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: reviewController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: "Share your experience with this product...",
-                        hintStyle: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.color?.withOpacity(0.7),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Rating selector
+                      Text(
+                        "Your Rating",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedRating = index + 1;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                index < selectedRating
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: Colors.amber,
+                                size: 32,
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Review text field
+                      Text(
+                        "Your Review",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: reviewController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          hintText:
+                              "Share your experience with this product...",
+                          hintStyle: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.color?.withOpacity(0.7),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).dividerColor.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Image upload section
+                      Text(
+                        "Add Photos (Optional)",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Image picker button
+                      Container(
+                        width: double.infinity,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(
                             color: Theme.of(
                               context,
                             ).dividerColor.withOpacity(0.3),
+                            style: BorderStyle.solid,
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).primaryColor,
+                        ),
+                        child:
+                            selectedImages.isEmpty
+                                ? InkWell(
+                                  onTap: _pickImages,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_photo_alternate_outlined,
+                                        size: 40,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Tap to add photos",
+                                        style: TextStyle(
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Up to 5 photos",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.color
+                                              ?.withOpacity(0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                : Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: selectedImages.length + 1,
+                                          itemBuilder: (context, index) {
+                                            if (index ==
+                                                selectedImages.length) {
+                                              // Add more button
+                                              return selectedImages.length < 5
+                                                  ? GestureDetector(
+                                                    onTap: _pickImages,
+                                                    child: Container(
+                                                      width: 60,
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            left: 8,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                          color:
+                                                              Theme.of(
+                                                                context,
+                                                              ).primaryColor,
+                                                          style:
+                                                              BorderStyle.solid,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.add,
+                                                        color:
+                                                            Theme.of(
+                                                              context,
+                                                            ).primaryColor,
+                                                      ),
+                                                    ),
+                                                  )
+                                                  : const SizedBox.shrink();
+                                            }
+
+                                            return Container(
+                                              width: 60,
+                                              height: 60,
+                                              margin: const EdgeInsets.only(
+                                                right: 8,
+                                              ),
+                                              child: Stack(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    child: Image.file(
+                                                      File(
+                                                        selectedImages[index]
+                                                            .path,
+                                                      ),
+                                                      width: 60,
+                                                      height: 60,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: -4,
+                                                    right: -4,
+                                                    child: GestureDetector(
+                                                      onTap:
+                                                          () => _removeImage(
+                                                            index,
+                                                          ),
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color: Colors.red,
+                                                              shape:
+                                                                  BoxShape
+                                                                      .circle,
+                                                            ),
+                                                        child: const Icon(
+                                                          Icons.close,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Submit button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isSubmitting ? null : _submitReview,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
+                          child:
+                              isSubmitting
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                  : const Text("Submit Review"),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Action buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text("Cancel"),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (reviewController.text.trim().isNotEmpty) {
-                                // Here you would typically send the review to your API
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Thank you for your review!"),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text("Submit Review"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1617,69 +1860,245 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
+            // Blog section button
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
               child: OutlinedButton.icon(
                 onPressed: () {
-                  // Add to wishlist logic
+                  print("Blog button pressed!"); // Debug
+                  // Show a snackbar first to confirm button works
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Opening blog..."),
+                      duration: Duration(milliseconds: 500),
+                    ),
+                  );
+                  // Then show the bottom sheet
+                  _showBlogBottomSheet();
                 },
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: Theme.of(context).primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 icon: Icon(
-                  Icons.favorite_border,
+                  Icons.article_outlined,
                   color: Theme.of(context).primaryColor,
+                  size: 20,
                 ),
                 label: Text(
-                  "Wishlist",
+                  "View Product Blog & Tips",
                   style: TextStyle(
                     color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // Add to cart logic with selected variation and quantity
-                  cartProvider.addProductToCart(
-                    productId: _detailedProduct!.id,
-                    title: _detailedProduct!.name,
-                    price: _currentPrice,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Added $_selectedQuantity item(s) to cart"),
-                      backgroundColor: Colors.green,
+
+            // Main action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Add to wishlist logic
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Theme.of(context).primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    icon: Icon(
+                      Icons.favorite_border,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    label: Text(
+                      "Wishlist",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-                icon: const Icon(Icons.shopping_cart),
-                label: const Text(
-                  "Add to Cart",
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Add to cart logic with selected variation and quantity
+                      cartProvider.addProductToCart(
+                        productId: _detailedProduct!.id,
+                        title: _detailedProduct!.name,
+                        price: _currentPrice,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Added $_selectedQuantity item(s) to cart",
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.shopping_cart),
+                    label: const Text(
+                      "Add to Cart",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showBlogBottomSheet() {
+    print("Blog bottom sheet button tapped!"); // Debug print
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        print("Building bottom sheet content"); // Debug print
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.article, color: Colors.blue, size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        "Product Blog & Tips",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Test content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "🎉 Blog Section is Working!",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              "This confirms that the bottom sheet is working properly. You can now see the blog content here!",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Sample Blog Content:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "• How to use this product effectively\n• Best practices and tips\n• Common mistakes to avoid\n• Expert recommendations\n• User reviews and feedback",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
