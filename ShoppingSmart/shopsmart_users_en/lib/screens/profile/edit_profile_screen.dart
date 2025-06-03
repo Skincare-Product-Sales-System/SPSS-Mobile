@@ -105,10 +105,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
     final cardColor = Theme.of(context).cardColor;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subTextColor = Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ?? Colors.grey[700];
     final isEditingAll = editingField == 'all';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sửa hồ sơ cá nhân'),
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -116,7 +118,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : userData == null
-              ? const Center(child: Text('Không lấy được thông tin người dùng.'))
+              ? const Center(child: Text('Could not load user info.'))
               : SingleChildScrollView(
                   child: Column(
                     children: [
@@ -147,19 +149,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 children: [
                                   Text(
                                     userData?['userName'] ?? '',
-                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
+                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     userData?['emailAddress'] ?? '',
-                                    style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                                    style: TextStyle(fontSize: 15, color: subTextColor),
                                   ),
                                 ],
                               ),
                             ),
                             IconButton(
                               icon: Icon(Icons.edit, color: primaryColor, size: 28),
-                              tooltip: 'Chỉnh sửa hồ sơ',
+                              tooltip: 'Edit profile',
                               onPressed: () {
                                 setState(() {
                                   editingField = 'all';
@@ -175,11 +177,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           key: _formKey,
                           child: Column(
                             children: [
-                              _buildEditableField('userName', 'Tên người dùng', icon: Icons.person, forceEdit: isEditingAll),
-                              _buildEditableField('surName', 'Họ', icon: Icons.badge, forceEdit: isEditingAll),
-                              _buildEditableField('lastName', 'Tên đầy đủ', icon: Icons.account_box, forceEdit: isEditingAll),
-                              _buildEditableField('emailAddress', 'Email', isEmail: true, icon: Icons.email, forceEdit: isEditingAll),
-                              _buildEditableField('phoneNumber', 'Số điện thoại', icon: Icons.phone, forceEdit: isEditingAll),
+                              _buildEditableField('userName', 'Username', icon: Icons.person, forceEdit: isEditingAll, textColor: textColor, subTextColor: subTextColor, cardColor: cardColor, primaryColor: primaryColor),
+                              _buildEditableField('surName', 'Surname', icon: Icons.badge, forceEdit: isEditingAll, textColor: textColor, subTextColor: subTextColor, cardColor: cardColor, primaryColor: primaryColor),
+                              _buildEditableField('lastName', 'Full name', icon: Icons.account_box, forceEdit: isEditingAll, textColor: textColor, subTextColor: subTextColor, cardColor: cardColor, primaryColor: primaryColor),
+                              _buildEditableField('emailAddress', 'Email', isEmail: true, icon: Icons.email, forceEdit: isEditingAll, textColor: textColor, subTextColor: subTextColor, cardColor: cardColor, primaryColor: primaryColor),
+                              _buildEditableField('phoneNumber', 'Phone number', icon: Icons.phone, forceEdit: isEditingAll, textColor: textColor, subTextColor: subTextColor, cardColor: cardColor, primaryColor: primaryColor),
                             ],
                           ),
                         ),
@@ -190,20 +192,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildEditableField(String field, String label, {bool isEmail = false, IconData? icon, bool forceEdit = false}) {
+  Widget _buildEditableField(String field, String label, {bool isEmail = false, IconData? icon, bool forceEdit = false, Color? textColor, Color? subTextColor, Color? cardColor, Color? primaryColor}) {
     final isEditing = editingField == field || forceEdit;
-    final primaryColor = Theme.of(context).primaryColor;
+    textColor ??= Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    subTextColor ??= Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ?? Colors.grey[700];
+    cardColor ??= Theme.of(context).cardColor;
+    primaryColor ??= Theme.of(context).primaryColor;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Material(
         elevation: 2,
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
+        color: cardColor,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: isEditing ? primaryColor : Colors.grey.shade200, width: 1.2),
-            color: isEditing ? primaryColor.withOpacity(0.04) : Colors.white,
+            color: cardColor,
           ),
           child: isEditing
               ? TextFormField(
@@ -230,10 +235,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             onPressed: () => updateUserData(field),
                           ),
                   ),
+                  style: TextStyle(color: textColor),
                   keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Không được để trống';
-                    if (isEmail && !val.contains('@')) return 'Email không hợp lệ';
+                    if (val == null || val.isEmpty) return 'This field is required';
+                    if (isEmail && !val.contains('@')) return 'Invalid email';
                     return null;
                   },
                 )
@@ -241,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   leading: icon != null ? Icon(icon, color: primaryColor) : null,
                   title: Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
-                  subtitle: Text(_controllers[field]?.text ?? '', style: const TextStyle(fontSize: 16)),
+                  subtitle: Text(_controllers[field]?.text ?? '', style: TextStyle(fontSize: 16, color: textColor)),
                   trailing: IconButton(
                     icon: Icon(Icons.edit, color: primaryColor),
                     onPressed: () {

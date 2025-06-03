@@ -176,14 +176,14 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Câu hỏi ${currentQuestion + 1}/${questions.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('Question ${currentQuestion + 1}/${questions.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Text(q['value'] ?? '', style: TextStyle(fontSize: 18, color: Theme.of(context).primaryColor)),
+            Text(q['value'] ?? '', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 24),
             ...o.map((opt) => RadioListTile<String>(
                   value: opt['id'],
                   groupValue: selectedOptionIds[currentQuestion],
-                  title: Text(opt['value'] ?? '', style: TextStyle(color: Theme.of(context).primaryColor)),
+                  title: Text(opt['value'] ?? ''),
                   onChanged: (val) {
                     setState(() {
                       selectedOptionIds[currentQuestion] = val;
@@ -196,17 +196,17 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
               children: [
                 ElevatedButton(
                   onPressed: currentQuestion > 0 ? prevQuestion : null,
-                  child: const Text('Quay lại'),
+                  child: const Text('Back'),
                 ),
                 if (currentQuestion < questions.length - 1)
                   ElevatedButton(
                     onPressed: selectedOptionIds[currentQuestion] != null ? nextQuestion : null,
-                    child: const Text('Tiếp theo'),
+                    child: const Text('Next'),
                   ),
                 if (currentQuestion == questions.length - 1)
                   ElevatedButton(
                     onPressed: selectedOptionIds[currentQuestion] != null ? finishQuiz : null,
-                    child: const Text('Hoàn thành'),
+                    child: const Text('Finish'),
                   ),
               ],
             ),
