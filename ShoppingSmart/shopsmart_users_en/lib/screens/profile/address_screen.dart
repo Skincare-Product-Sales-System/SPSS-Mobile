@@ -63,9 +63,9 @@ class _AddressScreenState extends State<AddressScreen> {
     );
     if (res.statusCode == 200) {
       fetchAddresses();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã xóa địa chỉ.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address deleted.')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Xóa thất bại!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete failed!')));
     }
   }
 
@@ -80,9 +80,9 @@ class _AddressScreenState extends State<AddressScreen> {
     );
     if (res.statusCode == 200) {
       fetchAddresses();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã đặt làm mặc định.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Set as default successfully.')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thao tác thất bại!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Action failed!')));
     }
   }
 
@@ -91,20 +91,20 @@ class _AddressScreenState extends State<AddressScreen> {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Địa chỉ của tôi'),
+        title: const Text('My Addresses', style: TextStyle(color: Colors.white)),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAddressForm(),
-        icon: const Icon(Icons.add_location_alt),
-        label: const Text('Thêm địa chỉ mới'),
+        icon: const Icon(Icons.add_location_alt, color: Colors.white),
+        label: const Text('Add new address', style: TextStyle(color: Colors.white)),
         backgroundColor: primaryColor,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : addresses.isEmpty
-              ? const Center(child: Text('Bạn chưa có địa chỉ nào.'))
+              ? const Center(child: Text('You have no addresses yet.'))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: addresses.length,
@@ -133,6 +133,9 @@ class AddressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subTextColor = Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ?? Colors.grey[700];
+    final cardBg = Theme.of(context).cardColor;
     return Material(
       elevation: 3,
       borderRadius: BorderRadius.circular(18),
@@ -140,7 +143,7 @@ class AddressCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          color: Colors.white,
+          color: cardBg,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +155,7 @@ class AddressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     address['customerName'] ?? '',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: primaryColor),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
                   ),
                 ),
                 if (address['isDefault'] == true)
@@ -162,24 +165,24 @@ class AddressCard extends StatelessWidget {
                       color: primaryColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('Địa chỉ mặc định', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+                    child: Text('Default address', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
                   ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(address['phoneNumber'] ?? '', style: const TextStyle(fontSize: 15)),
+            Text(address['phoneNumber'] ?? '', style: TextStyle(fontSize: 15, color: subTextColor)),
             const SizedBox(height: 4),
-            Text(_fullAddress(address), style: const TextStyle(fontSize: 15)),
+            Text(_fullAddress(address), style: TextStyle(fontSize: 15, color: subTextColor)),
             const SizedBox(height: 12),
             Row(
               children: [
                 ElevatedButton.icon(
                   onPressed: onEdit,
                   icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Chỉnh sửa'),
+                  label: const Text('Edit'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -187,10 +190,10 @@ class AddressCard extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete, size: 18),
-                  label: const Text('Xóa'),
+                  label: const Text('Delete'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -202,11 +205,12 @@ class AddressCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton(
                   onPressed: onSetDefault,
-                  child: const Text('Đặt làm mặc định'),
+                  child: const Text('Set as default'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,
                     side: BorderSide(color: primaryColor),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: TextStyle(color: primaryColor),
                   ),
                 ),
               ),
@@ -314,9 +318,9 @@ class _AddressFormState extends State<AddressForm> {
     if (res.statusCode == 200 || res.statusCode == 201) {
       widget.onSuccess();
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lưu địa chỉ thành công!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address saved successfully!')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lưu địa chỉ thất bại!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address save failed!')));
     }
   }
 
@@ -334,33 +338,33 @@ class _AddressFormState extends State<AddressForm> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.address == null ? 'Thêm địa chỉ mới' : 'Chỉnh sửa địa chỉ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor)),
+                Text(widget.address == null ? 'Add new address' : 'Edit address', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor)),
                 const SizedBox(height: 18),
-                _buildTextField('customerName', 'Tên khách hàng *', Icons.person),
+                _buildTextField('customerName', 'Customer name *', Icons.person),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField('phoneNumber', 'Số điện thoại *', Icons.phone)),
+                    Expanded(child: _buildTextField('phoneNumber', 'Phone number *', Icons.phone)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('streetNumber', 'Số nhà *', Icons.home)),
+                    Expanded(child: _buildTextField('streetNumber', 'Street number *', Icons.home)),
                   ],
                 ),
-                _buildTextField('addressLine1', 'Địa chỉ 1 *', Icons.location_on),
-                _buildTextField('addressLine2', 'Địa chỉ 2 (Tùy chọn)', Icons.location_on_outlined),
+                _buildTextField('addressLine1', 'Address line 1 *', Icons.location_on),
+                _buildTextField('addressLine2', 'Address line 2 (optional)', Icons.location_on_outlined),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField('city', 'Thành phố *', Icons.location_city)),
+                    Expanded(child: _buildTextField('city', 'City *', Icons.location_city)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('ward', 'Phường/Xã *', Icons.apartment)),
+                    Expanded(child: _buildTextField('ward', 'Ward *', Icons.apartment)),
                   ],
                 ),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField('postcode', 'Mã bưu điện *', Icons.markunread_mailbox)),
+                    Expanded(child: _buildTextField('postcode', 'Postcode *', Icons.markunread_mailbox)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('province', 'Quận/Huyện *', Icons.map)),
+                    Expanded(child: _buildTextField('province', 'Province *', Icons.map)),
                   ],
                 ),
-                _buildTextField('countryName', 'Quốc gia *', Icons.flag),
+                _buildTextField('countryName', 'Country *', Icons.flag),
                 Row(
                   children: [
                     Checkbox(
@@ -368,7 +372,7 @@ class _AddressFormState extends State<AddressForm> {
                       onChanged: (v) => setState(() => isDefault = v ?? false),
                       activeColor: primaryColor,
                     ),
-                    const Text('Đặt làm địa chỉ mặc định'),
+                    const Text('Set as default address'),
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -377,7 +381,7 @@ class _AddressFormState extends State<AddressForm> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Hủy'),
+                      child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
@@ -389,7 +393,7 @@ class _AddressFormState extends State<AddressForm> {
                       ),
                       child: isLoading
                           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text(widget.address == null ? 'Thêm địa chỉ' : 'Cập nhật'),
+                          : Text(widget.address == null ? 'Add address' : 'Update'),
                     ),
                   ],
                 ),
@@ -411,7 +415,7 @@ class _AddressFormState extends State<AddressForm> {
           prefixIcon: Icon(icon),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (val) => (label.contains('*') && (val == null || val.isEmpty)) ? 'Không được để trống' : null,
+        validator: (val) => (label.contains('*') && (val == null || val.isEmpty)) ? 'This field is required' : null,
       ),
     );
   }
