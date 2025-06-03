@@ -11,6 +11,8 @@ import 'package:shopsmart_users_en/services/my_app_function.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
 import 'package:shopsmart_users_en/models/auth_models.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
+import 'package:shopsmart_users_en/screens/profile/edit_profile_screen.dart';
+import 'package:shopsmart_users_en/screens/profile/address_screen.dart';
 
 import '../providers/theme_provider.dart';
 import '../widgets/app_name_text.dart';
@@ -95,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   vertical: 5,
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: 60,
@@ -115,15 +118,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TitlesTextWidget(label: _userInfo?.userName ?? "User"),
-                        const SizedBox(height: 6),
-                        SubtitleTextWidget(
-                          label: _userInfo?.email ?? "user@example.com",
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TitlesTextWidget(label: _userInfo?.userName ?? "User"),
+                          const SizedBox(height: 6),
+                          SubtitleTextWidget(
+                            label: _userInfo?.email ?? "user@example.com",
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.edit, color: Theme.of(context).primaryColor, size: 28),
+                      tooltip: 'Chỉnh sửa hồ sơ',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
+                          ),
+                        ).then((needReload) {
+                          if (needReload == true) {
+                            _checkLoginStatus();
+                          }
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -166,7 +187,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CustomListTile(
                     text: "Address",
                     imagePath: AssetsManager.address,
-                    function: () {},
+                    function: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddressScreen(),
+                        ),
+                      );
+                    },
                   ),
                   if (_isLoggedIn)
                     CustomListTile(
