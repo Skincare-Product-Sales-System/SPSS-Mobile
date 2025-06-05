@@ -7,6 +7,7 @@ import 'package:shopsmart_users_en/screens/home_screen.dart';
 import 'package:shopsmart_users_en/screens/profile_screen.dart';
 import 'package:shopsmart_users_en/screens/search_screen.dart';
 import 'package:shopsmart_users_en/screens/quiz_screen.dart';
+import 'package:shopsmart_users_en/widgets/chat/chat_widget.dart';
 
 class RootScreen extends StatefulWidget {
   static const routeName = '/RootScreen';
@@ -37,10 +38,18 @@ class _RootScreenState extends State<RootScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     return Scaffold(
-      body: PageView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: controller,
-        children: screens,
+      body: Stack(
+        children: [
+          // Main content
+          PageView(
+            physics: const NeverScrollableScrollPhysics(),
+            controller: controller,
+            children: screens,
+          ),
+
+          // Chat widget
+          const ChatWidget(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentScreen,

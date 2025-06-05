@@ -12,6 +12,7 @@ import 'package:shopsmart_users_en/screens/all_products_screen.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
+import 'package:shopsmart_users_en/providers/chat_provider.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -99,6 +100,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(
           create: (_) {
             return ViewedProdProvider();
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = ChatProvider();
+            provider.initialize();
+            return provider;
           },
         ),
       ],
