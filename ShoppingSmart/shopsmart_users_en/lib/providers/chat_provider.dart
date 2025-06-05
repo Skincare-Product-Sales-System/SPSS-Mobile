@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -16,6 +15,9 @@ class ChatProvider with ChangeNotifier {
   String _newMessage = '';
   final List<ChatMessage> _messages = [];
   String? _previewImageUrl;
+  bool _hasUnreadMessages = false;
+  int _connectionAttempts = 0;
+  static const int MAX_RETRY_ATTEMPTS = 3;
 
   // Getters
   bool get isOpen => _isOpen;
@@ -25,6 +27,13 @@ class ChatProvider with ChangeNotifier {
   String get newMessage => _newMessage;
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   String? get previewImageUrl => _previewImageUrl;
+  bool get hasUnreadMessages => _hasUnreadMessages;
+  int get connectionAttempts => _connectionAttempts;
+
+  ChatProvider() {
+    _chatService.onMessageReceived = _handleMessageReceived;
+    _chatService.initialize();
+  }
 
   // Initialize the provider
   Future<void> initialize() async {
@@ -35,20 +44,27 @@ class ChatProvider with ChangeNotifier {
   }
 
   // Toggle chat window
-  void toggleChat() async {
+  void toggleChat() {
     _isOpen = !_isOpen;
-
     if (_isOpen && !_isConnected) {
-      await _loadChatHistory();
-      await _connectToChat();
+      _connectToChat();
+      _loadChatHistory();
     }
-
     notifyListeners();
+  }
+
+  // Khởi tạo chat khi vào màn hình chat riêng biệt
+  Future<void> initChat() async {
+    if (!_isConnected) {
+      await _connectToChat();
+      await _loadChatHistory();
+    }
   }
 
   // Connect to chat service
   Future<void> _connectToChat() async {
     _setLoading(true);
+    _connectionAttempts++;
 
     // Add connecting message
     _addSystemMessage('Kết nối với nhân viên hỗ trợ của Skincede...');
@@ -58,20 +74,27 @@ class ChatProvider with ChangeNotifier {
     _isConnected = connected;
 
     if (connected) {
+      _connectionAttempts = 0;
       _addSystemMessage(
         'Đã kết nối với hỗ trợ viên. Bạn có thể bắt đầu nhắn tin.',
       );
     } else {
-      _addSystemMessage(
-        'Không thể kết nối với hỗ trợ viên. Vui lòng thử lại sau.',
-      );
-      // Tự động thử lại sau 5 giây
-      Future.delayed(const Duration(seconds: 5), () {
-        if (!_isConnected && _isOpen) {
-          _addSystemMessage('Kết nối với nhân viên hỗ trợ của Skincede...');
-          _connectToChat();
-        }
-      });
+      if (_connectionAttempts < MAX_RETRY_ATTEMPTS) {
+        _addSystemMessage(
+          'Không thể kết nối với hỗ trợ viên. Đang thử lại lần $_connectionAttempts/$MAX_RETRY_ATTEMPTS...',
+        );
+        // Tự động thử lại sau 3 giây
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!_isConnected && _isOpen) {
+            _connectToChat();
+          }
+        });
+      } else {
+        _addSystemMessage(
+          'Không thể kết nối với hỗ trợ viên sau nhiều lần thử. Vui lòng kiểm tra kết nối mạng và thử lại sau.',
+        );
+        _connectionAttempts = 0;
+      }
     }
 
     _setLoading(false);
@@ -96,6 +119,24 @@ class ChatProvider with ChangeNotifier {
     _setLoading(false);
   }
 
+  // Xóa lịch sử chat
+  Future<void> clearChatHistory() async {
+    _setLoading(true);
+
+    // Xóa tin nhắn từ bộ nhớ
+    await _chatService.clearChatHistory();
+
+    // Xóa tin nhắn từ danh sách hiện tại, chỉ giữ lại tin nhắn hệ thống
+    final systemMessages =
+        _messages.where((msg) => msg.type == MessageType.system).toList();
+    _messages.clear();
+    _messages.addAll(systemMessages);
+
+    _addSystemMessage('Lịch sử trò chuyện đã được xóa.');
+
+    _setLoading(false);
+  }
+
   // Set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
@@ -105,6 +146,12 @@ class ChatProvider with ChangeNotifier {
   // Handle message received from server
   void _handleMessageReceived(ChatMessage message) {
     _messages.add(message);
+
+    // Nếu tin nhắn đến từ nhân viên và chat không mở, đánh dấu có tin mới
+    if (message.type == MessageType.staff && !_isOpen) {
+      _hasUnreadMessages = true;
+    }
+
     notifyListeners();
   }
 
@@ -297,6 +344,14 @@ class ChatProvider with ChangeNotifier {
       _addSystemMessage(
         'Không thể gửi thông tin sản phẩm. Vui lòng thử lại sau.',
       );
+    }
+  }
+
+  // Đánh dấu đã đọc tin nhắn
+  void markMessagesAsRead() {
+    if (_hasUnreadMessages) {
+      _hasUnreadMessages = false;
+      notifyListeners();
     }
   }
 

@@ -237,6 +237,20 @@ class ChatService {
     }
   }
 
+  // Clear chat history from storage
+  Future<void> clearChatHistory() async {
+    if (userId == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storageKey = 'chat_$userId';
+
+      await prefs.remove(storageKey);
+    } catch (e) {
+      print('Error clearing chat history: $e');
+    }
+  }
+
   // Disconnect from SignalR hub
   Future<void> disconnect() async {
     if (_connection != null) {

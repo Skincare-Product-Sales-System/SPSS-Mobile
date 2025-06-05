@@ -13,6 +13,7 @@ import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/providers/chat_provider.dart';
+import 'package:shopsmart_users_en/screens/chat_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -142,6 +143,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const ChangePasswordScreen(),
               CheckoutScreen.routeName: (context) => const CheckoutScreen(),
               OffersScreen.routeName: (context) => const OffersScreen(),
+              ChatScreen.routeName: (context) => const ChatScreen(),
             },
           );
         },
