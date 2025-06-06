@@ -55,14 +55,27 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.detached:
-        // App is being terminated
+        // App is being terminated - clear all user data for security
+        print('App is being terminated, clearing user data...');
         await JwtService.clearAllUserData();
         break;
       case AppLifecycleState.paused:
-        // App is in background - optionally clear tokens here too for extra security
+        // App is in background - you can optionally clear sensitive data here
+        print('App moved to background');
+        // Uncomment the line below if you want to clear data when app goes to background
         // await JwtService.clearAllUserData();
         break;
-      default:
+      case AppLifecycleState.resumed:
+        // App is back in foreground
+        print('App resumed from background');
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive (e.g., during phone call)
+        print('App is inactive');
+        break;
+      case AppLifecycleState.hidden:
+        // App is hidden
+        print('App is hidden');
         break;
     }
   }
