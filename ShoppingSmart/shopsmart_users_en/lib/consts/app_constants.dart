@@ -8,8 +8,8 @@ class AppConstants {
       "https://images.unsplash.com/photo-1465572089651-8fde36c892dd?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80";
 
   static const List<String> bannersImage = [
-    'assets/images/banners/banner1.png',
-    'assets/images/banners/banner2.png',
+    'assets/images/banners/banner1.jpg',
+    'assets/images/banners/banner2.jpg',
   ];
 
   static List<CategoriesModel> categoriesList = [

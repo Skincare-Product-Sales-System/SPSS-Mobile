@@ -78,8 +78,12 @@ class CategoryWidget extends StatelessWidget {
                   )
                   : LinearGradient(
                     colors: [
-                      Theme.of(context).cardColor,
-                      Theme.of(context).cardColor.withOpacity(0.8),
+                      Theme.of(context).brightness == Brightness.light
+                          ? Colors.white
+                          : Theme.of(context).cardColor,
+                      Theme.of(context).brightness == Brightness.light
+                          ? const Color(0xFFF8F9FA)
+                          : Theme.of(context).cardColor.withOpacity(0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -89,6 +93,8 @@ class CategoryWidget extends StatelessWidget {
             color:
                 isSelected
                     ? Theme.of(context).primaryColor.withOpacity(0.8)
+                    : Theme.of(context).brightness == Brightness.light
+                    ? Colors.grey.withOpacity(0.2)
                     : Theme.of(context).dividerColor.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
@@ -97,8 +103,10 @@ class CategoryWidget extends StatelessWidget {
               color:
                   isSelected
                       ? Theme.of(context).primaryColor.withOpacity(0.25)
+                      : Theme.of(context).brightness == Brightness.light
+                      ? Colors.black.withOpacity(0.05)
                       : Theme.of(context).shadowColor.withOpacity(0.1),
-              spreadRadius: isSelected ? 2 : 1,
+              spreadRadius: isSelected ? 2 : 0,
               blurRadius: isSelected ? 8 : 4,
               offset: Offset(0, isSelected ? 3 : 2),
             ),
@@ -118,8 +126,10 @@ class CategoryWidget extends StatelessWidget {
                 color:
                     isSelected
                         ? Colors.white
+                        : Theme.of(context).brightness == Brightness.light
+                        ? const Color(0xFF2D3748)
                         : Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 fontSize: 13,
                 letterSpacing: 0.3,
               ),
