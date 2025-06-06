@@ -91,7 +91,7 @@ class _BlogSectionState extends State<BlogSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "📰 Latest Articles",
+                          "📰 Bài Viết Mới Nhất",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
@@ -101,7 +101,7 @@ class _BlogSectionState extends State<BlogSection> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Discover our latest insights & tips",
+                          "Khám phá thông tin và mẹo mới nhất",
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(
@@ -128,7 +128,7 @@ class _BlogSectionState extends State<BlogSection> {
                       ),
                     ),
                     child: Text(
-                      '${_blogs.length} articles',
+                      '${_blogs.length} bài viết',
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,
                         fontSize: 12,
@@ -173,7 +173,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Failed to load articles',
+                      'Không thể tải bài viết',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -182,7 +182,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Please check your connection',
+                      'Vui lòng kiểm tra kết nối của bạn',
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -192,7 +192,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ElevatedButton.icon(
                       onPressed: _loadBlogs,
                       icon: Icon(Icons.refresh, size: 18),
-                      label: const Text('Try Again'),
+                      label: const Text('Thử Lại'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
@@ -224,7 +224,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'No articles available',
+                      'Không có bài viết',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -232,7 +232,7 @@ class _BlogSectionState extends State<BlogSection> {
                       ),
                     ),
                     Text(
-                      'Check back later for new content',
+                      'Vui lòng quay lại sau để xem nội dung mới',
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).textTheme.bodySmall?.color,

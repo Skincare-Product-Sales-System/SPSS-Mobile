@@ -66,17 +66,17 @@ class _RootScreenState extends State<RootScreen> {
           const NavigationDestination(
             selectedIcon: Icon(IconlyBold.home),
             icon: Icon(IconlyLight.home),
-            label: "Home",
+            label: "Trang Chủ",
           ),
           const NavigationDestination(
             selectedIcon: Icon(IconlyBold.search),
             icon: Icon(IconlyLight.search),
-            label: "Search",
+            label: "Tìm Kiếm",
           ),
           const NavigationDestination(
             selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
             icon: Icon(Icons.quiz_outlined),
-            label: "Quiz",
+            label: "Câu Đố",
           ),
           NavigationDestination(
             selectedIcon: const Icon(IconlyBold.bag_2),
@@ -86,12 +86,12 @@ class _RootScreenState extends State<RootScreen> {
               label: Text(cartProvider.getCartitems.length.toString()),
               child: const Icon(IconlyLight.bag_2),
             ),
-            label: "Cart",
+            label: "Giỏ Hàng",
           ),
           const NavigationDestination(
             selectedIcon: Icon(IconlyBold.profile),
             icon: Icon(IconlyLight.profile),
-            label: "Profile",
+            label: "Cá Nhân",
           ),
         ],
       ),

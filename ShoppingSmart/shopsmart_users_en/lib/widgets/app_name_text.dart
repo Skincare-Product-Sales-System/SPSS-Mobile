@@ -12,7 +12,7 @@ class AppNameTextWidget extends StatelessWidget {
       period: Duration(seconds: 22),
       baseColor: Colors.purple,
       highlightColor: Colors.red,
-      child: TitlesTextWidget(label: "ShopSmart", fontSize: fontSize),
+      child: TitlesTextWidget(label: "Skincede", fontSize: fontSize),
     );
   }
 }

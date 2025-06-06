@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) {
           MyAppFunctions.showErrorOrWarningDialog(
             context: context,
-            subtitle: 'Registration successful! Welcome to ShopSmart.',
+            subtitle: 'Registration successful! Welcome to Skincede.',
             fct: () {
               if (fromScreen == 'checkout') {
                 // Redirect to checkout if user came from checkout
