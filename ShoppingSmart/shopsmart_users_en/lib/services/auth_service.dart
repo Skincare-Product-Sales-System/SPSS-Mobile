@@ -239,7 +239,16 @@ class AuthService {
         );
       }
 
-      final uri = Uri.parse('$baseUrl/authentications/change-password');
+      // Use query parameters as requested:
+      // http://localhost:5041/api/authentications/change-password?currentPassword=sada&newPassword=asdad
+      final uri = Uri.parse('$baseUrl/authentications/change-password').replace(
+        queryParameters: {
+          'currentPassword': request.currentPassword,
+          'newPassword': request.newPassword,
+        },
+      );
+
+      print('Making change password API request to: $uri'); // Debug log
 
       final response = await http
           .post(
@@ -249,7 +258,6 @@ class AuthService {
               'Accept': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: json.encode(request.toJson()),
           )
           .timeout(timeout);
 
@@ -377,8 +385,33 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('user_info');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Clear all authentication related data
+      await prefs.remove('auth_token');
+      await prefs.remove('refresh_token');
+      await prefs.remove('user_info');
+      await prefs.remove('user_id');
+      await prefs.remove('user_email');
+      await prefs.remove('user_name');
+      await prefs.remove('user_avatar');
+
+      // Clear any other app-specific user data
+      await prefs.remove('cart_items');
+      await prefs.remove('wishlist_items');
+      await prefs.remove('viewed_products');
+      await prefs.remove('user_preferences');
+      await prefs.remove('delivery_addresses');
+
+      print('User logged out and all data cleared successfully');
+    } catch (e) {
+      print('Error during logout: $e');
+    }
+  }
+
+  // Clear all user data (for app shutdown)
+  static Future<void> clearAllUserData() async {
+    await logout(); // Use the same comprehensive logout function
   }
 }

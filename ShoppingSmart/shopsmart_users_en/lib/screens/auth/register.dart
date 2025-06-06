@@ -9,8 +9,12 @@ import 'package:shopsmart_users_en/widgets/title_text.dart';
 import 'package:shopsmart_users_en/services/auth_service.dart';
 import 'package:shopsmart_users_en/models/auth_models.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
-
+import 'package:shopsmart_users_en/screens/auth/login.dart';
+import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import '../../widgets/auth/image_picker_widget.dart';
+import '../../widgets/auth/google_btn.dart';
+import 'package:provider/provider.dart';
+import 'package:shopsmart_users_en/providers/products_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   static const routName = "/RegisterScreen";
@@ -90,23 +94,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final String? fromScreen =
             ModalRoute.of(context)?.settings.arguments as String?;
 
-        // Registration successful
+        // Show success message with snackbar instead of dialog for better UX
         if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: 'Registration successful! Welcome to Skincede.',
-            fct: () {
-              if (fromScreen == 'checkout') {
-                // Redirect to checkout if user came from checkout
-                Navigator.of(context).pushReplacementNamed('/checkout');
-              } else {
-                // Otherwise go to home
-                Navigator.of(
-                  context,
-                ).pushReplacementNamed(RootScreen.routeName);
-              }
-            },
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Welcome to ShopSmart.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
           );
+
+          // Navigate based on where user came from
+          if (fromScreen == 'checkout') {
+            // User came from checkout, navigate back to checkout using proper route name
+            Navigator.of(
+              context,
+            ).pushReplacementNamed(CheckoutScreen.routeName);
+          } else {
+            // User came from normal registration, go to home
+            Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
+          }
         }
       } else {
         // Registration failed
@@ -156,6 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+    final productsProvider = Provider.of<ProductsProvider>(context);
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();

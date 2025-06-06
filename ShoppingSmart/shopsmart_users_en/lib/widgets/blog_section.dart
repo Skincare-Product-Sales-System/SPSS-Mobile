@@ -31,22 +31,71 @@ class _BlogSectionState extends State<BlogSection> {
       _errorMessage = null;
     });
 
+    print('Starting to load blogs...'); // Debug log
+
     try {
       final response = await ApiService.getBlogs(pageNumber: 1, pageSize: 10);
+      print(
+        'Blog API response: success=${response.success}, message=${response.message}',
+      ); // Debug log
+
       if (!mounted) return;
 
       if (response.success && response.data != null) {
+        print(
+          'Successfully loaded ${response.data!.items.length} blogs',
+        ); // Debug log
         setState(() {
           _blogs = response.data!.items;
           _isLoading = false;
         });
       } else {
+        print('Failed to load blogs: ${response.message}'); // Debug log
+        print('Response errors: ${response.errors}'); // Debug log
+
+        // Add temporary mock data for UI testing
+        print('Loading mock blog data for UI testing...'); // Debug log
         setState(() {
-          _errorMessage = response.message ?? 'Failed to load blogs';
+          _blogs = [
+            BlogModel(
+              id: '1',
+              title: 'Expert Tips for Caring For Men\'s Skin',
+              thumbnail:
+                  'https://images.unsplash.com/photo-1506629905607-bda39cee5c4d?w=400',
+              description:
+                  'Caring for men\'s skin isn\'t too complicated. If you\'re a beginner who has had your other half nag your skin...',
+              author: 'Dr. Alex',
+              lastUpdatedAt: DateTime.now().subtract(const Duration(days: 2)),
+            ),
+            BlogModel(
+              id: '2',
+              title: 'How to Layer Skincare Ingredients',
+              thumbnail:
+                  'https://images.unsplash.com/photo-1556909075-f3e7e8c33de4?w=400',
+              description:
+                  'Many ingredients react heavily with skincare, so it\'s important to know which ones don\'t belong together...',
+              author: 'Dr. Sarah',
+              lastUpdatedAt: DateTime.now().subtract(const Duration(days: 5)),
+            ),
+            BlogModel(
+              id: '3',
+              title: 'Complete Guide to Anti-Aging',
+              thumbnail:
+                  'https://images.unsplash.com/photo-1571772805616-942fa6b9d7e9?w=400',
+              description:
+                  'Discover the best anti-aging practices and products that actually work for your skin type...',
+              author: 'Dr. Emma',
+              lastUpdatedAt: DateTime.now().subtract(const Duration(days: 1)),
+            ),
+          ];
           _isLoading = false;
+          // Still keep the error message but with reduced severity
+          _errorMessage =
+              'API temporarily unavailable - showing sample content';
         });
       }
     } catch (e) {
+      print('Exception loading blogs: $e'); // Debug log
       if (!mounted) return;
 
       setState(() {
@@ -69,74 +118,126 @@ class _BlogSectionState extends State<BlogSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             margin: const EdgeInsets.only(bottom: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        IconlyBold.document,
-                        color: Theme.of(context).primaryColor,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "📰 Bài Viết Mới Nhất",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                            letterSpacing: 0.5,
-                          ),
+            decoration: BoxDecoration(
+              color:
+                  Theme.of(context).brightness == Brightness.light
+                      ? const Color(0xFFFAFBFC)
+                      : null,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.15)
+                                  : Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.1),
+                                    width: 1,
+                                  )
+                                  : null,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Khám phá thông tin và mẹo mới nhất",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Icon(
+                          IconlyBold.document,
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                if (_blogs.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Theme.of(context).primaryColor.withOpacity(0.2),
                       ),
-                    ),
-                    child: Text(
-                      '${_blogs.length} bài viết',
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "📰 Latest Articles",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color(0xFF1A202C)
+                                      : Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Discover our latest insights & tips",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color(0xFF4A5568)
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.color
+                                          ?.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
-              ],
+                  if (_blogs.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.12)
+                                : Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.25)
+                                  : Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        '${_blogs.length} articles',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
 
@@ -156,39 +257,84 @@ class _BlogSectionState extends State<BlogSection> {
               height: size.height * 0.3,
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color:
+                    Theme.of(context).brightness == Brightness.light
+                        ? const Color(0xFFFEF5F5)
+                        : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                  color:
+                      Theme.of(context).brightness == Brightness.light
+                          ? Colors.red.withOpacity(0.2)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.error.withOpacity(0.3),
+                  width: 1.5,
                 ),
+                boxShadow:
+                    Theme.of(context).brightness == Brightness.light
+                        ? [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                        : null,
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.warning,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.error,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? Colors.red.withOpacity(0.1)
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.warning_rounded,
+                        size: 48,
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? Colors.red.shade600
+                                : Theme.of(context).colorScheme.error,
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       'Không thể tải bài viết',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? const Color(0xFF1A202C)
+                                : Theme.of(context).colorScheme.error,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Vui lòng kiểm tra kết nối của bạn',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? const Color(0xFF4A5568)
+                                  : Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     ElevatedButton.icon(
                       onPressed: _loadBlogs,
                       icon: Icon(Icons.refresh, size: 18),
@@ -196,9 +342,14 @@ class _BlogSectionState extends State<BlogSection> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        elevation: 0,
                       ),
                     ),
                   ],
@@ -210,32 +361,76 @@ class _BlogSectionState extends State<BlogSection> {
               height: size.height * 0.3,
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color:
+                    Theme.of(context).brightness == Brightness.light
+                        ? const Color(0xFFF7FAFC)
+                        : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
+                border:
+                    Theme.of(context).brightness == Brightness.light
+                        ? Border.all(
+                          color: Colors.grey.withOpacity(0.15),
+                          width: 1,
+                        )
+                        : null,
+                boxShadow:
+                    Theme.of(context).brightness == Brightness.light
+                        ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                        : null,
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      IconlyBold.document,
-                      size: 48,
-                      color: Theme.of(context).disabledColor,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.08)
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        IconlyBold.document,
+                        size: 48,
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.7)
+                                : Theme.of(context).disabledColor,
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       'Không có bài viết',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? const Color(0xFF2D3748)
+                                : Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     Text(
                       'Vui lòng quay lại sau để xem nội dung mới',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        color:
+                            Theme.of(context).brightness == Brightness.light
+                                ? const Color(0xFF718096)
+                                : Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
@@ -323,12 +518,28 @@ class BlogCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
+        border:
+            Theme.of(context).brightness == Brightness.light
+                ? Border.all(color: Colors.grey.withOpacity(0.15), width: 1)
+                : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
+            color:
+                Theme.of(context).brightness == Brightness.light
+                    ? Colors.black.withOpacity(0.06)
+                    : Colors.black.withOpacity(0.08),
+            blurRadius:
+                Theme.of(context).brightness == Brightness.light ? 12 : 20,
             offset: const Offset(0, 4),
+            spreadRadius:
+                Theme.of(context).brightness == Brightness.light ? 0 : 0,
           ),
+          if (Theme.of(context).brightness == Brightness.light)
+            BoxShadow(
+              color: Theme.of(context).primaryColor.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
         ],
       ),
       child: ClipRRect(
@@ -427,7 +638,12 @@ class BlogCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? const Color(0xFF1A202C)
+                                    : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                             height: 1.3,
                             letterSpacing: 0.3,
                           ),
@@ -441,9 +657,14 @@ class BlogCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? const Color(0xFF4A5568)
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.8),
                             height: 1.4,
                           ),
                         ),
