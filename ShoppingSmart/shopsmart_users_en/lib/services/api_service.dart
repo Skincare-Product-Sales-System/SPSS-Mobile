@@ -9,6 +9,8 @@ import '../models/blog_model.dart';
 import '../models/review_models.dart';
 import '../models/order_models.dart';
 import '../services/jwt_service.dart';
+import '../models/address_model.dart';
+import '../models/payment_method_model.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -901,6 +903,118 @@ class ApiService {
         success: false,
         message: 'Failed to upload image: ${e.toString()}',
         errors: [e.toString()],
+      );
+    }
+  }
+
+  static Future<ApiResponse<PaginatedResponse<AddressModel>>> getAddresses({
+    required int pageNumber,
+    required int pageSize,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<AddressModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/addresses/user').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(timeout);
+
+      print('getAddresses response.body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => AddressModel.fromJson(item),
+          ),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<PaginatedResponse<AddressModel>>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to load addresses',
+          errors: jsonData['errors'] != null
+              ? List<String>.from(jsonData['errors'])
+              : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<AddressModel>>(
+        success: false,
+        message: e.toString(),
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  static Future<ApiResponse<PaginatedResponse<PaymentMethodModel>>> getPaymentMethods({
+    required int pageNumber,
+    required int pageSize,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payment-methods').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final data = jsonData['data'];
+        final items = (data['items'] as List)
+            .map((item) => PaymentMethodModel.fromJson(item))
+            .toList();
+
+        return ApiResponse(
+          success: true,
+          data: PaginatedResponse(
+            items: items,
+            totalCount: data['totalCount'],
+            pageNumber: data['pageNumber'],
+            pageSize: data['pageSize'],
+            totalPages: data['totalPages'],
+          ),
+          message: jsonData['message'],
+        );
+      }
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      return ApiResponse(
+        success: false,
+        message: jsonData['message'] ?? 'Failed to load payment methods',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: e.toString(),
       );
     }
   }

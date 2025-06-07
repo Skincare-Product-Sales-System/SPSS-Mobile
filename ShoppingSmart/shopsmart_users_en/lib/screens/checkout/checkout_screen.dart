@@ -12,6 +12,10 @@ import '../../widgets/title_text.dart';
 import '../../models/order_models.dart';
 import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
+import '../../models/address_model.dart';
+import '../../models/payment_method_model.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -33,11 +37,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
+  List<AddressModel> _addresses = [];
+  List<PaymentMethodModel> _paymentMethods = [];
+  AddressModel? _selectedAddress;
+  PaymentMethodModel? _selectedPaymentMethod;
 
   @override
   void initState() {
     super.initState();
     _checkAuthentication();
+    _loadData();
   }
 
   Future<void> _checkAuthentication() async {
@@ -59,6 +68,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _userInfo = userInfo;
         _isAuthenticated = true;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final addressesResponse = await ApiService.getAddresses(
+        pageNumber: 1,
+        pageSize: 10,
+      );
+      print('addressesResponse: $addressesResponse');
+      print('addressesResponse.data: ${addressesResponse.data}');
+
+      final paymentMethodsResponse = await ApiService.getPaymentMethods(
+        pageNumber: 1,
+        pageSize: 10,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (addressesResponse.success && addressesResponse.data != null) {
+            // Sắp xếp địa chỉ: isDefault=true lên đầu
+            final allAddresses = List<AddressModel>.from(addressesResponse.data!.items);
+            allAddresses.sort((a, b) => b.isDefault.compareTo(a.isDefault));
+            // Nếu có địa chỉ mặc định, chọn nó, nếu không thì chọn địa chỉ đầu tiên
+            _addresses = allAddresses;
+            _selectedAddress = _addresses.isNotEmpty
+                ? (_addresses.firstWhere(
+                    (address) => address.isDefault,
+                    orElse: () => _addresses.first,
+                  ))
+                : null;
+            print('Parsed addresses: ${_addresses.length}');
+          }
+
+          if (paymentMethodsResponse.success && paymentMethodsResponse.data != null) {
+            _paymentMethods = paymentMethodsResponse.data!.items;
+            if (_paymentMethods.isNotEmpty) {
+              _selectedPaymentMethod = _paymentMethods.first;
+            }
+          }
+
+          _isLoading = false;
+        });
+      }
+
+      print('Addresses in state: ${_addresses.length}');
+    } catch (e) {
+      if (mounted) {
+        MyAppFunctions.showErrorOrWarningDialog(
+          context: context,
+          subtitle: 'An error occurred while loading data: ${e.toString()}',
+          isError: true,
+          fct: () {},
+        );
+      }
+      setState(() {
         _isLoading = false;
       });
     }
@@ -88,6 +159,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
     }
+
+    print('Addresses in build: ${_addresses.length}');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -151,73 +224,135 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         if (_userInfo != null) _buildUserInfoCard(),
                         const SizedBox(height: 20),
 
-                        // Address Selection
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
+                        // Delivery Address Section
+                        const TitlesTextWidget(label: 'Delivery Address', fontSize: 18),
+                        const SizedBox(height: 8),
+                        if (_addresses.isEmpty)
+                          Center(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const TitlesTextWidget(label: 'Delivery Address'),
-                                const SizedBox(height: 8),
-                                DropdownButtonFormField<String>(
-                                  value: _selectedAddressId,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Select Address',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: const [], // TODO: Add address items
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedAddressId = value;
-                                    });
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please select an address';
-                                    }
-                                    return null;
+                                const SubtitleTextWidget(
+                                  label: 'No addresses found. Please add an address.',
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.person),
+                                  label: const Text('Go to Profile to Add Address'),
+                                  onPressed: () {
+                                    Navigator.of(context).pushNamed('/profile'); // Đổi route nếu cần
                                   },
                                 ),
                               ],
                             ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _addresses.length,
+                            itemBuilder: (context, index) {
+                              final address = _addresses[index];
+                              final isSelected = _selectedAddress?.id == address.id;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  selected: isSelected,
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedAddress = address;
+                                    });
+                                  },
+                                  title: Text(
+                                    address.customerName,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(address.phoneNumber),
+                                      Text(
+                                        '${address.streetNumber}, ${address.addressLine1}, ${address.ward}, ${address.city}, ${address.province}',
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: isSelected
+                                      ? Icon(
+                                          Icons.check_circle,
+                                          color: Theme.of(context).primaryColor,
+                                        )
+                                      : null,
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                        const SizedBox(height: 16),
 
-                        // Payment Method Selection
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const TitlesTextWidget(label: 'Payment Method'),
-                                const SizedBox(height: 8),
-                                DropdownButtonFormField<String>(
-                                  value: _selectedPaymentMethodId,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Select Payment Method',
-                                    border: OutlineInputBorder(),
+                        const SizedBox(height: 24),
+
+                        // Payment Method Section
+                        const TitlesTextWidget(label: 'Payment Method', fontSize: 18),
+                        const SizedBox(height: 8),
+                        if (_paymentMethods.isEmpty)
+                          const Center(
+                            child: SubtitleTextWidget(
+                              label: 'No payment methods available.',
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _paymentMethods.length,
+                            itemBuilder: (context, index) {
+                              final method = _paymentMethods[index];
+                              final isSelected = _selectedPaymentMethod?.id == method.id;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                                    width: 2,
                                   ),
-                                  items: const [], // TODO: Add payment method items
-                                  onChanged: (value) {
+                                ),
+                                child: ListTile(
+                                  selected: isSelected,
+                                  onTap: () {
                                     setState(() {
-                                      _selectedPaymentMethodId = value;
+                                      _selectedPaymentMethod = method;
                                     });
                                   },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please select a payment method';
-                                    }
-                                    return null;
-                                  },
+                                  leading: Image.network(
+                                    method.imageUrl,
+                                    width: 40,
+                                    height: 40,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.payment, size: 40);
+                                    },
+                                  ),
+                                  title: Text(
+                                    method.paymentType,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  trailing: isSelected
+                                      ? Icon(
+                                          Icons.check_circle,
+                                          color: Theme.of(context).primaryColor,
+                                        )
+                                      : null,
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        ),
-                        const SizedBox(height: 16),
+
+                        const SizedBox(height: 24),
 
                         // Voucher Selection (Optional)
                         Card(
@@ -288,14 +423,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         const SizedBox(height: 24),
 
                         // Place Order Button
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _placeOrder,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: const Text(
-                            'Place Order',
-                            style: TextStyle(fontSize: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _selectedAddress == null || _selectedPaymentMethod == null
+                                ? null
+                                : _placeOrder,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Place Order',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ],
@@ -395,8 +538,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }).toList();
 
       final request = CreateOrderRequest(
-        addressId: _selectedAddressId!,
-        paymentMethodId: _selectedPaymentMethodId!,
+        addressId: _selectedAddress!.id,
+        paymentMethodId: _selectedPaymentMethod!.id,
         voucherId: _selectedVoucherId,
         orderDetails: orderDetails,
       );

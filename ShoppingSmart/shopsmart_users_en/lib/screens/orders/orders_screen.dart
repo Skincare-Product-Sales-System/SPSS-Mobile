@@ -88,15 +88,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
         status: _selectedStatus == 'All' ? null : _selectedStatus,
       );
 
-      print('Orders API Response: ${response.toString()}'); // Debug log
-
       if (response.success && response.data != null) {
         try {
-          print('Response data: ${response.data}'); // Debug log
-          print('Response items: ${response.data!.items}'); // Debug log
-
           final orders = response.data!.items;
-          print('Final orders list: ${orders.length} orders'); // Debug log
 
           if (mounted) {
             setState(() {
@@ -107,7 +101,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
             });
           }
         } catch (e) {
-          print('Error processing orders: $e'); // Debug log
           if (mounted) {
             MyAppFunctions.showErrorOrWarningDialog(
               context: context,
@@ -121,7 +114,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
           });
         }
       } else {
-        print('API response not successful: ${response.message}'); // Debug log
         if (mounted) {
           MyAppFunctions.showErrorOrWarningDialog(
             context: context,
@@ -135,7 +127,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         });
       }
     } catch (e) {
-      print('Error loading orders: $e'); // Debug log
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
@@ -164,15 +155,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
         status: _selectedStatus == 'All' ? null : _selectedStatus,
       );
 
-      print('Load More Orders API Response: ${response.toString()}'); // Debug log
-
       if (response.success && response.data != null) {
         try {
-          print('Load more data: ${response.data}'); // Debug log
-          print('Load more items: ${response.data!.items}'); // Debug log
-
           final newOrders = response.data!.items;
-          print('Final new orders list: ${newOrders.length} orders'); // Debug log
 
           if (mounted) {
             setState(() {
@@ -183,7 +168,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
             });
           }
         } catch (e) {
-          print('Error processing more orders: $e'); // Debug log
           if (mounted) {
             MyAppFunctions.showErrorOrWarningDialog(
               context: context,
@@ -197,7 +181,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
           });
         }
       } else {
-        print('Load more API response not successful: ${response.message}'); // Debug log
         if (mounted) {
           MyAppFunctions.showErrorOrWarningDialog(
             context: context,
@@ -211,7 +194,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         });
       }
     } catch (e) {
-      print('Error loading more orders: $e'); // Debug log
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
