@@ -56,7 +56,7 @@ class CategoryWidget extends StatelessWidget {
           Navigator.pushNamed(
             context,
             SearchScreen.routeName,
-            arguments: isSelected ? "All" : category.categoryName,
+            arguments: isSelected ? "Tất Cả" : category.categoryName,
           );
         }
       },
@@ -78,8 +78,12 @@ class CategoryWidget extends StatelessWidget {
                   )
                   : LinearGradient(
                     colors: [
-                      Theme.of(context).cardColor,
-                      Theme.of(context).cardColor.withOpacity(0.8),
+                      Theme.of(context).brightness == Brightness.light
+                          ? Colors.white
+                          : Theme.of(context).cardColor,
+                      Theme.of(context).brightness == Brightness.light
+                          ? const Color(0xFFF8F9FA)
+                          : Theme.of(context).cardColor.withOpacity(0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -89,6 +93,8 @@ class CategoryWidget extends StatelessWidget {
             color:
                 isSelected
                     ? Theme.of(context).primaryColor.withOpacity(0.8)
+                    : Theme.of(context).brightness == Brightness.light
+                    ? Colors.grey.withOpacity(0.2)
                     : Theme.of(context).dividerColor.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
@@ -97,8 +103,10 @@ class CategoryWidget extends StatelessWidget {
               color:
                   isSelected
                       ? Theme.of(context).primaryColor.withOpacity(0.25)
+                      : Theme.of(context).brightness == Brightness.light
+                      ? Colors.black.withOpacity(0.05)
                       : Theme.of(context).shadowColor.withOpacity(0.1),
-              spreadRadius: isSelected ? 2 : 1,
+              spreadRadius: isSelected ? 2 : 0,
               blurRadius: isSelected ? 8 : 4,
               offset: Offset(0, isSelected ? 3 : 2),
             ),
@@ -118,8 +126,10 @@ class CategoryWidget extends StatelessWidget {
                 color:
                     isSelected
                         ? Colors.white
+                        : Theme.of(context).brightness == Brightness.light
+                        ? const Color(0xFF2D3748)
                         : Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 fontSize: 13,
                 letterSpacing: 0.3,
               ),
@@ -172,7 +182,7 @@ class CategorySection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Categories",
+                    "Danh Mục",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -186,11 +196,11 @@ class CategorySection extends StatelessWidget {
                         Navigator.pushNamed(
                           context,
                           SearchScreen.routeName,
-                          arguments: "All",
+                          arguments: "Tất Cả",
                         );
                       },
                       child: Text(
-                        'See All',
+                        'Xem Tất Cả',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -216,7 +226,7 @@ class CategorySection extends StatelessWidget {
                     return CategoryWidget(
                       category: CategoryModel(
                         id: '',
-                        categoryName: 'All',
+                        categoryName: 'Tất Cả',
                         children: [],
                       ),
                       isSelected: categoriesProvider.selectedCategoryId == null,

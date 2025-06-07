@@ -108,13 +108,23 @@ class JwtService {
   static Future<void> clearAllUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
       // Clear all authentication related data
       await prefs.remove('auth_token');
       await prefs.remove('refresh_token');
+      await prefs.remove('user_info');
       await prefs.remove('user_id');
       await prefs.remove('user_email');
       await prefs.remove('user_name');
-      // You can add more user-related keys here if needed
+      await prefs.remove('user_avatar');
+
+      // Clear any other app-specific user data
+      await prefs.remove('cart_items');
+      await prefs.remove('wishlist_items');
+      await prefs.remove('viewed_products');
+      await prefs.remove('user_preferences');
+      await prefs.remove('delivery_addresses');
+
       print('All user data cleared successfully');
     } catch (e) {
       print('Error clearing user data: $e');

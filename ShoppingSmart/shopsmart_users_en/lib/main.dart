@@ -12,6 +12,8 @@ import 'package:shopsmart_users_en/screens/all_products_screen.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
+import 'package:shopsmart_users_en/providers/chat_provider.dart';
+import 'package:shopsmart_users_en/screens/chat_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -55,14 +57,27 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.detached:
-        // App is being terminated
+        // App is being terminated - clear all user data for security
+        print('App is being terminated, clearing user data...');
         await JwtService.clearAllUserData();
         break;
       case AppLifecycleState.paused:
-        // App is in background - optionally clear tokens here too for extra security
+        // App is in background - you can optionally clear sensitive data here
+        print('App moved to background');
+        // Uncomment the line below if you want to clear data when app goes to background
         // await JwtService.clearAllUserData();
         break;
-      default:
+      case AppLifecycleState.resumed:
+        // App is back in foreground
+        print('App resumed from background');
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive (e.g., during phone call)
+        print('App is inactive');
+        break;
+      case AppLifecycleState.hidden:
+        // App is hidden
+        print('App is hidden');
         break;
     }
   }
@@ -101,6 +116,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return ViewedProdProvider();
           },
         ),
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = ChatProvider();
+            provider.initialize();
+            return provider;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -134,6 +156,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const ChangePasswordScreen(),
               CheckoutScreen.routeName: (context) => const CheckoutScreen(),
               OffersScreen.routeName: (context) => const OffersScreen(),
+              ChatScreen.routeName: (context) => const ChatScreen(),
             },
           );
         },
