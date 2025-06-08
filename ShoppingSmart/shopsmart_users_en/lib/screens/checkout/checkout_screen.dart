@@ -14,6 +14,7 @@ import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
 import '../../models/address_model.dart';
 import '../../models/payment_method_model.dart';
+import '../orders/orders_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -96,7 +97,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           if (addressesResponse.success && addressesResponse.data != null) {
             // Sắp xếp địa chỉ: isDefault=true lên đầu
             final allAddresses = List<AddressModel>.from(addressesResponse.data!.items);
-            allAddresses.sort((a, b) => b.isDefault.compareTo(a.isDefault));
+            allAddresses.sort((a, b) => b.isDefault ? 1 : (a.isDefault ? -1 : 0));
             // Nếu có địa chỉ mặc định, chọn nó, nếu không thì chọn địa chỉ đầu tiên
             _addresses = allAddresses;
             _selectedAddress = _addresses.isNotEmpty
@@ -516,55 +517,77 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Kiểm tra các điều kiện
+    if (_selectedPaymentMethod == null) {
+      MyAppFunctions.showErrorOrWarningDialog(
+        context: context,
+        subtitle: 'Vui lòng chọn phương thức thanh toán',
+        isError: true,
+        fct: () {},
+      );
+      return;
+    }
+
+    if (_selectedAddress == null) {
+      MyAppFunctions.showErrorOrWarningDialog(
+        context: context,
+        subtitle: 'Vui lòng chọn địa chỉ giao hàng',
+        isError: true,
+        fct: () {},
+      );
+      return;
+    }
+
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final cartItems = cartProvider.getCartitems.values.toList();
+
+    if (cartItems.isEmpty) {
+          MyAppFunctions.showErrorOrWarningDialog(
+            context: context,
+        subtitle: 'Giỏ hàng trống',
+            isError: true,
+            fct: () {},
+          );
+        return;
+    }
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final orderDetails = cartItems.map((item) {
-        return OrderDetail(
-          productItemId: item.productId,
-          productId: item.productId,
-          productName: item.title,
-          productImage: '',
-          quantity: item.quantity,
-          price: item.price,
-          variationOptionValues: [],
-          isReviewable: false,
-        );
+      // Chuẩn bị dữ liệu order (raw map)
+      final orderDetails = cartItems.map((item) => {
+        'productItemId': item.productItemId,
+        'quantity': item.quantity,
       }).toList();
 
-      final request = CreateOrderRequest(
-        addressId: _selectedAddress!.id,
-        paymentMethodId: _selectedPaymentMethod!.id,
-        voucherId: _selectedVoucherId,
-        orderDetails: orderDetails,
-      );
+      final orderData = {
+        'addressId': _selectedAddress!.id,
+        'paymentMethodId': _selectedPaymentMethod!.id,
+        'voucherId': _selectedVoucherId,
+        'OrderDetail': orderDetails,
+      };
 
-      final response = await ApiService.createOrder(request);
+      final response = await ApiService.createOrderRaw(orderData);
 
       if (response.success) {
-        // Clear cart after successful order
-        cartProvider.clearLocalCart();
-
-        // Show success message
         if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: 'Order placed successfully!',
-            fct: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
+          // Chuyển hướng đến trang success
+          Navigator.pushReplacementNamed(
+            context,
+            '/order-success',
           );
+          // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+          Future.microtask(() {
+            cartProvider.clearLocalCart();
+          });
         }
       } else {
         if (mounted) {
           MyAppFunctions.showErrorOrWarningDialog(
             context: context,
-            subtitle: response.message,
+            subtitle: response.message ?? 'Đã xảy ra lỗi khi tạo đơn hàng',
             isError: true,
             fct: () {},
           );

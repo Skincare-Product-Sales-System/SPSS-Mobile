@@ -1018,4 +1018,52 @@ class ApiService {
       );
     }
   }
+
+  static Future<ApiResponse<OrderResponse>> createOrderRaw(Map<String, dynamic> data) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+      final uri = Uri.parse('$baseUrl/orders');
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(data),
+          )
+          .timeout(timeout);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderResponse.fromJson(data),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to create order',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
 }

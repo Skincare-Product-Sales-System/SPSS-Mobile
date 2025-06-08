@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class CartModel with ChangeNotifier {
   final String cartId;
   final String productId;
+  final String productItemId;
   final String id;
   final String title;
   final double price;
@@ -11,6 +12,7 @@ class CartModel with ChangeNotifier {
   CartModel({
     required this.cartId,
     required this.productId,
+    required this.productItemId,
     required this.id,
     required this.title,
     required this.price,

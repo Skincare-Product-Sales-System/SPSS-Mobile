@@ -76,9 +76,7 @@ class CartWidget extends StatelessWidget {
                           // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SubtitleTextWidget(
-                              label: CurrencyFormatter.formatVNDFromString(
-                                getCurrProduct.productPrice,
-                              ),
+                              label: CurrencyFormatter.formatVND(cartModel.price),
                               color: Colors.blue,
                             ),
                             const Spacer(),

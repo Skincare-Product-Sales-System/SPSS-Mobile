@@ -31,19 +31,19 @@ class AddressModel {
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      id: json['id'],
-      isDefault: json['isDefault'],
-      customerName: json['customerName'],
-      countryId: json['countryId'],
-      phoneNumber: json['phoneNumber'],
-      countryName: json['countryName'],
-      streetNumber: json['streetNumber'],
-      addressLine1: json['addressLine1'],
-      addressLine2: json['addressLine2'],
-      city: json['city'],
-      ward: json['ward'],
-      postCode: json['postCode'],
-      province: json['province'],
+      id: json['id']?.toString() ?? '',
+      isDefault: json['isDefault'] ?? false,
+      customerName: json['customerName']?.toString() ?? '',
+      countryId: json['countryId'] ?? 0,
+      phoneNumber: json['phoneNumber']?.toString() ?? '',
+      countryName: json['countryName']?.toString() ?? '',
+      streetNumber: json['streetNumber']?.toString() ?? '',
+      addressLine1: json['addressLine1']?.toString() ?? '',
+      addressLine2: json['addressLine2']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      ward: json['ward']?.toString() ?? '',
+      postCode: json['postCode']?.toString() ?? '',
+      province: json['province']?.toString() ?? '',
     );
   }
 } 

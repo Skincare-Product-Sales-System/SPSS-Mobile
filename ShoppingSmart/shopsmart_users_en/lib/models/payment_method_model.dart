@@ -11,9 +11,9 @@ class PaymentMethodModel {
 
   factory PaymentMethodModel.fromJson(Map<String, dynamic> json) {
     return PaymentMethodModel(
-      id: json['id'],
-      paymentType: json['paymentType'],
-      imageUrl: json['imageUrl'],
+      id: json['id']?.toString() ?? '',
+      paymentType: json['paymentType']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
     );
   }
 } 

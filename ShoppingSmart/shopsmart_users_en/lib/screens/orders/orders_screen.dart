@@ -348,18 +348,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     Text('Date: ${order.createdAt.toString().split('.')[0]}', style: TextStyle(color: Colors.grey[700])),
                                     const SizedBox(height: 8),
                                     Divider(),
+                                    if (order.orderDetails.isNotEmpty)
                                     ...order.orderDetails.map((detail) => Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 4.0),
                                       child: Row(
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              detail.productName,
+                                                detail.productName?.toString() ?? '[Không có tên sản phẩm]',
                                               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          Text('x${detail.quantity}', style: const TextStyle(fontSize: 13)),
+                                            Text('x${detail.quantity.toString()}', style: const TextStyle(fontSize: 13)),
                                           const SizedBox(width: 8),
                                           Text(
                                             CurrencyFormatter.formatVND(detail.price),
@@ -367,7 +368,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                           ),
                                         ],
                                       ),
-                                    )),
+                                      ))
+                                    else
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                                        child: Text('Không có chi tiết sản phẩm', style: TextStyle(color: Colors.grey)),
+                                      ),
                                     Divider(),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
