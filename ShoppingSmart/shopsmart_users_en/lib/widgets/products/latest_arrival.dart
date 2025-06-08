@@ -184,10 +184,37 @@ class LatestArrivalProductsWidget extends StatelessWidget {
                           )) {
                             return;
                           }
+                          if (productsModel.productItems.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Sản phẩm hiện không có sẵn. Vui lòng chọn sản phẩm khác.'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
+                          // Check if the first product item has valid price
+                          final firstItem = productsModel.productItems.first;
+                          if (firstItem.price <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Sản phẩm không có giá. Vui lòng thử lại sau.'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
                           cartProvider.addProductToCart(
                             productId: productsModel.productId,
+                            productItemId: firstItem.id,
                             title: productsModel.productTitle,
-                            price: double.parse(productsModel.productPrice),
+                            price: firstItem.price.toDouble(),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Đã thêm vào giỏ hàng'),
+                              duration: Duration(seconds: 1),
+                            ),
                           );
                         },
                         icon: Icon(

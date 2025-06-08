@@ -9,12 +9,22 @@ class CartProvider with ChangeNotifier {
     return _cartItems;
   }
 
-  void addProductToCart({required String productId, required String title, required double price}) {
+  void addProductToCart({
+    required String productId,
+    required String productItemId,
+    required String title,
+    required double price
+  }) {
+    assert(price > 0, 'Giá sản phẩm phải lớn hơn 0');
+    assert(productId.isNotEmpty, 'ProductId không được để trống');
+    assert(productItemId.isNotEmpty, 'ProductItemId không được để trống');
+    
     _cartItems.putIfAbsent(
       productId,
       () => CartModel(
         cartId: const Uuid().v4(),
         productId: productId,
+        productItemId: productItemId,
         id: productId,
         title: title,
         price: price,
@@ -32,6 +42,7 @@ class CartProvider with ChangeNotifier {
         (cartItem) => CartModel(
           cartId: cartItem.cartId,
           productId: productId,
+          productItemId: cartItem.productItemId,
           id: cartItem.id,
           title: cartItem.title,
           price: cartItem.price,

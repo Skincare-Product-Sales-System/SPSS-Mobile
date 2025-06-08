@@ -69,7 +69,7 @@ class CreateOrderRequest {
       'addressId': addressId,
       'paymentMethodId': paymentMethodId,
       'voucherId': voucherId,
-      'orderDetail': orderDetails.map((detail) => detail.toJson()).toList(),
+      'OrderDetail': orderDetails.map((detail) => detail.toJson()).toList(),
     };
   }
 }
@@ -88,11 +88,20 @@ class OrderResponse {
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
+    DateTime parseDateTime(String? dateStr) {
+      if (dateStr == null) return DateTime.now();
+      try {
+        return DateTime.parse(dateStr);
+      } catch (e) {
+        print('Error parsing date in OrderResponse: $dateStr');
+        return DateTime.now();
+      }
+    }
     return OrderResponse(
-      orderId: json['orderId'] ?? '',
+      orderId: json['id'] ?? '',
       status: json['status'] ?? '',
-      totalAmount: (json['totalAmount'] ?? 0).toDouble(),
-      createdAt: DateTime.parse(json['createdAt']),
+      totalAmount: (json['orderTotal'] ?? 0).toDouble(),
+      createdAt: parseDateTime(json['createdTime'] as String?),
     );
   }
 }
@@ -127,6 +136,14 @@ class OrderModel {
       }
     }
 
+    List<OrderDetail> parseOrderDetails(dynamic details) {
+      if (details == null) return [];
+      if (details is List) {
+        return details.map((detail) => OrderDetail.fromJson(detail)).toList();
+      }
+      return [];
+    }
+
     return OrderModel(
       id: json['id'] ?? '',
       status: json['status'] ?? 'pending',
@@ -134,10 +151,7 @@ class OrderModel {
       createdAt: parseDateTime(json['createdTime']),
       cancelReasonId: json['cancelReasonId'],
       paymentMethodId: json['paymentMethodId'] ?? '',
-      orderDetails: (json['orderDetails'] as List<dynamic>?)
-              ?.map((detail) => OrderDetail.fromJson(detail))
-              .toList() ??
-          [],
+      orderDetails: parseOrderDetails(json['orderDetails']),
     );
   }
 
