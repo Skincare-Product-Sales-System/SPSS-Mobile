@@ -11,6 +11,10 @@ class SkinAnalysisResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sắp xếp các bước skincare routine theo thứ tự
+    final sortedRoutineSteps = [...result.routineSteps]
+      ..sort((a, b) => a.order.compareTo(b.order));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kết Quả Phân Tích Da'),
@@ -140,6 +144,15 @@ class SkinAnalysisResultScreen extends StatelessWidget {
                 const SizedBox(height: 24),
               ],
 
+              // Skincare Routine - PHẦN MỚI THÊM VÀO
+              if (result.routineSteps.isNotEmpty) ...[
+                _buildSectionTitle(context, 'Quy Trình Chăm Sóc Da'),
+                ...sortedRoutineSteps.map(
+                  (step) => _buildRoutineStepCard(context, step),
+                ),
+                const SizedBox(height: 24),
+              ],
+
               // Recommended products
               _buildSectionTitle(context, 'Sản Phẩm Đề Xuất'),
               ...result.recommendedProducts.map(
@@ -196,6 +209,108 @@ class SkinAnalysisResultScreen extends StatelessWidget {
               const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // THÊM WIDGET MỚI CHO ROUTINE STEP
+  Widget _buildRoutineStepCard(BuildContext context, RoutineStep step) {
+    // Hàm để đảm bảo tên bước bắt đầu bằng "Bước x."
+    String _ensureStepPrefix(String title, int order) {
+      // Kiểm tra xem tên bước đã có "Bước x." chưa
+      RegExp regex = RegExp(r'^Bước\s+\d+\.\s*');
+      if (regex.hasMatch(title)) {
+        return title; // Nếu đã có rồi thì giữ nguyên
+      } else {
+        // Nếu chưa có thì thêm vào
+        return 'Bước ${order + 1}. $title';
+      }
+    }
+
+    return _buildInfoCard(
+      context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Bỏ phần Row có chứa vòng tròn số thứ tự
+          Text(
+            _ensureStepPrefix(step.stepName, step.order),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text(step.instruction, style: const TextStyle(fontSize: 14)),
+          if (step.products.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Sản phẩm gợi ý:',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            ...step.products.map(
+              (product) => _buildRoutineProductItem(context, product),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoutineProductItem(
+    BuildContext context,
+    RecommendedProduct product,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            ProductDetailsScreen.routName,
+            arguments: product.productId,
+          );
+        },
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                product.imageUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 50,
+                    height: 50,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.image_not_supported, size: 20),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    '${_formatPrice(product.price)}₫',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

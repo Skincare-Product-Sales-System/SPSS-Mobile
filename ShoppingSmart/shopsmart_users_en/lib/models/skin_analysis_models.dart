@@ -81,12 +81,39 @@ class RecommendedProduct {
   }
 }
 
+class RoutineStep {
+  final String stepName;
+  final String instruction;
+  final int order;
+  final List<RecommendedProduct> products;
+
+  RoutineStep({
+    required this.stepName,
+    required this.instruction,
+    required this.order,
+    required this.products,
+  });
+
+  factory RoutineStep.fromJson(Map<String, dynamic> json) {
+    return RoutineStep(
+      stepName: json['stepName'] ?? '',
+      instruction: json['instruction'] ?? '',
+      order: json['order'] ?? 0,
+      products:
+          (json['products'] as List<dynamic>? ?? [])
+              .map((product) => RecommendedProduct.fromJson(product))
+              .toList(),
+    );
+  }
+}
+
 class SkinAnalysisResult {
   final String imageUrl;
   final SkinCondition skinCondition;
   final List<SkinIssue> skinIssues;
   final List<RecommendedProduct> recommendedProducts;
   final List<String> skinCareAdvice;
+  final List<RoutineStep> routineSteps;
 
   SkinAnalysisResult({
     required this.imageUrl,
@@ -94,6 +121,7 @@ class SkinAnalysisResult {
     required this.skinIssues,
     required this.recommendedProducts,
     required this.skinCareAdvice,
+    required this.routineSteps,
   });
 
   factory SkinAnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -101,17 +129,21 @@ class SkinAnalysisResult {
       imageUrl: json['imageUrl'] ?? '',
       skinCondition: SkinCondition.fromJson(json['skinCondition'] ?? {}),
       skinIssues:
-          (json['skinIssues'] as List<dynamic>?)
-              ?.map((issue) => SkinIssue.fromJson(issue))
-              .toList() ??
-          [],
+          (json['skinIssues'] as List<dynamic>? ?? [])
+              .map((issue) => SkinIssue.fromJson(issue))
+              .toList(),
       recommendedProducts:
-          (json['recommendedProducts'] as List<dynamic>?)
-              ?.map((product) => RecommendedProduct.fromJson(product))
-              .toList() ??
-          [],
+          (json['recommendedProducts'] as List<dynamic>? ?? [])
+              .map((product) => RecommendedProduct.fromJson(product))
+              .toList(),
       skinCareAdvice:
-          (json['skinCareAdvice'] as List<dynamic>?)?.cast<String>() ?? [],
+          (json['skinCareAdvice'] as List<dynamic>? ?? [])
+              .map((advice) => advice.toString())
+              .toList(),
+      routineSteps:
+          (json['routineSteps'] as List<dynamic>? ?? [])
+              .map((step) => RoutineStep.fromJson(step))
+              .toList(),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:shopsmart_users_en/screens/auth/login.dart';
 import 'package:shopsmart_users_en/screens/auth/change_password.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/wishlist.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_history_screen.dart';
 import 'package:shopsmart_users_en/services/assets_manager.dart';
 import 'package:shopsmart_users_en/services/auth_service.dart';
 import 'package:shopsmart_users_en/services/my_app_function.dart';
@@ -202,6 +203,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
+                  if (_isLoggedIn)
+                    CustomListTile(
+                      text: "Lịch sử phân tích da",
+                      imagePath: AssetsManager.recent,
+                      function: () {
+                        Navigator.pushNamed(
+                          context,
+                          SkinAnalysisHistoryScreen.routeName,
+                        );
+                      },
+                    ),
                   if (_isLoggedIn)
                     CustomListTile(
                       text: "Đổi mật khẩu",
