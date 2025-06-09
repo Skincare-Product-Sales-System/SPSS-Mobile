@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -60,6 +62,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: const AppNameTextWidget(fontSize: 20),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, SearchScreen.routeName);
+            },
+          ),
           Consumer<ProductsProvider>(
             builder: (context, productsProvider, child) {
               if (productsProvider.errorMessage != null) {
@@ -197,33 +205,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Swiper(
                           autoplay: true,
                           itemBuilder: (BuildContext context, int index) {
-                            return Image.network(
+                            return Image.asset(
                               AppConstants.bannersImage[index],
                               fit: BoxFit.cover,
-                              loadingBuilder: (
-                                context,
-                                child,
-                                loadingProgress,
-                              ) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value:
-                                        loadingProgress.expectedTotalBytes !=
-                                                null
-                                            ? loadingProgress
-                                                    .cumulativeBytesLoaded /
-                                                loadingProgress
-                                                    .expectedTotalBytes!
-                                            : null,
-                                  ),
-                                );
-                              },
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey[300],
-                                  child: const Center(
-                                    child: Icon(Icons.error_outline, size: 40),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 40,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Lỗi: ${error.toString().substring(0, math.min(error.toString().length, 50))}',
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               },

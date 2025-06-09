@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
-import 'package:shopsmart_users_en/consts/validator.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/auth/forgot_password.dart';
 import 'package:shopsmart_users_en/screens/auth/register.dart';
-import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/widgets/app_name_text.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
 import 'package:shopsmart_users_en/widgets/title_text.dart';
@@ -78,26 +76,23 @@ class _LoginScreenState extends State<LoginScreen> {
         final String? fromScreen =
             ModalRoute.of(context)?.settings.arguments as String?;
 
-        // Show success message with snackbar instead of dialog for better UX
+        // Login successful
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login successful! Welcome back.'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
+          MyAppFunctions.showErrorOrWarningDialog(
+            context: context,
+            subtitle: 'Login successful! Welcome back.',
+            fct: () {
+              if (fromScreen == 'checkout') {
+                // Redirect to checkout if user came from checkout
+                Navigator.of(context).pushReplacementNamed('/checkout');
+              } else {
+                // Otherwise go to home
+                Navigator.of(
+                  context,
+                ).pushReplacementNamed(RootScreen.routeName);
+              }
+            },
           );
-
-          // Navigate based on where user came from
-          if (fromScreen == 'checkout') {
-            // User came from checkout, navigate back to checkout using proper route name
-            Navigator.of(
-              context,
-            ).pushReplacementNamed(CheckoutScreen.routeName);
-          } else {
-            // User came from normal login, go to home
-            Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
-          }
         }
       } else {
         // Login failed
@@ -149,10 +144,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
 
                   // Welcome message
-                  const TitlesTextWidget(label: "Welcome back!", fontSize: 28),
+                  const TitlesTextWidget(
+                    label: "Chào mừng trở lại!",
+                    fontSize: 28,
+                  ),
                   const SizedBox(height: 8),
                   SubtitleTextWidget(
-                    label: "Your welcome message",
+                    label: "Thông điệp chào mừng của bạn",
                     color: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.color?.withOpacity(0.7),
@@ -180,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              hintText: "Email address",
+                              hintText: "Địa chỉ email",
                               prefixIcon: Icon(
                                 IconlyLight.message,
                                 color: Theme.of(context).primaryColor,
@@ -269,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ).pushNamed(ForgotPasswordScreen.routeName);
                             },
                             child: Text(
-                              "Forgot password?",
+                              "Quên mật khẩu?",
                               style: TextStyle(
                                 color: Theme.of(context).primaryColor,
                                 fontSize: 14,
@@ -317,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         const Icon(Icons.login, size: 20),
                                         const SizedBox(width: 8),
                                         Text(
-                                          "Login",
+                                          "Đăng nhập",
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,

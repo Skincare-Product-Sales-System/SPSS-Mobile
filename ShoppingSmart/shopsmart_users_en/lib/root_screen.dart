@@ -27,7 +27,6 @@ class _RootScreenState extends State<RootScreen> {
     super.initState();
     screens = const [
       HomeScreen(),
-      SearchScreen(),
       QuizScreen(),
       SkinAnalysisScreen(),
       CartScreen(),
@@ -69,11 +68,6 @@ class _RootScreenState extends State<RootScreen> {
             selectedIcon: Icon(IconlyBold.home),
             icon: Icon(IconlyLight.home),
             label: "Trang Chủ",
-          ),
-          const NavigationDestination(
-            selectedIcon: Icon(IconlyBold.search),
-            icon: Icon(IconlyLight.search),
-            label: "Tìm Kiếm",
           ),
           const NavigationDestination(
             selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),

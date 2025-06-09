@@ -179,7 +179,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Change Password'), centerTitle: true),
+        appBar: AppBar(title: const Text('Đổi mật khẩu'), centerTitle: true),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
@@ -190,7 +190,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 const SizedBox(height: 30),
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: TitlesTextWidget(label: "Change Your Password"),
+                  child: TitlesTextWidget(label: "Thay đổi mật khẩu của bạn"),
                 ),
                 const SizedBox(height: 30),
                 Form(
@@ -230,7 +230,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           keyboardType: TextInputType.visiblePassword,
                           obscureText: obscureCurrentPassword,
                           decoration: InputDecoration(
-                            hintText: "Current Password",
+                            hintText: "Mật khẩu hiện tại",
                             hintStyle: TextStyle(
                               color:
                                   Theme.of(context).brightness ==
@@ -318,7 +318,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               keyboardType: TextInputType.visiblePassword,
                               obscureText: obscureNewPassword,
                               decoration: InputDecoration(
-                                hintText: "New Password",
+                                hintText: "Mật khẩu mới",
                                 hintStyle: TextStyle(
                                   color:
                                       Theme.of(context).brightness ==

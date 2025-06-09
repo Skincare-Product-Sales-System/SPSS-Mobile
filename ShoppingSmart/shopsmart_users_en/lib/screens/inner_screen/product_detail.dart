@@ -233,7 +233,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   _loadReviews(productId);
                 }
               },
-              child: const Text('Retry'),
+              child: const Text('Thử lại'),
             ),
           ],
         ),
@@ -1606,7 +1606,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                       ),
                                     ),
                                   )
-                                  : const Text("Submit Review"),
+                                  : const Text("Gửi đánh giá"),
                         ),
                       ),
                     ],
@@ -1762,7 +1762,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
           if (review.variationOptionValues.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              "Variation: ${review.variationOptionValues.join(', ')}",
+              "Biến thể: ${review.variationOptionValues.join(', ')}",
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).primaryColor,

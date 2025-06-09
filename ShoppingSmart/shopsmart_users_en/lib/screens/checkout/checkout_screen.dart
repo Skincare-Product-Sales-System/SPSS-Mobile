@@ -96,20 +96,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         setState(() {
           if (addressesResponse.success && addressesResponse.data != null) {
             // Sắp xếp địa chỉ: isDefault=true lên đầu
-            final allAddresses = List<AddressModel>.from(addressesResponse.data!.items);
-            allAddresses.sort((a, b) => b.isDefault ? 1 : (a.isDefault ? -1 : 0));
+            final allAddresses = List<AddressModel>.from(
+              addressesResponse.data!.items,
+            );
+            allAddresses.sort(
+              (a, b) => b.isDefault ? 1 : (a.isDefault ? -1 : 0),
+            );
             // Nếu có địa chỉ mặc định, chọn nó, nếu không thì chọn địa chỉ đầu tiên
             _addresses = allAddresses;
-            _selectedAddress = _addresses.isNotEmpty
-                ? (_addresses.firstWhere(
-                    (address) => address.isDefault,
-                    orElse: () => _addresses.first,
-                  ))
-                : null;
+            _selectedAddress =
+                _addresses.isNotEmpty
+                    ? (_addresses.firstWhere(
+                      (address) => address.isDefault,
+                      orElse: () => _addresses.first,
+                    ))
+                    : null;
             print('Parsed addresses: ${_addresses.length}');
           }
 
-          if (paymentMethodsResponse.success && paymentMethodsResponse.data != null) {
+          if (paymentMethodsResponse.success &&
+              paymentMethodsResponse.data != null) {
             _paymentMethods = paymentMethodsResponse.data!.items;
             if (_paymentMethods.isNotEmpty) {
               _selectedPaymentMethod = _paymentMethods.first;
@@ -176,278 +182,330 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           icon: const Icon(IconlyLight.arrow_left_2, size: 24),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: Consumer2<CartProvider, ProductsProvider>(
-                builder: (context, cartProvider, productsProvider, child) {
-                  final cartItems = cartProvider.getCartitems.values.toList();
-                  final totalAmount = cartProvider.getTotal(
-                    productsProvider: productsProvider,
-                  );
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Form(
+                key: _formKey,
+                child: Consumer2<CartProvider, ProductsProvider>(
+                  builder: (context, cartProvider, productsProvider, child) {
+                    final cartItems = cartProvider.getCartitems.values.toList();
+                    final totalAmount = cartProvider.getTotal(
+                      productsProvider: productsProvider,
+                    );
 
-                  if (cartItems.isEmpty) {
-                    return Center(
+                    if (cartItems.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              IconlyBold.bag,
+                              size: 80,
+                              color: Theme.of(context).disabledColor,
+                            ),
+                            const SizedBox(height: 16),
+                            const TitlesTextWidget(
+                              label: 'Your cart is empty',
+                              fontSize: 18,
+                            ),
+                            const SizedBox(height: 8),
+                            const SubtitleTextWidget(
+                              label: 'Add some products to get started',
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Tiếp tục mua sắm'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            IconlyBold.bag,
-                            size: 80,
-                            color: Theme.of(context).disabledColor,
-                          ),
-                          const SizedBox(height: 16),
+                          // User Info Card
+                          if (_userInfo != null) _buildUserInfoCard(),
+                          const SizedBox(height: 20),
+
+                          // Delivery Address Section
                           const TitlesTextWidget(
-                            label: 'Your cart is empty',
+                            label: 'Địa chỉ giao hàng',
                             fontSize: 18,
                           ),
                           const SizedBox(height: 8),
-                          const SubtitleTextWidget(
-                            label: 'Add some products to get started',
+                          if (_addresses.isEmpty)
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SubtitleTextWidget(
+                                    label:
+                                        'Không tìm thấy địa chỉ. Vui lòng thêm một địa chỉ.',
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.person),
+                                    label: const Text(
+                                      'Đến trang Hồ sơ để thêm địa chỉ',
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pushNamed(
+                                        '/profile',
+                                      ); // Đổi route nếu cần
+                                    },
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _addresses.length,
+                              itemBuilder: (context, index) {
+                                final address = _addresses[index];
+                                final isSelected =
+                                    _selectedAddress?.id == address.id;
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color:
+                                          isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    selected: isSelected,
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedAddress = address;
+                                      });
+                                    },
+                                    title: Text(
+                                      address.customerName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(address.phoneNumber),
+                                        Text(
+                                          '${address.streetNumber}, ${address.addressLine1}, ${address.ward}, ${address.city}, ${address.province}',
+                                        ),
+                                      ],
+                                    ),
+                                    trailing:
+                                        isSelected
+                                            ? Icon(
+                                              Icons.check_circle,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                            )
+                                            : null,
+                                  ),
+                                );
+                              },
+                            ),
+
+                          const SizedBox(height: 24),
+
+                          // Payment Method Section
+                          const TitlesTextWidget(
+                            label: 'Phương thức thanh toán',
+                            fontSize: 18,
                           ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Continue Shopping'),
+                          const SizedBox(height: 8),
+                          if (_paymentMethods.isEmpty)
+                            const Center(
+                              child: SubtitleTextWidget(
+                                label: 'No payment methods available.',
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _paymentMethods.length,
+                              itemBuilder: (context, index) {
+                                final method = _paymentMethods[index];
+                                final isSelected =
+                                    _selectedPaymentMethod?.id == method.id;
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color:
+                                          isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    selected: isSelected,
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedPaymentMethod = method;
+                                      });
+                                    },
+                                    leading: Image.network(
+                                      method.imageUrl,
+                                      width: 40,
+                                      height: 40,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return const Icon(
+                                          Icons.payment,
+                                          size: 40,
+                                        );
+                                      },
+                                    ),
+                                    title: Text(
+                                      method.paymentType,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    trailing:
+                                        isSelected
+                                            ? Icon(
+                                              Icons.check_circle,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                            )
+                                            : null,
+                                  ),
+                                );
+                              },
+                            ),
+
+                          const SizedBox(height: 24),
+
+                          // Voucher Selection (Optional)
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const TitlesTextWidget(
+                                    label: 'Mã giảm giá (Tùy chọn)',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<String>(
+                                    value: _selectedVoucherId,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Select Voucher',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: const [], // TODO: Add voucher items
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedVoucherId = value;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Order Summary
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const TitlesTextWidget(
+                                    label: 'Tóm tắt đơn hàng',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: cartItems.length,
+                                    itemBuilder: (context, index) {
+                                      final item = cartItems[index];
+                                      return ListTile(
+                                        title: Text(item.productId),
+                                        subtitle: Text(
+                                          '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const Divider(),
+                                  ListTile(
+                                    title: const Text('Tổng cộng'),
+                                    trailing: Text(
+                                      '\$${totalAmount.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Place Order Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed:
+                                  _selectedAddress == null ||
+                                          _selectedPaymentMethod == null
+                                      ? null
+                                      : _placeOrder,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Đặt hàng',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     );
-                  }
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // User Info Card
-                        if (_userInfo != null) _buildUserInfoCard(),
-                        const SizedBox(height: 20),
-
-                        // Delivery Address Section
-                        const TitlesTextWidget(label: 'Delivery Address', fontSize: 18),
-                        const SizedBox(height: 8),
-                        if (_addresses.isEmpty)
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SubtitleTextWidget(
-                                  label: 'No addresses found. Please add an address.',
-                                ),
-                                const SizedBox(height: 12),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.person),
-                                  label: const Text('Go to Profile to Add Address'),
-                                  onPressed: () {
-                                    Navigator.of(context).pushNamed('/profile'); // Đổi route nếu cần
-                                  },
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _addresses.length,
-                            itemBuilder: (context, index) {
-                              final address = _addresses[index];
-                              final isSelected = _selectedAddress?.id == address.id;
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  selected: isSelected,
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedAddress = address;
-                                    });
-                                  },
-                                  title: Text(
-                                    address.customerName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(address.phoneNumber),
-                                      Text(
-                                        '${address.streetNumber}, ${address.addressLine1}, ${address.ward}, ${address.city}, ${address.province}',
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: isSelected
-                                      ? Icon(
-                                          Icons.check_circle,
-                                          color: Theme.of(context).primaryColor,
-                                        )
-                                      : null,
-                                ),
-                              );
-                            },
-                          ),
-
-                        const SizedBox(height: 24),
-
-                        // Payment Method Section
-                        const TitlesTextWidget(label: 'Payment Method', fontSize: 18),
-                        const SizedBox(height: 8),
-                        if (_paymentMethods.isEmpty)
-                          const Center(
-                            child: SubtitleTextWidget(
-                              label: 'No payment methods available.',
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _paymentMethods.length,
-                            itemBuilder: (context, index) {
-                              final method = _paymentMethods[index];
-                              final isSelected = _selectedPaymentMethod?.id == method.id;
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  selected: isSelected,
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedPaymentMethod = method;
-                                    });
-                                  },
-                                  leading: Image.network(
-                                    method.imageUrl,
-                                    width: 40,
-                                    height: 40,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.payment, size: 40);
-                                    },
-                                  ),
-                                  title: Text(
-                                    method.paymentType,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  trailing: isSelected
-                                      ? Icon(
-                                          Icons.check_circle,
-                                          color: Theme.of(context).primaryColor,
-                                        )
-                                      : null,
-                                ),
-                              );
-                            },
-                          ),
-
-                        const SizedBox(height: 24),
-
-                        // Voucher Selection (Optional)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const TitlesTextWidget(label: 'Voucher (Optional)'),
-                                const SizedBox(height: 8),
-                                DropdownButtonFormField<String>(
-                                  value: _selectedVoucherId,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Select Voucher',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  items: const [], // TODO: Add voucher items
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedVoucherId = value;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Order Summary
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const TitlesTextWidget(label: 'Order Summary'),
-                                const SizedBox(height: 8),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: cartItems.length,
-                                  itemBuilder: (context, index) {
-                                    final item = cartItems[index];
-                                    return ListTile(
-                                      title: Text(item.productId),
-                                      subtitle: Text(
-                                        '\$${(item.price * item.quantity).toStringAsFixed(2)}',
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const Divider(),
-                                ListTile(
-                                  title: const Text('Total'),
-                                  trailing: Text(
-                                    '\$${totalAmount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Place Order Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _selectedAddress == null || _selectedPaymentMethod == null
-                                ? null
-                                : _placeOrder,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Place Order',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ),
     );
   }
 
@@ -542,13 +600,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartItems = cartProvider.getCartitems.values.toList();
 
     if (cartItems.isEmpty) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
+      MyAppFunctions.showErrorOrWarningDialog(
+        context: context,
         subtitle: 'Giỏ hàng trống',
-            isError: true,
-            fct: () {},
-          );
-        return;
+        isError: true,
+        fct: () {},
+      );
+      return;
     }
 
     setState(() {
@@ -557,10 +615,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     try {
       // Chuẩn bị dữ liệu order (raw map)
-      final orderDetails = cartItems.map((item) => {
-        'productItemId': item.productItemId,
-        'quantity': item.quantity,
-      }).toList();
+      final orderDetails =
+          cartItems
+              .map(
+                (item) => {
+                  'productItemId': item.productItemId,
+                  'quantity': item.quantity,
+                },
+              )
+              .toList();
 
       final orderData = {
         'addressId': _selectedAddress!.id,
@@ -574,10 +637,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (response.success) {
         if (mounted) {
           // Chuyển hướng đến trang success
-          Navigator.pushReplacementNamed(
-            context,
-            '/order-success',
-          );
+          Navigator.pushReplacementNamed(context, '/order-success');
           // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
           Future.microtask(() {
             cartProvider.clearLocalCart();

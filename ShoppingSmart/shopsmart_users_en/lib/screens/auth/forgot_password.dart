@@ -64,10 +64,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 height: size.width * 0.6,
               ),
               const SizedBox(height: 10),
-              const TitlesTextWidget(label: 'Forgot password', fontSize: 22),
+              const TitlesTextWidget(label: 'Quên mật khẩu', fontSize: 22),
               const SubtitleTextWidget(
                 label:
-                    'Please enter the email address you\'d like your password reset information sent to',
+                    'Vui lòng nhập địa chỉ email mà bạn muốn nhận thông tin đặt lại mật khẩu',
                 fontSize: 14,
               ),
               const SizedBox(height: 40),
@@ -111,7 +111,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   icon: const Icon(IconlyBold.send),
                   label: const Text(
-                    "Request link",
+                    "Yêu cầu liên kết",
                     style: TextStyle(fontSize: 20),
                   ),
                   onPressed: () async {

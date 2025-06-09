@@ -6,7 +6,11 @@ import 'package:shopsmart_users_en/widgets/products/quiz_product_card.dart';
 class QuizQuestionScreen extends StatefulWidget {
   final String quizSetId;
   final String quizSetName;
-  const QuizQuestionScreen({Key? key, required this.quizSetId, required this.quizSetName}) : super(key: key);
+  const QuizQuestionScreen({
+    super.key,
+    required this.quizSetId,
+    required this.quizSetName,
+  });
 
   @override
   State<QuizQuestionScreen> createState() => _QuizQuestionScreenState();
@@ -22,7 +26,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
   int totalScore = 0;
   bool isLoadingResult = false;
   Map<String, dynamic>? quizResultData;
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -37,14 +41,22 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
   }
 
   Future<void> fetchQuestionsAndOptions() async {
-    final qRes = await http.get(Uri.parse('http://10.0.2.2:5041/api/quiz-questions/by-quiz-set/${widget.quizSetId}'));
+    final qRes = await http.get(
+      Uri.parse(
+        'http://10.0.2.2:5041/api/quiz-questions/by-quiz-set/${widget.quizSetId}',
+      ),
+    );
     if (qRes.statusCode == 200) {
       final qData = json.decode(qRes.body);
       final qList = qData['data'] as List<dynamic>;
       questions = qList.cast<Map<String, dynamic>>();
       options = [];
       for (final q in questions) {
-        final oRes = await http.get(Uri.parse('http://10.0.2.2:5041/api/quiz-options/by-quiz-question/${q['id']}'));
+        final oRes = await http.get(
+          Uri.parse(
+            'http://10.0.2.2:5041/api/quiz-options/by-quiz-question/${q['id']}',
+          ),
+        );
         if (oRes.statusCode == 200) {
           final oData = json.decode(oRes.body);
           final oList = oData['data'] as List<dynamic>;
@@ -77,14 +89,19 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
   }
 
   Future<void> fetchQuizResult() async {
-    setState(() { isLoadingResult = true; });
-    final url = 'http://10.0.2.2:5041/api/quiz-results/by-point-and-set?score=$totalScore&quizSetId=${widget.quizSetId}';
+    setState(() {
+      isLoadingResult = true;
+    });
+    final url =
+        'http://10.0.2.2:5041/api/quiz-results/by-point-and-set?score=$totalScore&quizSetId=${widget.quizSetId}';
     final res = await http.get(Uri.parse(url));
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
       quizResultData = data['data'];
     }
-    setState(() { isLoadingResult = false; });
+    setState(() {
+      isLoadingResult = false;
+    });
   }
 
   void finishQuiz() {
@@ -92,7 +109,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     for (int i = 0; i < questions.length; i++) {
       final selectedId = selectedOptionIds[i];
       if (selectedId != null) {
-        final opt = options[i].firstWhere((o) => o['id'] == selectedId, orElse: () => {});
+        final opt = options[i].firstWhere(
+          (o) => o['id'] == selectedId,
+          orElse: () => {},
+        );
         score += (opt['score'] ?? 0) as int;
       }
     }
@@ -106,20 +126,16 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (isDone) {
       if (isLoadingResult) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
       if (quizResultData == null) {
         return Scaffold(
           appBar: AppBar(title: Text(widget.quizSetName)),
-          body: const Center(child: Text('Không lấy được kết quả.')), 
+          body: const Center(child: Text('Không lấy được kết quả.')),
         );
       }
       final skinName = quizResultData!['name'] ?? '';
@@ -127,7 +143,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
       final routine = quizResultData!['routine'] as List<dynamic>? ?? [];
       routine.sort((a, b) => (a['order'] ?? 0).compareTo(b['order'] ?? 0));
       return Scaffold(
-        appBar: AppBar(title: const Text('Kết Quả Quiz')),
+        appBar: AppBar(title: const Text('Kết Quả Bài Kiểm Tra')),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -136,9 +152,20 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
               Center(
                 child: Column(
                   children: [
-                    Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: 64),
+                    Icon(
+                      Icons.check_circle,
+                      color: Theme.of(context).primaryColor,
+                      size: 64,
+                    ),
                     const SizedBox(height: 12),
-                    Text(skinName, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
+                    Text(
+                      skinName,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -146,15 +173,28 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                         color: Theme.of(context).primaryColor.withOpacity(0.07),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(skinDesc, style: TextStyle(fontSize: 16, color: Theme.of(context).primaryColor)),
+                      child: Text(
+                        skinDesc,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Quy Trình Chăm Sóc Da Được Đề Xuất', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
+              Text(
+                'Quy Trình Chăm Sóc Da Được Đề Xuất',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
               const SizedBox(height: 12),
-              ...routine.map((step) => _buildRoutineStep(context, step)).toList(),
+              ...routine.map((step) => _buildRoutineStep(context, step)),
               const SizedBox(height: 32),
               Center(
                 child: ElevatedButton(
@@ -176,37 +216,48 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Question ${currentQuestion + 1}/${questions.length}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'Câu hỏi ${currentQuestion + 1}/${questions.length}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Text(q['value'] ?? '', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 24),
-            ...o.map((opt) => RadioListTile<String>(
-                  value: opt['id'],
-                  groupValue: selectedOptionIds[currentQuestion],
-                  title: Text(opt['value'] ?? ''),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedOptionIds[currentQuestion] = val;
-                    });
-                  },
-                )),
+            ...o.map(
+              (opt) => RadioListTile<String>(
+                value: opt['id'],
+                groupValue: selectedOptionIds[currentQuestion],
+                title: Text(opt['value'] ?? ''),
+                onChanged: (val) {
+                  setState(() {
+                    selectedOptionIds[currentQuestion] = val;
+                  });
+                },
+              ),
+            ),
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
                   onPressed: currentQuestion > 0 ? prevQuestion : null,
-                  child: const Text('Back'),
+                  child: const Text('Quay lại'),
                 ),
                 if (currentQuestion < questions.length - 1)
                   ElevatedButton(
-                    onPressed: selectedOptionIds[currentQuestion] != null ? nextQuestion : null,
-                    child: const Text('Next'),
+                    onPressed:
+                        selectedOptionIds[currentQuestion] != null
+                            ? nextQuestion
+                            : null,
+                    child: const Text('Tiếp theo'),
                   ),
                 if (currentQuestion == questions.length - 1)
                   ElevatedButton(
-                    onPressed: selectedOptionIds[currentQuestion] != null ? finishQuiz : null,
-                    child: const Text('Finish'),
+                    onPressed:
+                        selectedOptionIds[currentQuestion] != null
+                            ? finishQuiz
+                            : null,
+                    child: const Text('Hoàn thành'),
                   ),
               ],
             ),
@@ -230,22 +281,48 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
               CircleAvatar(
                 radius: 16,
                 backgroundColor: Theme.of(context).primaryColor,
-                child: Text('${step['order']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(
+                  '${step['order']}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(stepName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).primaryColor)),
+                child: Text(
+                  stepName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(instruction, style: TextStyle(fontSize: 15, color: Theme.of(context).primaryColor)),
+          Text(
+            instruction,
+            style: TextStyle(
+              fontSize: 15,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
           const SizedBox(height: 8),
           if (products.isNotEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Sản phẩm đề xuất:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Theme.of(context).primaryColor)),
+                Text(
+                  'Sản phẩm đề xuất:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 220,
@@ -279,9 +356,17 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.7),
                                   shape: BoxShape.circle,
-                                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(Icons.arrow_back_ios, size: 24),
+                                child: const Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 24,
+                                ),
                               ),
                             ),
                           ),
@@ -304,9 +389,17 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.7),
                                   shape: BoxShape.circle,
-                                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(Icons.arrow_forward_ios, size: 24),
+                                child: const Icon(
+                                  Icons.arrow_forward_ios,
+                                  size: 24,
+                                ),
                               ),
                             ),
                           ),
@@ -320,4 +413,4 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
       ),
     );
   }
-} 
+}
