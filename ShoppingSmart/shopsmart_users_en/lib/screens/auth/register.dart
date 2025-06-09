@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,6 +17,8 @@ import '../../widgets/auth/image_picker_widget.dart';
 import '../../widgets/auth/google_btn.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegisterScreen extends StatefulWidget {
   static const routName = "/RegisterScreen";
@@ -27,44 +31,63 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   bool obscureText = true;
   bool _isLoading = false;
-  late final TextEditingController _nameController,
+  bool _showPasswordRequirements = false;
+  late final TextEditingController _userNameController,
+      _surNameController,
+      _lastNameController,
       _emailController,
+      _phoneNumberController,
       _passwordController,
-      _repeatPasswordController;
+      _confirmPasswordController;
 
-  late final FocusNode _nameFocusNode,
+  late final FocusNode _userNameFocusNode,
+      _surNameFocusNode,
+      _lastNameFocusNode,
       _emailFocusNode,
+      _phoneNumberFocusNode,
       _passwordFocusNode,
-      _repeatPasswordFocusNode;
+      _confirmPasswordFocusNode;
 
   final _formkey = GlobalKey<FormState>();
   XFile? _pickedImage;
   @override
   void initState() {
-    _nameController = TextEditingController();
+    _userNameController = TextEditingController();
+    _surNameController = TextEditingController();
+    _lastNameController = TextEditingController();
     _emailController = TextEditingController();
+    _phoneNumberController = TextEditingController();
     _passwordController = TextEditingController();
-    _repeatPasswordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
     // Focus Nodes
-    _nameFocusNode = FocusNode();
+    _userNameFocusNode = FocusNode();
+    _surNameFocusNode = FocusNode();
+    _lastNameFocusNode = FocusNode();
     _emailFocusNode = FocusNode();
+    _phoneNumberFocusNode = FocusNode();
     _passwordFocusNode = FocusNode();
-    _repeatPasswordFocusNode = FocusNode();
+    _confirmPasswordFocusNode = FocusNode();
     super.initState();
   }
 
   @override
   void dispose() {
     if (mounted) {
-      _nameController.dispose();
+      _userNameController.dispose();
+      _surNameController.dispose();
+      _lastNameController.dispose();
       _emailController.dispose();
+      _phoneNumberController.dispose();
       _passwordController.dispose();
-      _repeatPasswordController.dispose();
+      _confirmPasswordController.dispose();
       // Focus Nodes
-      _nameFocusNode.dispose();
+      _userNameFocusNode.dispose();
+      _surNameFocusNode.dispose();
+      _lastNameFocusNode.dispose();
       _emailFocusNode.dispose();
+      _phoneNumberFocusNode.dispose();
       _passwordFocusNode.dispose();
-      _repeatPasswordFocusNode.dispose();
+      _confirmPasswordFocusNode.dispose();
     }
     super.dispose();
   }
@@ -80,48 +103,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final registerRequest = RegisterRequest(
-        userName: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        confirmPassword: _repeatPasswordController.text,
+      // Debug: In ra giá trị các trường nhập liệu
+      print('DEBUG INPUT VALUES:');
+      print('userName: ${_userNameController.text.trim()}');
+      print('surName: ${_surNameController.text.trim()}');
+      print('lastName: ${_lastNameController.text.trim()}');
+      print('emailAddress: ${_emailController.text.trim()}');
+      print('phoneNumber: ${_phoneNumberController.text.trim()}');
+
+      // Tạo request theo đúng định dạng Swagger
+      final requestData = {
+        'userName': _userNameController.text.trim(),
+        'surName': _surNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'emailAddress': _emailController.text.trim(),
+        'phoneNumber': _phoneNumberController.text.trim(),
+        'password': _passwordController.text,
+      };
+
+      // Debug: In ra JSON trước khi gửi đi
+      print('DIRECT REQUEST JSON: ${json.encode(requestData)}');
+
+      // Gọi API trực tiếp để đảm bảo định dạng đúng
+      final uri = Uri.parse('${AuthService.baseUrl}/authentications/register');
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(requestData),
       );
 
-      final response = await AuthService.register(registerRequest);
+      print('REGISTER API RESPONSE STATUS: ${response.statusCode}');
+      print('REGISTER API RESPONSE BODY: ${response.body}');
 
-      if (response.success) {
-        // Get the arguments to check where user came from
-        final String? fromScreen =
-            ModalRoute.of(context)?.settings.arguments as String?;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Đăng ký thành công
+        final Map<String, dynamic> jsonData = json.decode(response.body);
 
         // Show success message with snackbar instead of dialog for better UX
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Đăng ký thành công! Chào mừng đến với ShopSmart.'),
+              content: Text('Đăng ký thành công! Vui lòng đăng nhập.'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
           );
 
-          // Navigate based on where user came from
-          if (fromScreen == 'checkout') {
-            // User came from checkout, navigate back to checkout using proper route name
-            Navigator.of(
-              context,
-            ).pushReplacementNamed(CheckoutScreen.routeName);
-          } else {
-            // User came from normal registration, go to home
-            Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
-          }
+          // Chuyển đến màn hình đăng nhập
+          Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
         }
       } else {
-        // Registration failed
+        // Đăng ký thất bại
+        String errorMessage = "Đăng ký không thành công";
+
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          errorMessage = jsonData['message'] ?? errorMessage;
+        } catch (e) {
+          print('Không thể parse response body: $e');
+        }
+
         if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: response.message,
-            fct: () {},
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
           );
         }
       }
@@ -157,6 +208,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _pickedImage = null;
         });
       },
+    );
+  }
+
+  // Thêm hàm hiển thị yêu cầu mật khẩu
+  Widget _buildPasswordRequirement(String text, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.cancel,
+            color: isMet ? Colors.green : Colors.red,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: isMet ? Colors.green : Colors.red,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -251,7 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     key: _formkey,
                     child: Column(
                       children: [
-                        // Full Name Field
+                        // Username Field
                         Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
@@ -263,12 +338,92 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           child: TextFormField(
-                            controller: _nameController,
-                            focusNode: _nameFocusNode,
+                            controller: _userNameController,
+                            focusNode: _userNameFocusNode,
                             textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.name,
                             decoration: InputDecoration(
-                              hintText: 'Họ và tên',
+                              hintText: 'Tên đăng nhập',
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                            ),
+                            onFieldSubmitted: (value) {
+                              FocusScope.of(
+                                context,
+                              ).requestFocus(_surNameFocusNode);
+                            },
+                            validator: (value) {
+                              return MyValidators.displayNamevalidator(value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Surname Field (Họ)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).dividerColor.withOpacity(0.2),
+                            ),
+                          ),
+                          child: TextFormField(
+                            controller: _surNameController,
+                            focusNode: _surNameFocusNode,
+                            textInputAction: TextInputAction.next,
+                            keyboardType: TextInputType.name,
+                            decoration: InputDecoration(
+                              hintText: 'Họ',
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                            ),
+                            onFieldSubmitted: (value) {
+                              FocusScope.of(
+                                context,
+                              ).requestFocus(_lastNameFocusNode);
+                            },
+                            validator: (value) {
+                              return MyValidators.displayNamevalidator(value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Lastname Field (Tên)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).dividerColor.withOpacity(0.2),
+                            ),
+                          ),
+                          child: TextFormField(
+                            controller: _lastNameController,
+                            focusNode: _lastNameFocusNode,
+                            textInputAction: TextInputAction.next,
+                            keyboardType: TextInputType.name,
+                            decoration: InputDecoration(
+                              hintText: 'Tên',
                               prefixIcon: Icon(
                                 Icons.person,
                                 color: Theme.of(context).primaryColor,
@@ -322,10 +477,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onFieldSubmitted: (value) {
                               FocusScope.of(
                                 context,
-                              ).requestFocus(_passwordFocusNode);
+                              ).requestFocus(_phoneNumberFocusNode);
                             },
                             validator: (value) {
                               // return MyValidators.emailValidator(value);
+                              return null; // Commented out for testing
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Phone Number Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).dividerColor.withOpacity(0.2),
+                            ),
+                          ),
+                          child: TextFormField(
+                            controller: _phoneNumberController,
+                            focusNode: _phoneNumberFocusNode,
+                            textInputAction: TextInputAction.next,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: "Số điện thoại",
+                              prefixIcon: Icon(
+                                Icons.phone,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                            ),
+                            onFieldSubmitted: (value) {
+                              FocusScope.of(
+                                context,
+                              ).requestFocus(_passwordFocusNode);
+                            },
+                            validator: (value) {
+                              // return MyValidators.phoneValidator(value);
                               return null; // Commented out for testing
                             },
                           ),
@@ -350,7 +546,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             keyboardType: TextInputType.visiblePassword,
                             obscureText: obscureText,
                             decoration: InputDecoration(
-                              hintText: "***********",
+                              hintText: "Mật khẩu",
                               prefixIcon: Icon(
                                 IconlyLight.lock,
                                 color: Theme.of(context).primaryColor,
@@ -379,17 +575,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onFieldSubmitted: (value) async {
                               FocusScope.of(
                                 context,
-                              ).requestFocus(_repeatPasswordFocusNode);
+                              ).requestFocus(_confirmPasswordFocusNode);
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _showPasswordRequirements = true;
+                              });
                             },
                             validator: (value) {
-                              // return MyValidators.passwordValidator(value);
-                              return null; // Commented out for testing
+                              return MyValidators.passwordValidator(value);
                             },
                           ),
                         ),
+
+                        // Hiển thị yêu cầu mật khẩu
+                        if (_showPasswordRequirements)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, left: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Yêu cầu mật khẩu:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                _buildPasswordRequirement(
+                                  'Ít nhất 6 ký tự',
+                                  _passwordController.text.length >= 6,
+                                ),
+                                _buildPasswordRequirement(
+                                  'Có ít nhất 1 chữ in hoa (A-Z)',
+                                  RegExp(
+                                    r'[A-Z]',
+                                  ).hasMatch(_passwordController.text),
+                                ),
+                                _buildPasswordRequirement(
+                                  'Có ít nhất 1 số (0-9)',
+                                  RegExp(
+                                    r'\d',
+                                  ).hasMatch(_passwordController.text),
+                                ),
+                                _buildPasswordRequirement(
+                                  'Có ít nhất 1 ký tự đặc biệt (!@#\$%^&*...)',
+                                  RegExp(
+                                    r'[!@#\$%^&*()_+={}[\]|\\:;<>,.?/~`]',
+                                  ).hasMatch(_passwordController.text),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         const SizedBox(height: 20),
 
-                        // Repeat Password Field
+                        // Confirm Password Field
                         Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
@@ -401,8 +644,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           child: TextFormField(
-                            controller: _repeatPasswordController,
-                            focusNode: _repeatPasswordFocusNode,
+                            controller: _confirmPasswordController,
+                            focusNode: _confirmPasswordFocusNode,
                             textInputAction: TextInputAction.done,
                             keyboardType: TextInputType.visiblePassword,
                             obscureText: obscureText,
@@ -437,11 +680,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               await _registerFCT();
                             },
                             validator: (value) {
-                              // return MyValidators.repeatPasswordValidator(
-                              //   value: value,
-                              //   password: _passwordController.text,
-                              // );
-                              return null; // Commented out for testing
+                              return MyValidators.repeatPasswordValidator(
+                                value: value,
+                                password: _passwordController.text,
+                              );
                             },
                           ),
                         ),

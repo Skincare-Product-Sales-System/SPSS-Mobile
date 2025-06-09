@@ -78,20 +78,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Login successful
         if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: 'Login successful! Welcome back.',
-            fct: () {
-              if (fromScreen == 'checkout') {
-                // Redirect to checkout if user came from checkout
-                Navigator.of(context).pushReplacementNamed('/checkout');
-              } else {
-                // Otherwise go to home
-                Navigator.of(
-                  context,
-                ).pushReplacementNamed(RootScreen.routeName);
-              }
-            },
+          // Chuyển đến màn hình tương ứng ngay lập tức thay vì hiển thị hộp thoại
+          if (fromScreen == 'checkout') {
+            // Redirect to checkout if user came from checkout
+            Navigator.of(context).pushReplacementNamed('/checkout');
+          } else {
+            // Otherwise go to home
+            Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
+          }
+
+          // Hiển thị thông báo nhỏ (Snackbar) để báo đăng nhập thành công
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng nhập thành công! Chào mừng trở lại.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
           );
         }
       } else {
