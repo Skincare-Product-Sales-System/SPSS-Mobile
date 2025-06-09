@@ -5,6 +5,92 @@ import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_sc
 import 'package:shopsmart_users_en/services/api_service.dart';
 import 'package:shopsmart_users_en/widgets/loading_widget.dart';
 
+// Thêm class mới để hiển thị tiến trình phân tích da
+class AnalyzingProgressDialog extends StatefulWidget {
+  const AnalyzingProgressDialog({super.key});
+
+  @override
+  State<AnalyzingProgressDialog> createState() =>
+      _AnalyzingProgressDialogState();
+}
+
+class _AnalyzingProgressDialogState extends State<AnalyzingProgressDialog> {
+  int _progressValue = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startProgress();
+  }
+
+  void _startProgress() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted && _progressValue < 100) {
+        setState(() {
+          _progressValue += 5; // Tăng 5% mỗi 100ms
+        });
+        _startProgress();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            const Text(
+              'Đang phân tích da',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            LinearProgressIndicator(
+              value: _progressValue / 100,
+              backgroundColor: Colors.grey[200],
+              color: Theme.of(context).primaryColor,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '$_progressValue%',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _getAnalyzingMessage(_progressValue),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getAnalyzingMessage(int progress) {
+    if (progress < 30) {
+      return 'Đang quét khuôn mặt...';
+    } else if (progress < 60) {
+      return 'Đang phân tích tình trạng da...';
+    } else if (progress < 90) {
+      return 'Đang tìm kiếm sản phẩm phù hợp...';
+    } else {
+      return 'Hoàn tất phân tích...';
+    }
+  }
+}
+
 class SkinAnalysisCameraScreen extends StatefulWidget {
   static const routeName = '/skin-analysis-camera';
   const SkinAnalysisCameraScreen({super.key});
@@ -53,9 +139,19 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
     });
 
     try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AnalyzingProgressDialog(),
+      );
+
+      await Future.delayed(const Duration(seconds: 3));
+
       final result = await ApiService.analyzeSkin(_selectedImage!);
 
       if (mounted) {
+        Navigator.of(context).pop();
+
         setState(() {
           _isAnalyzing = false;
         });
@@ -76,6 +172,8 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
       }
     } catch (e) {
       if (mounted) {
+        Navigator.of(context).pop();
+
         setState(() {
           _isAnalyzing = false;
         });

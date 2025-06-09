@@ -1327,108 +1327,111 @@ class ApiService {
     }
   }
 
-  // Skin analysis API call
+  // Phân tích da
   static Future<ApiResponse<SkinAnalysisResult>> analyzeSkin(
     File imageFile,
   ) async {
     try {
       final token = await JwtService.getStoredToken();
       if (token == null) {
-        return ApiResponse<SkinAnalysisResult>(
+        return ApiResponse(
           success: false,
-          message: 'Vui lòng đăng nhập để sử dụng tính năng này',
-          errors: ['Người dùng chưa đăng nhập'],
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
         );
       }
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/skin-analysis/analyze'),
-      );
+      final url = Uri.parse('$baseUrl/skin-analysis');
+      final request =
+          http.MultipartRequest('POST', url)
+            ..headers.addAll({'Authorization': 'Bearer $token'})
+            ..files.add(
+              await http.MultipartFile.fromPath('image', imageFile.path),
+            );
 
-      request.headers.addAll({
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      });
-
-      request.files.add(
-        await http.MultipartFile.fromPath('faceImage', imageFile.path),
-      );
-
-      final streamedResponse = await request.send().timeout(timeout);
+      final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = json.decode(response.body);
-        return ApiResponse<SkinAnalysisResult>.fromJson(
-          jsonData,
-          (data) => SkinAnalysisResult.fromJson(data),
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
         );
       } else {
-        Map<String, dynamic>? errorData;
-        try {
-          errorData = json.decode(response.body);
-        } catch (e) {
-          errorData = null;
-        }
-
-        String errorMessage = 'Không thể phân tích da';
-
-        if (errorData != null && errorData['message'] != null) {
-          errorMessage = errorData['message'];
-        } else {
-          // Provide specific error messages based on status code
-          switch (response.statusCode) {
-            case 400:
-              errorMessage =
-                  'Không thể nhận diện khuôn mặt trong ảnh. Vui lòng thử lại với ảnh khác.';
-              break;
-            case 401:
-              errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
-              break;
-            case 500:
-              errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau.';
-              break;
-            default:
-              errorMessage =
-                  'Không thể phân tích da. Vui lòng thử lại với ảnh khác.';
-          }
-        }
-
-        List<String> errors = [];
-        if (errorData != null && errorData['errors'] != null) {
-          errors = List<String>.from(errorData['errors']);
-        }
-
-        if (errors.isEmpty) {
-          errors.add(
-            'Vui lòng thử lại với ảnh rõ nét và chụp trực diện khuôn mặt',
-          );
-        }
-
-        return ApiResponse<SkinAnalysisResult>(
+        return ApiResponse(
           success: false,
-          message: errorMessage,
-          errors: errors,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
         );
       }
-    } on SocketException {
-      return ApiResponse<SkinAnalysisResult>(
-        success: false,
-        message: 'Không có kết nối mạng',
-        errors: ['Vui lòng kiểm tra kết nối internet của bạn và thử lại'],
-      );
-    } on TimeoutException {
-      return ApiResponse<SkinAnalysisResult>(
-        success: false,
-        message: 'Hệ thống phản hồi chậm',
-        errors: ['Vui lòng thử lại sau'],
-      );
     } catch (e) {
-      return ApiResponse<SkinAnalysisResult>(
+      return ApiResponse(
         success: false,
-        message: 'Đã xảy ra lỗi khi phân tích da',
-        errors: ['Vui lòng thử lại với ảnh khác'],
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Lấy lịch sử phân tích da của người dùng
+  static Future<ApiResponse<List<SkinAnalysisResult>>>
+  getSkinAnalysisHistory() async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xem lịch sử phân tích da',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/user');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<List<SkinAnalysisResult>>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? (responseData['data'] as List)
+                      .map((item) => SkinAnalysisResult.fromJson(item))
+                      .toList()
+                  : [],
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
       );
     }
   }

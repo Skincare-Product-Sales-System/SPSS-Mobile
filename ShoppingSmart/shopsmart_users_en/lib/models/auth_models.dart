@@ -12,13 +12,19 @@ class LoginRequest {
 
 class RegisterRequest {
   final String userName;
-  final String email;
+  final String surName;
+  final String lastName;
+  final String emailAddress;
+  final String phoneNumber;
   final String password;
   final String confirmPassword;
 
   RegisterRequest({
     required this.userName,
-    required this.email,
+    required this.surName,
+    required this.lastName,
+    required this.emailAddress,
+    required this.phoneNumber,
     required this.password,
     required this.confirmPassword,
   });
@@ -26,9 +32,11 @@ class RegisterRequest {
   Map<String, dynamic> toJson() {
     return {
       'userName': userName,
-      'email': email,
+      'surName': surName,
+      'lastName': lastName,
+      'emailAddress': emailAddress,
+      'phoneNumber': phoneNumber,
       'password': password,
-      'confirmPassword': confirmPassword,
     };
   }
 }

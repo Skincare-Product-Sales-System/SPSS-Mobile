@@ -23,11 +23,20 @@ class MyValidators {
   }
 
   static String? passwordValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'Please enter a password';
+    if (value == null || value.isEmpty) {
+      return 'Vui lòng nhập mật khẩu';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters long';
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Mật khẩu phải có ít nhất 1 chữ in hoa';
+    }
+    if (!RegExp(r'\d').hasMatch(value)) {
+      return 'Mật khẩu phải có ít nhất 1 số';
+    }
+    if (!RegExp(r'[!@#\$%^&*()_+={}[\]|\\:;<>,.?/~`]').hasMatch(value)) {
+      return 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
     }
     return null;
   }
