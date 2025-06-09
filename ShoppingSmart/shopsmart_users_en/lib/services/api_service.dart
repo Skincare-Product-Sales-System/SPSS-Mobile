@@ -1341,12 +1341,12 @@ class ApiService {
         );
       }
 
-      final url = Uri.parse('$baseUrl/skin-analysis');
+      final url = Uri.parse('$baseUrl/skin-analysis/analyze');
       final request =
           http.MultipartRequest('POST', url)
             ..headers.addAll({'Authorization': 'Bearer $token'})
             ..files.add(
-              await http.MultipartFile.fromPath('image', imageFile.path),
+              await http.MultipartFile.fromPath('faceImage', imageFile.path),
             );
 
       final streamedResponse = await request.send();
