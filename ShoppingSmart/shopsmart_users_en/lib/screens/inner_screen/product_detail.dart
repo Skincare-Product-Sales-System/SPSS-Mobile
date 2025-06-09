@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../../providers/cart_provider.dart';
-import '../../widgets/app_name_text.dart';
 import '../../widgets/products/heart_btn.dart';
 import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
@@ -325,7 +324,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
           ),
           items:
               images.map((imageUrl) {
-                return Container(
+                return SizedBox(
                   width: double.infinity,
                   child: FancyShimmerImage(
                     imageUrl: imageUrl,
@@ -537,7 +536,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   }),
                   const SizedBox(width: 8),
                   Text(
-                    "${_detailedProduct!.rating.toStringAsFixed(1)}",
+                    _detailedProduct!.rating.toStringAsFixed(1),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -1038,7 +1037,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
@@ -1164,7 +1163,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            Future<void> _pickImages() async {
+            Future<void> pickImages() async {
               final ImagePicker picker = ImagePicker();
               final List<XFile> images = await picker.pickMultiImage();
               if (images.isNotEmpty) {
@@ -1178,13 +1177,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
               }
             }
 
-            Future<void> _removeImage(int index) async {
+            Future<void> removeImage(int index) async {
               setState(() {
                 selectedImages.removeAt(index);
               });
             }
 
-            Future<void> _submitReview() async {
+            Future<void> submitReview() async {
               if (reviewController.text.trim().isEmpty ||
                   _selectedProductItemId == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1444,7 +1443,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                         child:
                             selectedImages.isEmpty
                                 ? InkWell(
-                                  onTap: _pickImages,
+                                  onTap: pickImages,
                                   borderRadius: BorderRadius.circular(8),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1490,7 +1489,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                               // Add more button
                                               return selectedImages.length < 5
                                                   ? GestureDetector(
-                                                    onTap: _pickImages,
+                                                    onTap: pickImages,
                                                     child: Container(
                                                       width: 60,
                                                       margin:
@@ -1551,7 +1550,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                                     right: -4,
                                                     child: GestureDetector(
                                                       onTap:
-                                                          () => _removeImage(
+                                                          () => removeImage(
                                                             index,
                                                           ),
                                                       child: Container(
@@ -1586,7 +1585,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isSubmitting ? null : _submitReview,
+                          onPressed: isSubmitting ? null : submitReview,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Colors.white,
