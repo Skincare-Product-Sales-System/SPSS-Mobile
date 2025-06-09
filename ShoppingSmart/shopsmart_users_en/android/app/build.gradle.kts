@@ -23,7 +23,7 @@ if (keyStorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.shopsmart_users_en"
+    namespace = "com.spss.skincede"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
