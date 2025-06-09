@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shopsmart_users_en/widgets/products/quiz_product_card.dart';
+import 'package:shopsmart_users_en/services/jwt_service.dart';
 
 class QuizQuestionScreen extends StatefulWidget {
   final String quizSetId;
@@ -94,7 +95,14 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
     });
     final url =
         'http://10.0.2.2:5041/api/quiz-results/by-point-and-set?score=$totalScore&quizSetId=${widget.quizSetId}';
-    final res = await http.get(Uri.parse(url));
+    final token = await JwtService.getStoredToken();
+    final res = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
       quizResultData = data['data'];

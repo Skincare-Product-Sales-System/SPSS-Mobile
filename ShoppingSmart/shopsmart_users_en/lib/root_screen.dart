@@ -9,6 +9,7 @@ import 'package:shopsmart_users_en/screens/search_screen.dart';
 import 'package:shopsmart_users_en/screens/quiz_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_screen.dart';
 import 'package:shopsmart_users_en/widgets/chat/chat_widget.dart';
+import 'package:shopsmart_users_en/screens/chat_ai_screen.dart';
 
 class RootScreen extends StatefulWidget {
   static const routeName = '/RootScreen';
