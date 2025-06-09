@@ -69,11 +69,11 @@ class _AddressScreenState extends State<AddressScreen> {
       fetchAddresses();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Address deleted.')));
+      ).showSnackBar(const SnackBar(content: Text('Đã xóa địa chỉ.')));
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Delete failed!')));
+      ).showSnackBar(const SnackBar(content: Text('Xóa thất bại!')));
     }
   }
 
@@ -89,12 +89,12 @@ class _AddressScreenState extends State<AddressScreen> {
     if (res.statusCode == 200) {
       fetchAddresses();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Set as default successfully.')),
+        const SnackBar(content: Text('Đã đặt làm địa chỉ mặc định.')),
       );
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Action failed!')));
+      ).showSnackBar(const SnackBar(content: Text('Thao tác thất bại!')));
     }
   }
 
@@ -123,7 +123,7 @@ class _AddressScreenState extends State<AddressScreen> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : addresses.isEmpty
-              ? const Center(child: Text('You have no addresses yet.'))
+              ? const Center(child: Text('Bạn chưa có địa chỉ nào.'))
               : ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: addresses.length,
@@ -383,12 +383,12 @@ class _AddressFormState extends State<AddressForm> {
       widget.onSuccess();
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Address saved successfully!')),
+        const SnackBar(content: Text('Đã lưu địa chỉ thành công!')),
       );
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Address save failed!')));
+      ).showSnackBar(const SnackBar(content: Text('Lưu địa chỉ thất bại!')));
     }
   }
 
@@ -493,7 +493,7 @@ class _AddressFormState extends State<AddressForm> {
                       onChanged: (v) => setState(() => isDefault = v ?? false),
                       activeColor: primaryColor,
                     ),
-                    const Text('Set as default address'),
+                    const Text('Đặt làm địa chỉ mặc định'),
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -502,7 +502,7 @@ class _AddressFormState extends State<AddressForm> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                      child: const Text('Hủy'),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(

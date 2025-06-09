@@ -51,7 +51,7 @@ class _OffersScreenState extends State<OffersScreen> {
               padding: const EdgeInsets.all(8.0),
               child: Image.asset(AssetsManager.shoppingCart),
             ),
-            title: const TitlesTextWidget(label: "🎉 Special Offers"),
+            title: const TitlesTextWidget(label: "🎉 Ưu đãi đặc biệt"),
             actions: [
               IconButton(
                 onPressed: () {

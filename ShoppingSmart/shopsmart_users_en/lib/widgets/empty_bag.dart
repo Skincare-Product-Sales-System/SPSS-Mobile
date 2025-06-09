@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
-import 'package:shopsmart_users_en/widgets/title_text.dart';
 
 class EmptyBagWidget extends StatefulWidget {
   const EmptyBagWidget({
@@ -231,7 +229,7 @@ class _EmptyBagWidgetState extends State<EmptyBagWidget>
                         ),
                       ),
                       child: Text(
-                        "Oops! Empty Cart",
+                        "Ôi! Giỏ hàng trống",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

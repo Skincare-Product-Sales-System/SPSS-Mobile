@@ -39,203 +39,217 @@ class LatestArrivalProductsWidget extends StatelessWidget {
               arguments: productsModel.productId,
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image section - Reduced height
-                SizedBox(
-                  height: 85,
-                  width: double.infinity,
-                  child: FancyShimmerImage(
-                    imageUrl: productsModel.productImage,
+          child: SizedBox(
+            height: 280, // Tăng thêm 10px từ 270 lên 280
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image section with fixed height and proper layout
+                  Container(
+                    height: 150,
                     width: double.infinity,
-                    height: 85,
-                    boxFit: BoxFit.cover,
-                    errorWidget: Container(
-                      height: 85,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: 24,
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withOpacity(0.5),
-                      ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Product title - Reduced height and compact
-                SizedBox(
-                  height: 32,
-                  child: Text(
-                    productsModel.productTitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Price section - More compact
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "${productsModel.formattedPrice} VND",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      if (productsModel.marketPrice > productsModel.price) ...[
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                "${productsModel.formattedMarketPrice} VND",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withOpacity(0.6),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: FancyShimmerImage(
+                              imageUrl: productsModel.productImage,
+                              boxFit: BoxFit.contain,
+                              errorWidget: Container(
+                                color: Theme.of(context).colorScheme.surface,
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  size: 32,
+                                  color: Theme.of(context).disabledColor,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (productsModel.discountPercentage > 0) ...[
-                              const SizedBox(width: 3),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 1,
+                          ),
+                        ),
+                        if (productsModel.discountPercentage > 0)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                "-${productsModel.discountPercentage.toStringAsFixed(0)}%",
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red[500],
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Product title - fixed height
+                  SizedBox(
+                    height: 36,
+                    child: Text(
+                      productsModel.productTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6), // Tăng từ 4px lên 6px
+                  // Price section - fixed height
+                  SizedBox(
+                    height: 40, // Tăng từ 36px lên 40px
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "${productsModel.formattedPrice} VND",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                        if (productsModel.marketPrice >
+                            productsModel.price) ...[
+                          const SizedBox(height: 3), // Tăng từ 2px lên 3px
+                          Row(
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  "-${productsModel.discountPercentage.toStringAsFixed(0)}%",
-                                  style: const TextStyle(
-                                    fontSize: 8,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                  "${productsModel.formattedMarketPrice} VND",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withOpacity(0.6),
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
-                          ],
-                        ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Action buttons - Smaller and more compact
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: HeartButtonWidget(
-                        productId: productsModel.productId,
-                        size: 16,
-                      ),
                     ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color:
-                            cartProvider.isProdinCart(
-                                  productId: productsModel.productId,
-                                )
-                                ? Colors.green.withOpacity(0.1)
-                                : Theme.of(
-                                  context,
-                                ).primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                  ),
+                  const Spacer(), // Sử dụng Spacer để đảm bảo nút luôn ở dưới cùng
+                  // Action buttons - Smaller and more compact
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: HeartButtonWidget(
+                          productId: productsModel.productId,
+                          size: 16,
+                        ),
                       ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          if (cartProvider.isProdinCart(
-                            productId: productsModel.productId,
-                          )) {
-                            return;
-                          }
-                          if (productsModel.productItems.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Sản phẩm hiện không có sẵn. Vui lòng chọn sản phẩm khác.'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-                          // Check if the first product item has valid price
-                          final firstItem = productsModel.productItems.first;
-                          if (firstItem.price <= 0) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Sản phẩm không có giá. Vui lòng thử lại sau.'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-                          cartProvider.addProductToCart(
-                            productId: productsModel.productId,
-                            productItemId: firstItem.id,
-                            title: productsModel.productTitle,
-                            price: firstItem.price.toDouble(),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã thêm vào giỏ hàng'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          cartProvider.isProdinCart(
-                                productId: productsModel.productId,
-                              )
-                              ? Icons.check
-                              : Icons.add_shopping_cart_outlined,
-                          size: 14,
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
                           color:
                               cartProvider.isProdinCart(
                                     productId: productsModel.productId,
                                   )
-                                  ? Colors.green
-                                  : Theme.of(context).primaryColor,
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            if (cartProvider.isProdinCart(
+                              productId: productsModel.productId,
+                            )) {
+                              return;
+                            }
+                            if (productsModel.productItems.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Sản phẩm hiện không có sẵn. Vui lòng chọn sản phẩm khác.',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            // Check if the first product item has valid price
+                            final firstItem = productsModel.productItems.first;
+                            if (firstItem.price <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Sản phẩm không có giá. Vui lòng thử lại sau.',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            cartProvider.addProductToCart(
+                              productId: productsModel.productId,
+                              productItemId: firstItem.id,
+                              title: productsModel.productTitle,
+                              price: firstItem.price.toDouble(),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã thêm vào giỏ hàng'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            cartProvider.isProdinCart(
+                                  productId: productsModel.productId,
+                                )
+                                ? Icons.check
+                                : Icons.add_shopping_cart_outlined,
+                            size: 14,
+                            color:
+                                cartProvider.isProdinCart(
+                                      productId: productsModel.productId,
+                                    )
+                                    ? Colors.green
+                                    : Theme.of(context).primaryColor,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

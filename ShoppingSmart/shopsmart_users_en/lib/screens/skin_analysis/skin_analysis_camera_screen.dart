@@ -94,17 +94,24 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
           (context) => AlertDialog(
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                fontFamily: 'Roboto',
+              ),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(message),
+                Text(message, style: const TextStyle(fontFamily: 'Roboto')),
                 const SizedBox(height: 16),
                 const Text(
                   'Gợi ý:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Roboto',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _buildTipItem(
@@ -118,14 +125,20 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Đóng'),
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(fontFamily: 'Roboto'),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.camera);
                 },
-                child: const Text('Chụp ảnh mới'),
+                child: const Text(
+                  'Chụp ảnh mới',
+                  style: TextStyle(fontFamily: 'Roboto'),
+                ),
               ),
             ],
           ),
@@ -138,8 +151,13 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text)),
+          const Text(
+            '• ',
+            style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Roboto'),
+          ),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontFamily: 'Roboto')),
+          ),
         ],
       ),
     );
@@ -165,7 +183,7 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
                       // Image preview or placeholder
                       Container(
                         width: double.infinity,
-                        height: 400,
+                        height: 450,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(12),
@@ -177,7 +195,31 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: Image.file(
                                     _selectedImage!,
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 40,
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Không thể tải ảnh',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   ),
                                 )
                                 : Column(
@@ -194,6 +236,7 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Colors.grey[600],
+                                        fontFamily: 'Roboto',
                                       ),
                                       textAlign: TextAlign.center,
                                     ),

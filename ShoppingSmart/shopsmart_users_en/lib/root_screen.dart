@@ -72,7 +72,7 @@ class _RootScreenState extends State<RootScreen> {
           const NavigationDestination(
             selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
             icon: Icon(Icons.quiz_outlined),
-            label: "Câu Đố",
+            label: "Trắc nghiệm",
           ),
           const NavigationDestination(
             selectedIcon: Icon(

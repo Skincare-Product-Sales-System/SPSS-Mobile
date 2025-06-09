@@ -176,7 +176,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
         centerTitle: true,
-        title: const TitlesTextWidget(label: 'Checkout', fontSize: 22),
+        title: const TitlesTextWidget(label: 'Thanh toán', fontSize: 22),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(IconlyLight.arrow_left_2, size: 24),
@@ -206,12 +206,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             const SizedBox(height: 16),
                             const TitlesTextWidget(
-                              label: 'Your cart is empty',
+                              label: 'Giỏ hàng của bạn trống',
                               fontSize: 18,
                             ),
                             const SizedBox(height: 8),
                             const SubtitleTextWidget(
-                              label: 'Add some products to get started',
+                              label: 'Thêm một số sản phẩm để bắt đầu',
                             ),
                             const SizedBox(height: 20),
                             ElevatedButton(
@@ -332,7 +332,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           if (_paymentMethods.isEmpty)
                             const Center(
                               child: SubtitleTextWidget(
-                                label: 'No payment methods available.',
+                                label: 'Không có phương thức thanh toán nào.',
                               ),
                             )
                           else

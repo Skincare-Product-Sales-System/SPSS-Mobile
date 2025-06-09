@@ -139,7 +139,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               context: context,
             ),
             home: const RootScreen(),
-            // home: const LoginScreen(),
             routes: {
               RootScreen.routeName: (context) => const RootScreen(),
               ProductDetailsScreen.routName:

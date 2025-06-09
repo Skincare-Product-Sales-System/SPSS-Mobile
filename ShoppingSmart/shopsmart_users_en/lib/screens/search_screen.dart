@@ -306,17 +306,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   runSpacing: 8,
                   children: [
                     _buildPriceFilterChip(
-                      label: 'Default',
+                      label: 'Mặc định',
                       value: null,
                       icon: Icons.sort,
                     ),
                     _buildPriceFilterChip(
-                      label: 'Low to High',
+                      label: 'Thấp đến cao',
                       value: 'price_asc',
                       icon: Icons.trending_up,
                     ),
                     _buildPriceFilterChip(
-                      label: 'High to Low',
+                      label: 'Cao đến thấp',
                       value: 'price_desc',
                       icon: Icons.trending_down,
                     ),
@@ -884,7 +884,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ).textTheme.bodySmall?.color?.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
-              const TitlesTextWidget(label: "No products found"),
+              const TitlesTextWidget(label: "Không tìm thấy sản phẩm"),
               const SizedBox(height: 8),
               Text(
                 'No results for "${searchTextController.text}"',

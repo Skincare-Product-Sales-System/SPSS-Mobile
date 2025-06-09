@@ -20,10 +20,10 @@ class WishlistScreen extends StatelessWidget {
         ? Scaffold(
           body: EmptyBagWidget(
             imagePath: AssetsManager.bagWish,
-            title: "Nothing in ur wishlist yet",
+            title: "Chưa có gì trong danh sách yêu thích",
             subtitle:
-                "Looks like your cart is empty add something and make me happy",
-            buttonText: "Shop now",
+                "Có vẻ như danh sách yêu thích của bạn đang trống, hãy thêm gì đó và làm tôi vui",
+            buttonText: "Mua sắm ngay",
           ),
         )
         : Scaffold(
@@ -33,7 +33,8 @@ class WishlistScreen extends StatelessWidget {
               child: Image.asset(AssetsManager.shoppingCart),
             ),
             title: TitlesTextWidget(
-              label: "Wishlist (${wishlistProvider.getWishlists.length})",
+              label:
+                  "Danh sách yêu thích (${wishlistProvider.getWishlists.length})",
             ),
             actions: [
               IconButton(
@@ -41,7 +42,7 @@ class WishlistScreen extends StatelessWidget {
                   MyAppFunctions.showErrorOrWarningDialog(
                     isError: false,
                     context: context,
-                    subtitle: "Clear cart?",
+                    subtitle: "Xóa danh sách yêu thích?",
                     fct: () {
                       wishlistProvider.clearLocalWishlist();
                     },

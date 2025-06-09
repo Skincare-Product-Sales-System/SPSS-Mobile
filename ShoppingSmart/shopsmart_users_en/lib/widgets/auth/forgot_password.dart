@@ -81,7 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'youremail@email.com',
+                        hintText: 'email@example.com',
                         prefixIcon: Container(
                           padding: const EdgeInsets.all(12),
                           child: const Icon(IconlyLight.message),

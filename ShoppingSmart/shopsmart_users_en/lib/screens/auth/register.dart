@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Registration successful! Welcome to ShopSmart.'),
+              content: Text('Đăng ký thành công! Chào mừng đến với ShopSmart.'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -184,10 +184,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 40),
 
                   // Welcome message
-                  const TitlesTextWidget(label: "Welcome back!", fontSize: 28),
+                  const TitlesTextWidget(
+                    label: "Chào mừng trở lại!",
+                    fontSize: 28,
+                  ),
                   const SizedBox(height: 8),
                   SubtitleTextWidget(
-                    label: "Your welcome message",
+                    label: "Thông điệp chào mừng của bạn",
                     color: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.color?.withOpacity(0.7),
@@ -265,7 +268,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.name,
                             decoration: InputDecoration(
-                              hintText: 'Full Name',
+                              hintText: 'Họ và tên',
                               prefixIcon: Icon(
                                 Icons.person,
                                 color: Theme.of(context).primaryColor,
@@ -305,7 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              hintText: "Email address",
+                              hintText: "Địa chỉ email",
                               prefixIcon: Icon(
                                 IconlyLight.message,
                                 color: Theme.of(context).primaryColor,
@@ -404,7 +407,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             keyboardType: TextInputType.visiblePassword,
                             obscureText: obscureText,
                             decoration: InputDecoration(
-                              hintText: "Repeat password",
+                              hintText: "Nhập lại mật khẩu",
                               prefixIcon: Icon(
                                 IconlyLight.lock,
                                 color: Theme.of(context).primaryColor,

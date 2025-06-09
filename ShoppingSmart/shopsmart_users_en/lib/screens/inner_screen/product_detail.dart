@@ -188,7 +188,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
               : _errorMessage != null
               ? _buildErrorWidget()
               : _detailedProduct == null
-              ? const Center(child: Text('Product not found'))
+              ? const Center(child: Text('Không tìm thấy sản phẩm'))
               : _buildProductContent(cartProvider),
       bottomNavigationBar:
           _detailedProduct != null
@@ -1119,7 +1119,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          "No reviews yet",
+                          "Chưa có đánh giá nào",
                           style: TextStyle(
                             fontSize: 16,
                             color:
@@ -1188,7 +1188,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   _selectedProductItemId == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Please enter a review comment"),
+                    content: Text("Vui lòng nhập nội dung đánh giá"),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -1223,7 +1223,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Thank you for your review!"),
+                      content: Text("Cảm ơn bạn đã đánh giá!"),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -1238,7 +1238,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        response.message ?? "Failed to submit review",
+                        response.message ?? "Không thể gửi đánh giá",
                       ),
                       backgroundColor: Colors.red,
                     ),
@@ -1872,7 +1872,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   // Show a snackbar first to confirm button works
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Opening blog..."),
+                      content: Text("Đang mở bài viết..."),
                       duration: Duration(milliseconds: 500),
                     ),
                   );

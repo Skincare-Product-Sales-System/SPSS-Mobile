@@ -298,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   else
                     SizedBox(
-                      height: size.height * 0.25,
+                      height: 330,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         scrollDirection: Axis.horizontal,
@@ -307,11 +307,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? 10
                                 : productsProvider.getProducts.length,
                         itemBuilder: (context, index) {
-                          return SizedBox(
-                            width: size.width * 0.45,
-                            child: ChangeNotifierProvider.value(
-                              value: productsProvider.getProducts[index],
-                              child: const LatestArrivalProductsWidget(),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: SizedBox(
+                              width: 200,
+                              child: ChangeNotifierProvider.value(
+                                value: productsProvider.getProducts[index],
+                                child: const LatestArrivalProductsWidget(),
+                              ),
                             ),
                           );
                         },
@@ -364,8 +367,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: 0.85,
+                              mainAxisSpacing: 15,
+                              childAspectRatio: 0.65,
                             ),
                         itemCount:
                             productsProvider.getProducts.length > 10

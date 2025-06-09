@@ -16,6 +16,7 @@ class Styles {
               ? const Color.fromARGB(255, 13, 6, 37)
               : AppColors.lightCardColor,
       brightness: isDarkTheme ? Brightness.dark : Brightness.light,
+      fontFamily: 'Roboto',
 
       // Set different primary colors for light and dark themes
       primarySwatch: Colors.purple,

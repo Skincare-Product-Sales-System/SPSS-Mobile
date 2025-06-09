@@ -50,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _logout() async {
     await MyAppFunctions.showErrorOrWarningDialog(
       context: context,
-      subtitle: "Are you sure you want to logout?",
+      subtitle: "Bạn có chắc chắn muốn đăng xuất không?",
       fct: () async {
         await AuthService.logout();
         if (mounted) {
@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Padding(
                 padding: EdgeInsets.all(18.0),
                 child: TitlesTextWidget(
-                  label: "Please login to have unlimited access",
+                  label: "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
                 ),
               ),
             ),
@@ -122,7 +122,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TitlesTextWidget(label: _userInfo?.userName ?? "User"),
+                          TitlesTextWidget(
+                            label: _userInfo?.userName ?? "User",
+                          ),
                           const SizedBox(height: 6),
                           SubtitleTextWidget(
                             label: _userInfo?.email ?? "user@example.com",
@@ -131,7 +133,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.edit, color: Theme.of(context).primaryColor, size: 28),
+                      icon: Icon(
+                        Icons.edit,
+                        color: Theme.of(context).primaryColor,
+                        size: 28,
+                      ),
                       tooltip: 'Chỉnh sửa hồ sơ',
                       onPressed: () {
                         Navigator.push(
@@ -158,24 +164,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Divider(thickness: 1),
                   const SizedBox(height: 10),
-                  const TitlesTextWidget(label: "General"),
+                  const TitlesTextWidget(label: "Chung"),
                   const SizedBox(height: 10),
                   CustomListTile(
-                    text: "All Order",
+                    text: "Tất cả đơn hàng",
                     imagePath: AssetsManager.orderSvg,
                     function: () {
                       Navigator.pushNamed(context, OrdersScreen.routeName);
                     },
                   ),
                   CustomListTile(
-                    text: "Wishlist",
+                    text: "Danh sách yêu thích",
                     imagePath: AssetsManager.wishlistSvg,
                     function: () {
                       Navigator.pushNamed(context, WishlistScreen.routName);
                     },
                   ),
                   CustomListTile(
-                    text: "Viewed recently",
+                    text: "Đã xem gần đây",
                     imagePath: AssetsManager.recent,
                     function: () {
                       Navigator.pushNamed(
@@ -185,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   CustomListTile(
-                    text: "Address",
+                    text: "Địa chỉ",
                     imagePath: AssetsManager.address,
                     function: () {
                       Navigator.push(
@@ -198,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   if (_isLoggedIn)
                     CustomListTile(
-                      text: "Change Password",
+                      text: "Đổi mật khẩu",
                       imagePath: AssetsManager.orderSvg,
                       function: () {
                         Navigator.pushNamed(
@@ -210,12 +216,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 6),
                   const Divider(thickness: 1),
                   const SizedBox(height: 6),
-                  const TitlesTextWidget(label: "Settings"),
+                  const TitlesTextWidget(label: "Cài đặt"),
                   const SizedBox(height: 10),
                   SwitchListTile(
                     secondary: Image.asset(AssetsManager.theme, height: 34),
                     title: Text(
-                      themeProvider.getIsDarkTheme ? "Dark Mode" : "Light Mode",
+                      themeProvider.getIsDarkTheme
+                          ? "Chế độ tối"
+                          : "Chế độ sáng",
                     ),
                     value: themeProvider.getIsDarkTheme,
                     onChanged: (value) {
@@ -234,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 icon: Icon(_isLoggedIn ? Icons.logout : Icons.login),
-                label: Text(_isLoggedIn ? "Logout" : "Login"),
+                label: Text(_isLoggedIn ? "Đăng xuất" : "Đăng nhập"),
                 onPressed: () async {
                   if (_isLoggedIn) {
                     await _logout();

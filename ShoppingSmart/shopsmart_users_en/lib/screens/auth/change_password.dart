@@ -529,7 +529,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           keyboardType: TextInputType.visiblePassword,
                           obscureText: obscureConfirmPassword,
                           decoration: InputDecoration(
-                            hintText: "Confirm New Password",
+                            hintText: "Xác nhận mật khẩu mới",
                             hintStyle: TextStyle(
                               color:
                                   Theme.of(context).brightness ==

@@ -76,7 +76,9 @@ class CartWidget extends StatelessWidget {
                           // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SubtitleTextWidget(
-                              label: CurrencyFormatter.formatVND(cartModel.price),
+                              label: CurrencyFormatter.formatVND(
+                                cartModel.price,
+                              ),
                               color: Colors.blue,
                             ),
                             const Spacer(),
@@ -100,7 +102,7 @@ class CartWidget extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(IconlyLight.arrow_down_2),
-                              label: Text("Qty: ${cartModel.quantity}"),
+                              label: Text("SL: ${cartModel.quantity}"),
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(width: 1),
                                 shape: RoundedRectangleBorder(
