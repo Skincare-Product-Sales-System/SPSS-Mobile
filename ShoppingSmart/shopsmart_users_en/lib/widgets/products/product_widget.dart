@@ -114,11 +114,32 @@ class _ProductWidgetState extends State<ProductWidget> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SubtitleTextWidget(
-                                label: "${getCurrProduct.formattedPrice} VND",
-                                fontWeight: FontWeight.w700,
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 16,
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "From ",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.color
+                                            ?.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          "${getCurrProduct.formattedPrice} VND",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               if (getCurrProduct.marketPrice >
                                   getCurrProduct.price) ...[

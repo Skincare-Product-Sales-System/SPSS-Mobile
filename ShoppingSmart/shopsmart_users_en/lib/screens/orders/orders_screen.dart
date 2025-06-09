@@ -8,6 +8,7 @@ import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../services/my_app_function.dart';
 import '../../screens/auth/login.dart';
+import '../../screens/orders/order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   static const routeName = '/orders';
@@ -375,6 +376,26 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ],
                       ),
                     )
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            IconlyBold.bag,
+                            size: 80,
+                            color: Theme.of(context).disabledColor,
+                          ),
+                          const SizedBox(height: 16),
+                          const TitlesTextWidget(
+                            label: 'No orders yet',
+                            fontSize: 18,
+                          ),
+                          const SizedBox(height: 8),
+                          const SubtitleTextWidget(
+                            label: 'Your order history will appear here',
+                          ),
+                        ],
+                      ),
+                    )
                     : RefreshIndicator(
                       onRefresh: () async {
                         _currentPage = 1;
@@ -515,6 +536,142 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     ],
                                   ),
                                 ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                          final order = _orders[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  OrderDetailScreen.routeName,
+                                  arguments: order.id,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Order #${order.id}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Color(
+                                              int.parse(
+                                                _getStatusColor(
+                                                  order.status,
+                                                ).replaceAll('#', '0xFF'),
+                                              ),
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            order.status.toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Date: ${order.createdAt.toString().split('.')[0]}',
+                                      style: TextStyle(color: Colors.grey[700]),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Divider(),
+                                    ...order.orderDetails.map(
+                                      (detail) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                detail.productName,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              'x${detail.quantity}',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              CurrencyFormatter.formatVND(
+                                                detail.price,
+                                              ),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Divider(),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Total:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          CurrencyFormatter.formatVND(
+                                            order.totalAmount,
+                                          ),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );

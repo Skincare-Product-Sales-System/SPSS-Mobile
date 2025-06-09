@@ -18,6 +18,7 @@ import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_intro_scr
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
+import 'package:shopsmart_users_en/screens/orders/order_detail_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
