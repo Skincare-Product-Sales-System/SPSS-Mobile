@@ -174,6 +174,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               },
               '/order-success': (context) => const OrderSuccessScreen(),
             },
+            onGenerateRoute: (RouteSettings settings) {
+              // Handle dynamic routes with parameters
+              if (settings.name == OrderDetailScreen.routeName) {
+                // Extract orderId from arguments
+                final orderId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (context) => OrderDetailScreen(orderId: orderId),
+                  settings: settings,
+                );
+              }
+              return null; // Let the default routes handle other cases
+            },
           );
         },
       ),

@@ -92,6 +92,16 @@ class OrderResponse {
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
+    DateTime parseDateTime(String? dateStr) {
+      if (dateStr == null) return DateTime.now();
+      try {
+        return DateTime.parse(dateStr);
+      } catch (e) {
+        print('Error parsing date: $dateStr');
+        return DateTime.now();
+      }
+    }
+
     return OrderResponse(
       orderId: json['id'] ?? '',
       status: json['status'] ?? '',

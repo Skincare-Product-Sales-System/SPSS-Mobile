@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shopsmart_users_en/consts/app_colors.dart';
 
 class Styles {
@@ -16,7 +17,14 @@ class Styles {
               ? const Color.fromARGB(255, 13, 6, 37)
               : AppColors.lightCardColor,
       brightness: isDarkTheme ? Brightness.dark : Brightness.light,
-      fontFamily: 'Roboto',
+
+      // Use Google Fonts for better Vietnamese support
+      textTheme: GoogleFonts.notoSansTextTheme(
+        Theme.of(context).textTheme.apply(
+          bodyColor: isDarkTheme ? Colors.white : Colors.black87,
+          displayColor: isDarkTheme ? Colors.white : Colors.black87,
+        ),
+      ),
 
       // Set different primary colors for light and dark themes
       primarySwatch: Colors.purple,
@@ -55,8 +63,10 @@ class Styles {
                 : AppColors.lightScaffoldColor,
         elevation: 0,
         shadowColor: Colors.transparent,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.notoSans(
           color: isDarkTheme ? Colors.white : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

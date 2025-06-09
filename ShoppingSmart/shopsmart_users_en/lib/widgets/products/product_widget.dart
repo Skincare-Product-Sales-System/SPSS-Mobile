@@ -188,13 +188,39 @@ class _ProductWidgetState extends State<ProductWidget> {
                                 );
 
                                 if (getCurrProduct.productItems.isEmpty) {
-                                  debugPrint('No product items available');
+                                  debugPrint(
+                                    'No product items available, using product model price',
+                                  );
+
+                                  // Fallback: use product model price when productItems is empty
+                                  if (getCurrProduct.price <= 0) {
+                                    debugPrint(
+                                      'Invalid price in product model',
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Sản phẩm không có giá. Vui lòng thử lại sau.',
+                                        ),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Use a default productItemId when not available
+                                  cartProvider.addProductToCart(
+                                    productId: getCurrProduct.productId,
+                                    productItemId:
+                                        getCurrProduct
+                                            .productId, // Use productId as fallback
+                                    title: getCurrProduct.productTitle,
+                                    price: getCurrProduct.price.toDouble(),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                        'Sản phẩm hiện không có sẵn. Vui lòng chọn sản phẩm khác.',
-                                      ),
-                                      duration: Duration(seconds: 2),
+                                      content: Text('Đã thêm vào giỏ hàng'),
+                                      duration: Duration(seconds: 1),
                                     ),
                                   );
                                   return;

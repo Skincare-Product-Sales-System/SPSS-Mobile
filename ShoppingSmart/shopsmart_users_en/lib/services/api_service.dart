@@ -12,7 +12,7 @@ import '../models/order_models.dart';
 import '../models/skin_analysis_models.dart';
 import '../models/voucher_model.dart';
 import '../services/jwt_service.dart';
-import '../models/address_model.dart';
+import '../models/address_model.dart' as address_lib;
 import '../models/payment_method_model.dart';
 
 class ApiService {
@@ -1113,14 +1113,12 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse<PaginatedResponse<AddressModel>>> getAddresses({
-    required int pageNumber,
-    required int pageSize,
-  }) async {
+  static Future<ApiResponse<PaginatedResponse<address_lib.AddressModel>>>
+  getAddresses({required int pageNumber, required int pageSize}) async {
     try {
       final token = await JwtService.getStoredToken();
       if (token == null) {
-        return ApiResponse<PaginatedResponse<AddressModel>>(
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
           success: false,
           message: 'Not authenticated',
           errors: ['No authentication token found'],
@@ -1153,12 +1151,12 @@ class ApiService {
           jsonData,
           (data) => PaginatedResponse.fromJson(
             data,
-            (item) => AddressModel.fromJson(item),
+            (item) => address_lib.AddressModel.fromJson(item),
           ),
         );
       } else {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        return ApiResponse<PaginatedResponse<AddressModel>>(
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
           success: false,
           message: jsonData['message'] ?? 'Failed to load addresses',
           errors:
@@ -1168,7 +1166,7 @@ class ApiService {
         );
       }
     } catch (e) {
-      return ApiResponse<PaginatedResponse<AddressModel>>(
+      return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
         success: false,
         message: e.toString(),
         errors: [e.toString()],
