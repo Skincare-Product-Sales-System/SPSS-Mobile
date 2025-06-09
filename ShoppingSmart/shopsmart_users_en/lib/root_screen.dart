@@ -7,6 +7,7 @@ import 'package:shopsmart_users_en/screens/home_screen.dart';
 import 'package:shopsmart_users_en/screens/profile_screen.dart';
 import 'package:shopsmart_users_en/screens/search_screen.dart';
 import 'package:shopsmart_users_en/screens/quiz_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_screen.dart';
 import 'package:shopsmart_users_en/widgets/chat/chat_widget.dart';
 
 class RootScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _RootScreenState extends State<RootScreen> {
       HomeScreen(),
       SearchScreen(),
       QuizScreen(),
+      SkinAnalysisScreen(),
       CartScreen(),
       ProfileScreen(),
     ];
@@ -77,6 +79,14 @@ class _RootScreenState extends State<RootScreen> {
             selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
             icon: Icon(Icons.quiz_outlined),
             label: "Câu Đố",
+          ),
+          const NavigationDestination(
+            selectedIcon: Icon(
+              Icons.face_retouching_natural,
+              color: Colors.pink,
+            ),
+            icon: Icon(Icons.face_retouching_natural_outlined),
+            label: "Phân Tích Da",
           ),
           NavigationDestination(
             selectedIcon: const Icon(IconlyBold.bag_2),

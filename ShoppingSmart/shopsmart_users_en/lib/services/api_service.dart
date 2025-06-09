@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../models/api_response_model.dart';
 import '../models/product_model.dart';
@@ -8,6 +9,7 @@ import '../models/detailed_product_model.dart';
 import '../models/blog_model.dart';
 import '../models/review_models.dart';
 import '../models/order_models.dart';
+import '../models/skin_analysis_models.dart';
 import '../services/jwt_service.dart';
 
 class ApiService {
@@ -901,6 +903,112 @@ class ApiService {
         success: false,
         message: 'Failed to upload image: ${e.toString()}',
         errors: [e.toString()],
+      );
+    }
+  }
+
+  // Skin analysis API call
+  static Future<ApiResponse<SkinAnalysisResult>> analyzeSkin(
+    File imageFile,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: 'Vui lòng đăng nhập để sử dụng tính năng này',
+          errors: ['Người dùng chưa đăng nhập'],
+        );
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/skin-analysis/analyze'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath('faceImage', imageFile.path),
+      );
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>.fromJson(
+          jsonData,
+          (data) => SkinAnalysisResult.fromJson(data),
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        String errorMessage = 'Không thể phân tích da';
+
+        if (errorData != null && errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        } else {
+          // Provide specific error messages based on status code
+          switch (response.statusCode) {
+            case 400:
+              errorMessage =
+                  'Không thể nhận diện khuôn mặt trong ảnh. Vui lòng thử lại với ảnh khác.';
+              break;
+            case 401:
+              errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+              break;
+            case 500:
+              errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+              break;
+            default:
+              errorMessage =
+                  'Không thể phân tích da. Vui lòng thử lại với ảnh khác.';
+          }
+        }
+
+        List<String> errors = [];
+        if (errorData != null && errorData['errors'] != null) {
+          errors = List<String>.from(errorData['errors']);
+        }
+
+        if (errors.isEmpty) {
+          errors.add(
+            'Vui lòng thử lại với ảnh rõ nét và chụp trực diện khuôn mặt',
+          );
+        }
+
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: errorMessage,
+          errors: errors,
+        );
+      }
+    } on SocketException {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Không có kết nối mạng',
+        errors: ['Vui lòng kiểm tra kết nối internet của bạn và thử lại'],
+      );
+    } on TimeoutException {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Hệ thống phản hồi chậm',
+        errors: ['Vui lòng thử lại sau'],
+      );
+    } catch (e) {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Đã xảy ra lỗi khi phân tích da',
+        errors: ['Vui lòng thử lại với ảnh khác'],
       );
     }
   }

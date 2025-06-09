@@ -17,6 +17,9 @@ class Styles {
               : AppColors.lightCardColor,
       brightness: isDarkTheme ? Brightness.dark : Brightness.light,
 
+      // Set font family to Roboto for better Vietnamese character support
+      fontFamily: 'Roboto',
+
       // Set different primary colors for light and dark themes
       primarySwatch: Colors.purple,
       primaryColor:

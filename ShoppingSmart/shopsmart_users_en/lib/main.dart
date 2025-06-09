@@ -14,6 +14,10 @@ import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/providers/chat_provider.dart';
 import 'package:shopsmart_users_en/screens/chat_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_intro_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
+import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -157,6 +161,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               CheckoutScreen.routeName: (context) => const CheckoutScreen(),
               OffersScreen.routeName: (context) => const OffersScreen(),
               ChatScreen.routeName: (context) => const ChatScreen(),
+              SkinAnalysisIntroScreen.routeName:
+                  (context) => const SkinAnalysisIntroScreen(),
+              SkinAnalysisCameraScreen.routeName:
+                  (context) => const SkinAnalysisCameraScreen(),
+              SkinAnalysisResultScreen.routeName: (context) {
+                final result =
+                    ModalRoute.of(context)!.settings.arguments
+                        as SkinAnalysisResult;
+                return SkinAnalysisResultScreen(result: result);
+              },
             },
           );
         },
