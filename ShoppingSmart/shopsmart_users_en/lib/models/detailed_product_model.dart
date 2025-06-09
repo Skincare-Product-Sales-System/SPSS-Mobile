@@ -1,4 +1,3 @@
-
 class DetailedProductModel {
   final String id;
   final String name;
@@ -114,6 +113,17 @@ class ProductItem {
           [],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'quantityInStock': quantityInStock,
+      'imageUrl': imageUrl,
+      'price': price,
+      'marketPrice': marketPrice,
+      'configurations': configurations.map((config) => config.toJson()).toList(),
+    };
+  }
 }
 
 class Configuration {
@@ -133,6 +143,14 @@ class Configuration {
       optionName: json['optionName']?.toString() ?? '',
       optionId: json['optionId']?.toString() ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'variationName': variationName,
+      'optionName': optionName,
+      'optionId': optionId,
+    };
   }
 }
 

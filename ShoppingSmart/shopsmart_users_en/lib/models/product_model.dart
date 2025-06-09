@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'detailed_product_model.dart';
 
 class ProductModel with ChangeNotifier {
   final String id;
@@ -8,6 +9,7 @@ class ProductModel with ChangeNotifier {
   final int price;
   final int marketPrice;
   final int soldCount;
+  final List<ProductItem> productItems;
 
   ProductModel({
     required this.id,
@@ -17,29 +19,53 @@ class ProductModel with ChangeNotifier {
     required this.price,
     required this.marketPrice,
     required this.soldCount,
+    required this.productItems,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    debugPrint('Parsing product JSON: ${json['id']}');
+    debugPrint('Raw product items: ${json['productItems']}');
+    
+    List<ProductItem> parsedItems = [];
+    if (json['productItems'] != null) {
+      try {
+        parsedItems = (json['productItems'] as List<dynamic>)
+            .map((e) {
+              debugPrint('Parsing product item: $e');
+              return ProductItem.fromJson(e as Map<String, dynamic>);
+            })
+            .toList();
+        debugPrint('Successfully parsed ${parsedItems.length} product items');
+      } catch (e) {
+        debugPrint('Error parsing product items: $e');
+      }
+    }
+    
     return ProductModel(
       id: json['id']?.toString() ?? '',
       thumbnail: json['thumbnail']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      // Handle both int and double types for price fields
       price: _parseIntFromDynamic(json['price']),
       marketPrice: _parseIntFromDynamic(json['marketPrice']),
       soldCount: _parseIntFromDynamic(json['soldCount']),
+      productItems: parsedItems,
     );
   }
 
-  // Helper method to safely convert dynamic number types to int
   static int _parseIntFromDynamic(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
     if (value is double) return value.toInt();
     if (value is String) {
-      return int.tryParse(value) ?? 0;
+      try {
+        return int.parse(value);
+      } catch (e) {
+        debugPrint('Error parsing int from string: $value');
+        return 0;
+      }
     }
+    debugPrint('Unknown type for price: ${value.runtimeType}');
     return 0;
   }
 
@@ -52,6 +78,7 @@ class ProductModel with ChangeNotifier {
       'price': price,
       'marketPrice': marketPrice,
       'soldCount': soldCount,
+      'productItems': productItems.map((item) => item.toJson()).toList(),
     };
   }
 

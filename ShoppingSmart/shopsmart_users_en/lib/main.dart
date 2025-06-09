@@ -30,6 +30,7 @@ import 'screens/auth/change_password.dart';
 import 'screens/inner_screen/orders/orders_screen.dart';
 import 'screens/inner_screen/wishlist.dart';
 import 'screens/search_screen.dart';
+import 'screens/checkout/order_success_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -171,6 +172,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                         as SkinAnalysisResult;
                 return SkinAnalysisResultScreen(result: result);
               },
+              '/order-success': (context) => const OrderSuccessScreen(),
             },
           );
         },

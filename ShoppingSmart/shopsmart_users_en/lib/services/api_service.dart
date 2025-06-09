@@ -11,6 +11,8 @@ import '../models/review_models.dart';
 import '../models/order_models.dart';
 import '../models/skin_analysis_models.dart';
 import '../services/jwt_service.dart';
+import '../models/address_model.dart';
+import '../models/payment_method_model.dart';
 
 class ApiService {
   // Use different base URLs for different platforms

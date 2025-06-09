@@ -46,6 +46,10 @@ class ProductsProvider with ChangeNotifier {
 
       if (response.success && response.data != null) {
         final paginatedData = response.data!;
+        debugPrint('Loading products - Total items: ${paginatedData.items.length}');
+        for (var product in paginatedData.items) {
+          debugPrint('Product ${product.id} - Items count: ${product.productItems.length}');
+        }
 
         if (refresh) {
           _products = paginatedData.items;

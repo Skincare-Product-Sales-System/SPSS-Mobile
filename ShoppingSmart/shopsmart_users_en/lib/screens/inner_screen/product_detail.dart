@@ -1940,6 +1940,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                       // Add to cart logic with selected variation and quantity
                       cartProvider.addProductToCart(
                         productId: _detailedProduct!.id,
+                        productItemId: _selectedProductItemId!,
                         title: _detailedProduct!.name,
                         price: _currentPrice,
                       );
