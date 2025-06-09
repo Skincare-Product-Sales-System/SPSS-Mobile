@@ -8,6 +8,7 @@ import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../services/my_app_function.dart';
 import '../../screens/auth/login.dart';
+import '../../screens/orders/order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   static const routeName = '/orders';
@@ -401,120 +402,131 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          'Đơn hàng #${order.id}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Color(
-                                            int.parse(
-                                              _getStatusColor(
-                                                order.status,
-                                              ).replaceAll('#', '0xFF'),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  OrderDetailScreen.routeName,
+                                  arguments: order.id,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Đơn hàng #${order.id}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        child: Text(
-                                          _translateStatusToVietnamese(
-                                            order.status,
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
                                           ),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Ngày: ${order.createdAt.toString().split('.')[0]}',
-                                    style: TextStyle(color: Colors.grey[700]),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Divider(),
-                                  ...order.orderDetails.map(
-                                    (detail) => Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4.0,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              detail.productName,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
+                                          decoration: BoxDecoration(
+                                            color: Color(
+                                              int.parse(
+                                                _getStatusColor(
+                                                  order.status,
+                                                ).replaceAll('#', '0xFF'),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
                                             ),
                                           ),
-                                          Text(
-                                            'x${detail.quantity}',
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            CurrencyFormatter.formatVND(
-                                              detail.price,
+                                          child: Text(
+                                            _translateStatusToVietnamese(
+                                              order.status,
                                             ),
                                             style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.blue,
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Ngày: ${order.createdAt.toString().split('.')[0]}',
+                                      style: TextStyle(color: Colors.grey[700]),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Divider(),
+                                    ...order.orderDetails.map(
+                                      (detail) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                detail.productName,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              'x${detail.quantity}',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              CurrencyFormatter.formatVND(
+                                                detail.price,
+                                              ),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Divider(),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Tổng cộng:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                    Divider(),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Tổng cộng:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        CurrencyFormatter.formatVND(
-                                          order.totalAmount,
+                                        Text(
+                                          CurrencyFormatter.formatVND(
+                                            order.totalAmount,
+                                          ),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                          ),
                                         ),
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );

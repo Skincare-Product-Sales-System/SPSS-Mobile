@@ -27,7 +27,11 @@ class OrderDetail {
       productImage: json['productImage'] ?? '',
       quantity: json['quantity'] ?? 0,
       price: (json['price'] ?? 0).toDouble(),
-      variationOptionValues: (json['variationOptionValues'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      variationOptionValues:
+          (json['variationOptionValues'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       isReviewable: json['isReviewable'] ?? false,
     );
   }
@@ -93,10 +97,11 @@ class OrderResponse {
       try {
         return DateTime.parse(dateStr);
       } catch (e) {
-        print('Error parsing date in OrderResponse: $dateStr');
+        print('Error parsing date: $dateStr');
         return DateTime.now();
       }
     }
+
     return OrderResponse(
       orderId: json['id'] ?? '',
       status: json['status'] ?? '',
@@ -151,7 +156,11 @@ class OrderModel {
       createdAt: parseDateTime(json['createdTime']),
       cancelReasonId: json['cancelReasonId'],
       paymentMethodId: json['paymentMethodId'] ?? '',
-      orderDetails: parseOrderDetails(json['orderDetails']),
+      orderDetails:
+          (json['orderDetails'] as List<dynamic>?)
+              ?.map((detail) => OrderDetail.fromJson(detail))
+              .toList() ??
+          [],
     );
   }
 
@@ -159,4 +168,124 @@ class OrderModel {
   String toString() {
     return 'OrderModel(id: $id, status: $status, totalAmount: $totalAmount, createdAt: $createdAt, cancelReasonId: $cancelReasonId, paymentMethodId: $paymentMethodId, orderDetails: ${orderDetails.map((d) => d.toString()).join(", ")})';
   }
-} 
+}
+
+// New models for detailed order information
+class AddressModel {
+  final String id;
+  final bool isDefault;
+  final String customerName;
+  final int countryId;
+  final String phoneNumber;
+  final String countryName;
+  final String streetNumber;
+  final String addressLine1;
+  final String addressLine2;
+  final String city;
+  final String ward;
+  final String postCode;
+  final String province;
+
+  AddressModel({
+    required this.id,
+    required this.isDefault,
+    required this.customerName,
+    required this.countryId,
+    required this.phoneNumber,
+    required this.countryName,
+    required this.streetNumber,
+    required this.addressLine1,
+    required this.addressLine2,
+    required this.city,
+    required this.ward,
+    required this.postCode,
+    required this.province,
+  });
+
+  factory AddressModel.fromJson(Map<String, dynamic> json) {
+    return AddressModel(
+      id: json['id'] ?? '',
+      isDefault: json['isDefault'] ?? false,
+      customerName: json['customerName'] ?? '',
+      countryId: json['countryId'] ?? 0,
+      phoneNumber: json['phoneNumber'] ?? '',
+      countryName: json['countryName'] ?? '',
+      streetNumber: json['streetNumber'] ?? '',
+      addressLine1: json['addressLine1'] ?? '',
+      addressLine2: json['addressLine2'] ?? '',
+      city: json['city'] ?? '',
+      ward: json['ward'] ?? '',
+      postCode: json['postCode'] ?? '',
+      province: json['province'] ?? '',
+    );
+  }
+}
+
+class StatusChangeModel {
+  final DateTime date;
+  final String status;
+
+  StatusChangeModel({required this.date, required this.status});
+
+  factory StatusChangeModel.fromJson(Map<String, dynamic> json) {
+    return StatusChangeModel(
+      date: DateTime.parse(json['date']),
+      status: json['status'] ?? '',
+    );
+  }
+}
+
+class OrderDetailModel {
+  final String id;
+  final String status;
+  final double originalOrderTotal;
+  final double discountedOrderTotal;
+  final String? voucherCode;
+  final double discountAmount;
+  final String? cancelReasonId;
+  final DateTime createdTime;
+  final String paymentMethodId;
+  final List<OrderDetail> orderDetails;
+  final AddressModel address;
+  final List<StatusChangeModel> statusChanges;
+
+  OrderDetailModel({
+    required this.id,
+    required this.status,
+    required this.originalOrderTotal,
+    required this.discountedOrderTotal,
+    this.voucherCode,
+    required this.discountAmount,
+    this.cancelReasonId,
+    required this.createdTime,
+    required this.paymentMethodId,
+    required this.orderDetails,
+    required this.address,
+    required this.statusChanges,
+  });
+
+  factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
+    return OrderDetailModel(
+      id: json['id'] ?? '',
+      status: json['status'] ?? '',
+      originalOrderTotal: (json['originalOrderTotal'] ?? 0).toDouble(),
+      discountedOrderTotal: (json['discountedOrderTotal'] ?? 0).toDouble(),
+      voucherCode: json['voucherCode'],
+      discountAmount: (json['discountAmount'] ?? 0).toDouble(),
+      cancelReasonId: json['cancelReasonId'],
+      createdTime: DateTime.parse(json['createdTime']),
+      paymentMethodId: json['paymentMethodId'] ?? '',
+      orderDetails:
+          (json['orderDetails'] as List<dynamic>?)
+              ?.map((detail) => OrderDetail.fromJson(detail))
+              .toList() ??
+          [],
+      address: AddressModel.fromJson(json['address'] ?? {}),
+      statusChanges:
+          (json['statusChanges'] as List<dynamic>?)
+              ?.map((change) => StatusChangeModel.fromJson(change))
+              .toList() ??
+          [],
+    );
+  }
+}

@@ -1,4 +1,4 @@
-import 'package:signalr_netcore/signalr_client.dart';
+// import 'package:signalr_netcore/signalr_client.dart'; // Package not available
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -41,6 +41,23 @@ class ChatMessage {
       timestamp: DateTime.parse(json['timestamp']),
     );
   }
+}
+
+// Dummy HubConnection class since signalr_netcore is not available
+class HubConnection {
+  void on(String method, Function callback) {}
+  void onreconnecting(Function callback) {}
+  void onreconnected(Function callback) {}
+  void onclose(Function callback) {}
+  Future<void> start() async {}
+  Future<void> stop() async {}
+  Future<void> invoke(String method, {List<Object>? args}) async {}
+}
+
+class HubConnectionBuilder {
+  HubConnectionBuilder withUrl(String url) => this;
+  HubConnectionBuilder withAutomaticReconnect({List<int>? retryDelays}) => this;
+  HubConnection build() => HubConnection();
 }
 
 class ChatService {

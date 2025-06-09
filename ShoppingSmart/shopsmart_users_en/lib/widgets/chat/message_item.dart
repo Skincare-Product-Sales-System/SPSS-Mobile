@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+// Removed flutter_rating_bar dependency
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -336,21 +336,21 @@ class MessageItem extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4.0),
-                            RatingBar.builder(
-                              initialRating:
-                                  (contentJson['rating'] ?? 4.5).toDouble(),
-                              minRating: 1,
-                              direction: Axis.horizontal,
-                              allowHalfRating: true,
-                              itemCount: 5,
-                              itemSize: 12.0,
-                              ignoreGestures: true,
-                              itemBuilder:
-                                  (context, _) => const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                  ),
-                              onRatingUpdate: (rating) {},
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(5, (index) {
+                                final rating =
+                                    (contentJson['rating'] ?? 4.5).toDouble();
+                                return Icon(
+                                  index < rating.floor()
+                                      ? Icons.star
+                                      : (index < rating && rating % 1 >= 0.5)
+                                      ? Icons.star_half
+                                      : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 12.0,
+                                );
+                              }),
                             ),
                             const SizedBox(width: 4.0),
                             Text(

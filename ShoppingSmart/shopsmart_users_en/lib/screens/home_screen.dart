@@ -15,6 +15,8 @@ import '../services/api_service.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
 import '../screens/search_screen.dart';
+// import '../widgets/order_demo_button.dart'; // Removed as requested
+import '../widgets/voucher_demo_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -387,6 +389,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Blog Section
                   const BlogSection(),
+
+                  // Demo button for order detail screen
+                  // OrderDemoButton removed as requested
+
+                  // Voucher Demo
+                  const VoucherDemoWidget(),
 
                   const SizedBox(height: 20.0),
                 ],

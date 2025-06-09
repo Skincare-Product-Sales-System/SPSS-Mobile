@@ -10,8 +10,9 @@ import '../models/blog_model.dart';
 import '../models/review_models.dart';
 import '../models/order_models.dart';
 import '../models/skin_analysis_models.dart';
+import '../models/voucher_model.dart';
 import '../services/jwt_service.dart';
-import '../models/address_model.dart';
+import '../models/address_model.dart' as address_lib;
 import '../models/payment_method_model.dart';
 
 class ApiService {
@@ -787,6 +788,262 @@ class ApiService {
     }
   }
 
+  // Get order detail by ID
+  static Future<ApiResponse<OrderDetailModel>> getOrderDetail(
+    String orderId,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderDetailModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/orders/$orderId');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderDetailModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<OrderDetailModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get order detail',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<OrderDetailModel>(
+            success: false,
+            message: 'Failed to get order detail',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get vouchers with pagination
+  static Future<ApiResponse<PaginatedResponse<VoucherModel>>> getVouchers({
+    int pageNumber = 1,
+    int pageSize = 10,
+    String? status,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<VoucherModel>>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/voucher',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => VoucherModel.fromJson(item),
+          ),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<PaginatedResponse<VoucherModel>>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get vouchers',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<PaginatedResponse<VoucherModel>>(
+            success: false,
+            message: 'Failed to get vouchers',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Validate voucher by code
+  static Future<ApiResponse<VoucherModel>> validateVoucher(
+    String voucherCode,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<VoucherModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/voucher/validate/$voucherCode');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => VoucherModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Voucher not valid',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: 'Failed to validate voucher',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
   // Post a review
   static Future<ApiResponse<Map<String, dynamic>>> postReview({
     required String productItemId,
@@ -856,14 +1113,12 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse<PaginatedResponse<AddressModel>>> getAddresses({
-    required int pageNumber,
-    required int pageSize,
-  }) async {
+  static Future<ApiResponse<PaginatedResponse<address_lib.AddressModel>>>
+  getAddresses({required int pageNumber, required int pageSize}) async {
     try {
       final token = await JwtService.getStoredToken();
       if (token == null) {
-        return ApiResponse<PaginatedResponse<AddressModel>>(
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
           success: false,
           message: 'Not authenticated',
           errors: ['No authentication token found'],
@@ -896,12 +1151,12 @@ class ApiService {
           jsonData,
           (data) => PaginatedResponse.fromJson(
             data,
-            (item) => AddressModel.fromJson(item),
+            (item) => address_lib.AddressModel.fromJson(item),
           ),
         );
       } else {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        return ApiResponse<PaginatedResponse<AddressModel>>(
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
           success: false,
           message: jsonData['message'] ?? 'Failed to load addresses',
           errors:
@@ -911,7 +1166,7 @@ class ApiService {
         );
       }
     } catch (e) {
-      return ApiResponse<PaginatedResponse<AddressModel>>(
+      return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
         success: false,
         message: e.toString(),
         errors: [e.toString()],

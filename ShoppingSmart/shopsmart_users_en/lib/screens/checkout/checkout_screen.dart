@@ -9,14 +9,15 @@ import '../../screens/auth/login.dart';
 import '../../widgets/app_name_text.dart';
 import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
-import '../../models/order_models.dart';
+import '../../models/address_model.dart';
 import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
-import '../../models/address_model.dart';
 import '../../models/payment_method_model.dart';
 import '../orders/orders_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../models/voucher_model.dart';
+import '../../widgets/voucher_card_widget.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -35,6 +36,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _selectedAddressId;
   String? _selectedPaymentMethodId;
   String? _selectedVoucherId;
+  VoucherModel? _selectedVoucher;
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
@@ -401,7 +403,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                           const SizedBox(height: 24),
 
-                          // Voucher Selection (Optional)
+                          // Voucher Selection
                           Card(
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -409,19 +411,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const TitlesTextWidget(
-                                    label: 'Mã giảm giá (Tùy chọn)',
+                                    label: 'Mã giảm giá',
+                                    fontSize: 18,
                                   ),
-                                  const SizedBox(height: 8),
-                                  DropdownButtonFormField<String>(
-                                    value: _selectedVoucherId,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Select Voucher',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    items: const [], // TODO: Add voucher items
-                                    onChanged: (value) {
+                                  const SizedBox(height: 12),
+                                  VoucherCardWidget(
+                                    selectedVoucher: _selectedVoucher,
+                                    orderTotal: totalAmount,
+                                    onVoucherChanged: (voucher) {
                                       setState(() {
-                                        _selectedVoucherId = value;
+                                        _selectedVoucher = voucher;
+                                        _selectedVoucherId = voucher?.id;
                                       });
                                     },
                                   ),
@@ -459,12 +459,46 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                   const Divider(),
                                   ListTile(
-                                    title: const Text('Tổng cộng'),
+                                    title: const Text('Tạm tính'),
                                     trailing: Text(
-                                      '\$${totalAmount.toStringAsFixed(2)}',
+                                      CurrencyFormatter.formatVND(totalAmount),
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                  if (_selectedVoucher != null) ...[
+                                    ListTile(
+                                      title: Text(
+                                        'Giảm giá (${_selectedVoucher!.code})',
+                                      ),
+                                      trailing: Text(
+                                        '- ${CurrencyFormatter.formatVND(_selectedVoucher!.calculateDiscount(totalAmount))}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  ListTile(
+                                    title: const Text(
+                                      'Tổng thanh toán',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    trailing: Text(
+                                      CurrencyFormatter.formatVND(
+                                        totalAmount -
+                                            (_selectedVoucher
+                                                    ?.calculateDiscount(
+                                                      totalAmount,
+                                                    ) ??
+                                                0),
+                                      ),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
+                                        color: Colors.red,
                                       ),
                                     ),
                                   ),

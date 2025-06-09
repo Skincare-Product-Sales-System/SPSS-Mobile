@@ -18,6 +18,7 @@ import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_intro_scr
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
+import 'package:shopsmart_users_en/screens/orders/order_detail_screen.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -175,6 +176,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               '/order-success': (context) => const OrderSuccessScreen(),
               SkinAnalysisHistoryScreen.routeName:
                   (context) => const SkinAnalysisHistoryScreen(),
+            },
+            onGenerateRoute: (RouteSettings settings) {
+              // Handle dynamic routes with parameters
+              if (settings.name == OrderDetailScreen.routeName) {
+                // Extract orderId from arguments
+                final orderId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (context) => OrderDetailScreen(orderId: orderId),
+                  settings: settings,
+                );
+              }
+              return null; // Let the default routes handle other cases
             },
           );
         },
