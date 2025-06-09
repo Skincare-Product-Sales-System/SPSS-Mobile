@@ -306,7 +306,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Failed to load articles',
+                      'Không thể tải bài viết',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -338,7 +338,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ElevatedButton.icon(
                       onPressed: _loadBlogs,
                       icon: Icon(Icons.refresh, size: 18),
-                      label: const Text('Try Again'),
+                      label: const Text('Thử Lại'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
@@ -412,7 +412,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No articles available',
+                      'Không có bài viết',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -424,7 +424,7 @@ class _BlogSectionState extends State<BlogSection> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Check back later for new content',
+                      'Vui lòng quay lại sau để xem nội dung mới',
                       style: TextStyle(
                         fontSize: 14,
                         color:

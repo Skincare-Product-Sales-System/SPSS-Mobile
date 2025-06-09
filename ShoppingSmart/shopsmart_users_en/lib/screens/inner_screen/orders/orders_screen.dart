@@ -18,14 +18,14 @@ class _OrdersScreenFreeState extends State<OrdersScreenFree> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const TitlesTextWidget(label: 'Placed orders')),
+      appBar: AppBar(title: const TitlesTextWidget(label: 'Đơn hàng đã đặt')),
       body:
           isEmptyOrders
               ? EmptyBagWidget(
                 imagePath: AssetsManager.orderBag,
-                title: "No orders has been placed yet",
+                title: "Bạn chưa đặt đơn hàng nào",
                 subtitle: "",
-                buttonText: "Shop now",
+                buttonText: "Mua sắm ngay",
               )
               : ListView.separated(
                 itemCount: 15,

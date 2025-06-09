@@ -5,10 +5,12 @@ import 'quiz_question_screen.dart';
 
 class QuizScreen extends StatelessWidget {
   static const routeName = '/quiz';
-  const QuizScreen({Key? key}) : super(key: key);
+  const QuizScreen({super.key});
 
   Future<List<Map<String, dynamic>>> fetchQuizSets() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:5041/api/quiz-sets?pageNumber=1&pageSize=10'));
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5041/api/quiz-sets?pageNumber=1&pageSize=10'),
+    );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final items = data['data']['items'] as List<dynamic>;
@@ -22,10 +24,7 @@ class QuizScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quiz'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Bài kiểm tra'), centerTitle: true),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: fetchQuizSets(),
         builder: (context, snapshot) {
@@ -51,9 +50,14 @@ class QuizScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.97),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withOpacity(0.97),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.18), width: 1.5),
+                    border: Border.all(
+                      color: Theme.of(context).primaryColor.withOpacity(0.18),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
@@ -70,7 +74,10 @@ class QuizScreen extends StatelessWidget {
                           topLeft: Radius.circular(16),
                           topRight: Radius.circular(16),
                         ),
-                        child: _QuizImageChooser(imageJpg: imageJpg, imagePng: imagePng),
+                        child: _QuizImageChooser(
+                          imageJpg: imageJpg,
+                          imagePng: imagePng,
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -79,7 +86,10 @@ class QuizScreen extends StatelessWidget {
                           children: [
                             Text(
                               quiz['name'] ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             SizedBox(
@@ -88,21 +98,32 @@ class QuizScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primaryColor,
                                   foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                 ),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => QuizQuestionScreen(
-                                        quizSetId: quiz['id'],
-                                        quizSetName: quiz['name'] ?? '',
-                                      ),
+                                      builder:
+                                          (context) => QuizQuestionScreen(
+                                            quizSetId: quiz['id'],
+                                            quizSetName: quiz['name'] ?? '',
+                                          ),
                                     ),
                                   );
                                 },
-                                child: const Text('Take quiz', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                child: const Text(
+                                  'Làm bài kiểm tra',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -131,7 +152,8 @@ class _QuizImageChooser extends StatelessWidget {
     return FutureBuilder(
       future: _assetExists(context, imageJpg),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.data == true) {
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.data == true) {
           return Image.asset(
             imageJpg,
             height: 160,
@@ -142,7 +164,8 @@ class _QuizImageChooser extends StatelessWidget {
         return FutureBuilder(
           future: _assetExists(context, imagePng),
           builder: (context, snap) {
-            if (snap.connectionState == ConnectionState.done && snap.data == true) {
+            if (snap.connectionState == ConnectionState.done &&
+                snap.data == true) {
               return Image.asset(
                 imagePng,
                 height: 160,
@@ -178,4 +201,4 @@ class _QuizImageChooser extends StatelessWidget {
 //    assets:
 //      - assets/images/quiz_1.jpg
 //      - assets/images/quiz_2.jpg
-// 3. Đặt tên ảnh đúng thứ tự hoặc sửa lại imageName trong code cho phù hợp quizset 
+// 3. Đặt tên ảnh đúng thứ tự hoặc sửa lại imageName trong code cho phù hợp quizset

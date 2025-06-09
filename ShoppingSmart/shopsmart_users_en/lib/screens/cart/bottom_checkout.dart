@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/cart_provider.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
-import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
-import 'package:shopsmart_users_en/widgets/title_text.dart';
 import 'package:shopsmart_users_en/services/currency_formatter.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
@@ -69,7 +67,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Total Items',
+                                  'Tổng sản phẩm',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(context)
@@ -80,7 +78,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  '$totalProducts products / $totalItems items',
+                                  '$totalProducts sản phẩm / $totalItems mặt hàng',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -96,7 +94,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Total Amount',
+                                  'Tổng tiền',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(context)
@@ -139,7 +137,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                                   MyAppFunctions.showErrorOrWarningDialog(
                                     context: context,
                                     subtitle:
-                                        'You need to login first to proceed with checkout',
+                                        'Bạn cần đăng nhập trước để tiến hành thanh toán',
                                     fct: () {
                                       Navigator.pushNamed(
                                         context,
@@ -170,8 +168,8 @@ class CartBottomSheetWidget extends StatelessWidget {
                       icon: const Icon(Icons.shopping_cart_checkout, size: 20),
                       label: Text(
                         totalAmount > 0
-                            ? 'Checkout • ${CurrencyFormatter.formatVND(totalAmount)}'
-                            : 'Cart is Empty',
+                            ? 'Thanh toán • ${CurrencyFormatter.formatVND(totalAmount)}'
+                            : 'Giỏ hàng trống',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -187,10 +185,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          OrdersScreen.routeName,
-                        );
+                        Navigator.pushNamed(context, OrdersScreen.routeName);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
@@ -202,7 +197,7 @@ class CartBottomSheetWidget extends StatelessWidget {
                       ),
                       icon: const Icon(Icons.history, size: 20),
                       label: const Text(
-                        'View Orders',
+                        'Xem đơn hàng',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

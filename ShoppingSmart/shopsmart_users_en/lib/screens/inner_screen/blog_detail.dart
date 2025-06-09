@@ -114,7 +114,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           _loadBlogDetails(blogId);
                         }
                       },
-                      child: const Text('Retry'),
+                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
@@ -122,7 +122,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
               : _detailedBlog == null
               ? Center(
                 child: Text(
-                  'Blog not found',
+                  'Không tìm thấy bài viết',
                   style: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),

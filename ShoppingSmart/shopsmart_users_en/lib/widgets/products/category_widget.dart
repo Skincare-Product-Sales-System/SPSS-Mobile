@@ -56,7 +56,7 @@ class CategoryWidget extends StatelessWidget {
           Navigator.pushNamed(
             context,
             SearchScreen.routeName,
-            arguments: isSelected ? "All" : category.categoryName,
+            arguments: isSelected ? "Tất Cả" : category.categoryName,
           );
         }
       },
@@ -182,7 +182,7 @@ class CategorySection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Categories",
+                    "Danh Mục",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -196,11 +196,11 @@ class CategorySection extends StatelessWidget {
                         Navigator.pushNamed(
                           context,
                           SearchScreen.routeName,
-                          arguments: "All",
+                          arguments: "Tất Cả",
                         );
                       },
                       child: Text(
-                        'See All',
+                        'Xem Tất Cả',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class CategorySection extends StatelessWidget {
                     return CategoryWidget(
                       category: CategoryModel(
                         id: '',
-                        categoryName: 'All',
+                        categoryName: 'Tất Cả',
                         children: [],
                       ),
                       isSelected: categoriesProvider.selectedCategoryId == null,

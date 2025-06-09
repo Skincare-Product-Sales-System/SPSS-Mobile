@@ -12,6 +12,12 @@ import 'package:shopsmart_users_en/screens/all_products_screen.dart';
 import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
+import 'package:shopsmart_users_en/providers/chat_provider.dart';
+import 'package:shopsmart_users_en/screens/chat_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_intro_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
+import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -24,6 +30,7 @@ import 'screens/auth/change_password.dart';
 import 'screens/inner_screen/orders/orders_screen.dart';
 import 'screens/inner_screen/wishlist.dart';
 import 'screens/search_screen.dart';
+import 'screens/checkout/order_success_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -114,6 +121,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return ViewedProdProvider();
           },
         ),
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = ChatProvider();
+            provider.initialize();
+            return provider;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -125,7 +139,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               context: context,
             ),
             home: const RootScreen(),
-            // home: const LoginScreen(),
             routes: {
               RootScreen.routeName: (context) => const RootScreen(),
               ProductDetailsScreen.routName:
@@ -147,6 +160,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const ChangePasswordScreen(),
               CheckoutScreen.routeName: (context) => const CheckoutScreen(),
               OffersScreen.routeName: (context) => const OffersScreen(),
+              ChatScreen.routeName: (context) => const ChatScreen(),
+              SkinAnalysisIntroScreen.routeName:
+                  (context) => const SkinAnalysisIntroScreen(),
+              SkinAnalysisCameraScreen.routeName:
+                  (context) => const SkinAnalysisCameraScreen(),
+              SkinAnalysisResultScreen.routeName: (context) {
+                final result =
+                    ModalRoute.of(context)!.settings.arguments
+                        as SkinAnalysisResult;
+                return SkinAnalysisResultScreen(result: result);
+              },
+              '/order-success': (context) => const OrderSuccessScreen(),
             },
           );
         },

@@ -55,10 +55,35 @@ class _ProductWidgetState extends State<ProductWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FancyShimmerImage(
-                      imageUrl: getCurrProduct.productImage,
-                      height: size.height * 0.22,
-                      width: double.infinity,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        height: size.height * 0.22,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: FancyShimmerImage(
+                          imageUrl: getCurrProduct.productImage,
+                          height: size.height * 0.22,
+                          width: double.infinity,
+                          boxFit: BoxFit.contain,
+                          errorWidget: Container(
+                            height: size.height * 0.22,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 42,
+                              color: Theme.of(context).disabledColor,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12.0),
                     Row(
@@ -131,10 +156,92 @@ class _ProductWidgetState extends State<ProductWidget> {
                                 )) {
                                   return;
                                 }
+                                debugPrint(
+                                  'Product ID: ${getCurrProduct.productId}',
+                                );
+                                debugPrint(
+                                  'Product Items: ${getCurrProduct.productItems.length}',
+                                );
+                                debugPrint(
+                                  'Product Items Data: ${getCurrProduct.productItems}',
+                                );
+
+                                if (getCurrProduct.productItems.isEmpty) {
+                                  debugPrint('No product items available');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sản phẩm hiện không có sẵn. Vui lòng chọn sản phẩm khác.',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                // Get the first product item with valid price and quantity
+                                final validItem = getCurrProduct.productItems
+                                    .firstWhere(
+                                      (item) =>
+                                          item.price > 0 &&
+                                          item.quantityInStock > 0,
+                                      orElse: () {
+                                        debugPrint(
+                                          'No valid item found, using first item',
+                                        );
+                                        return getCurrProduct
+                                            .productItems
+                                            .first;
+                                      },
+                                    );
+
+                                debugPrint(
+                                  'Selected Item Price: ${validItem.price}',
+                                );
+                                debugPrint('Selected Item ID: ${validItem.id}');
+                                debugPrint(
+                                  'Selected Item Quantity: ${validItem.quantityInStock}',
+                                );
+
+                                if (validItem.price <= 0) {
+                                  debugPrint('Invalid price for selected item');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sản phẩm không có giá. Vui lòng thử lại sau.',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                if (validItem.quantityInStock <= 0) {
+                                  debugPrint(
+                                    'No stock available for selected item',
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sản phẩm đã hết hàng. Vui lòng thử lại sau.',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 cartProvider.addProductToCart(
                                   productId: getCurrProduct.productId,
+                                  productItemId: validItem.id,
                                   title: getCurrProduct.productTitle,
-                                  price: double.parse(getCurrProduct.productPrice),
+                                  price: validItem.price.toDouble(),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Đã thêm vào giỏ hàng'),
+                                    duration: Duration(seconds: 1),
+                                  ),
                                 );
                               },
                               child: Padding(

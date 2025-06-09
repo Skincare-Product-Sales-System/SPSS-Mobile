@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 
 class AddressScreen extends StatefulWidget {
-  const AddressScreen({Key? key}) : super(key: key);
+  const AddressScreen({super.key});
 
   @override
   State<AddressScreen> createState() => _AddressScreenState();
@@ -21,10 +21,14 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   Future<void> fetchAddresses() async {
-    setState(() { isLoading = true; });
+    setState(() {
+      isLoading = true;
+    });
     final token = await JwtService.getStoredToken();
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:5041/api/addresses/user?pageNumber=1&pageSize=10'),
+      Uri.parse(
+        'http://10.0.2.2:5041/api/addresses/user?pageNumber=1&pageSize=10',
+      ),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -34,7 +38,9 @@ class _AddressScreenState extends State<AddressScreen> {
       final data = json.decode(res.body);
       addresses = (data['data']['items'] as List).cast<Map<String, dynamic>>();
     }
-    setState(() { isLoading = false; });
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void showAddressForm({Map<String, dynamic>? address}) async {
@@ -44,10 +50,8 @@ class _AddressScreenState extends State<AddressScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => AddressForm(
-        address: address,
-        onSuccess: fetchAddresses,
-      ),
+      builder:
+          (context) => AddressForm(address: address, onSuccess: fetchAddresses),
     );
     if (result == true) fetchAddresses();
   }
@@ -63,9 +67,13 @@ class _AddressScreenState extends State<AddressScreen> {
     );
     if (res.statusCode == 200) {
       fetchAddresses();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address deleted.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đã xóa địa chỉ.')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete failed!')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Xóa thất bại!')));
     }
   }
 
@@ -80,9 +88,13 @@ class _AddressScreenState extends State<AddressScreen> {
     );
     if (res.statusCode == 200) {
       fetchAddresses();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Set as default successfully.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã đặt làm địa chỉ mặc định.')),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Action failed!')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Thao tác thất bại!')));
     }
   }
 
@@ -91,34 +103,44 @@ class _AddressScreenState extends State<AddressScreen> {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Addresses', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Địa chỉ của tôi',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAddressForm(),
         icon: const Icon(Icons.add_location_alt, color: Colors.white),
-        label: const Text('Add new address', style: TextStyle(color: Colors.white)),
+        label: const Text(
+          'Thêm địa chỉ mới',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: primaryColor,
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : addresses.isEmpty
-              ? const Center(child: Text('You have no addresses yet.'))
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : addresses.isEmpty
+              ? const Center(child: Text('Bạn chưa có địa chỉ nào.'))
               : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: addresses.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, idx) {
-                    final addr = addresses[idx];
-                    return AddressCard(
-                      address: addr,
-                      onEdit: () => showAddressForm(address: addr),
-                      onDelete: () => deleteAddress(addr['id']),
-                      onSetDefault: addr['isDefault'] == true ? null : () => setDefault(addr['id']),
-                    );
-                  },
-                ),
+                padding: const EdgeInsets.all(16),
+                itemCount: addresses.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, idx) {
+                  final addr = addresses[idx];
+                  return AddressCard(
+                    address: addr,
+                    onEdit: () => showAddressForm(address: addr),
+                    onDelete: () => deleteAddress(addr['id']),
+                    onSetDefault:
+                        addr['isDefault'] == true
+                            ? null
+                            : () => setDefault(addr['id']),
+                  );
+                },
+              ),
     );
   }
 }
@@ -128,13 +150,22 @@ class AddressCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onSetDefault;
-  const AddressCard({super.key, required this.address, required this.onEdit, required this.onDelete, this.onSetDefault});
+  const AddressCard({
+    super.key,
+    required this.address,
+    required this.onEdit,
+    required this.onDelete,
+    this.onSetDefault,
+  });
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
-    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
-    final subTextColor = Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ?? Colors.grey[700];
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subTextColor =
+        Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
+        Colors.grey[700];
     final cardBg = Theme.of(context).cardColor;
     return Material(
       elevation: 3,
@@ -155,46 +186,69 @@ class AddressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     address['customerName'] ?? '',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: textColor,
+                    ),
                   ),
                 ),
                 if (address['isDefault'] == true)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: primaryColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('Default address', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Địa chỉ mặc định',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(address['phoneNumber'] ?? '', style: TextStyle(fontSize: 15, color: subTextColor)),
+            Text(
+              address['phoneNumber'] ?? '',
+              style: TextStyle(fontSize: 15, color: subTextColor),
+            ),
             const SizedBox(height: 4),
-            Text(_fullAddress(address), style: TextStyle(fontSize: 15, color: subTextColor)),
+            Text(
+              _fullAddress(address),
+              style: TextStyle(fontSize: 15, color: subTextColor),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 ElevatedButton.icon(
                   onPressed: onEdit,
                   icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Edit'),
+                  label: const Text('Sửa'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete, size: 18),
-                  label: const Text('Delete'),
+                  label: const Text('Xóa'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -205,13 +259,15 @@ class AddressCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton(
                   onPressed: onSetDefault,
-                  child: const Text('Set as default'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,
                     side: BorderSide(color: primaryColor),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     textStyle: TextStyle(color: primaryColor),
                   ),
+                  child: const Text('Đặt làm mặc định'),
                 ),
               ),
             ],
@@ -262,7 +318,9 @@ class _AddressFormState extends State<AddressForm> {
       'addressLine2': TextEditingController(text: a?['addressLine2'] ?? ''),
       'city': TextEditingController(text: a?['city'] ?? ''),
       'ward': TextEditingController(text: a?['ward'] ?? ''),
-      'postcode': TextEditingController(text: a?['postCode'] ?? a?['postcode'] ?? ''),
+      'postcode': TextEditingController(
+        text: a?['postCode'] ?? a?['postcode'] ?? '',
+      ),
       'province': TextEditingController(text: a?['province'] ?? ''),
       'countryName': TextEditingController(text: a?['countryName'] ?? ''),
     };
@@ -279,7 +337,9 @@ class _AddressFormState extends State<AddressForm> {
 
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { isLoading = true; });
+    setState(() {
+      isLoading = true;
+    });
     final token = await JwtService.getStoredToken();
     final body = {
       'customerName': _ctrl['customerName']!.text,
@@ -306,7 +366,9 @@ class _AddressFormState extends State<AddressForm> {
       );
     } else {
       res = await http.patch(
-        Uri.parse('http://10.0.2.2:5041/api/addresses/${widget.address!['id']}'),
+        Uri.parse(
+          'http://10.0.2.2:5041/api/addresses/${widget.address!['id']}',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -314,13 +376,19 @@ class _AddressFormState extends State<AddressForm> {
         body: json.encode(body),
       );
     }
-    setState(() { isLoading = false; });
+    setState(() {
+      isLoading = false;
+    });
     if (res.statusCode == 200 || res.statusCode == 201) {
       widget.onSuccess();
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address saved successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu địa chỉ thành công!')),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Address save failed!')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lưu địa chỉ thất bại!')));
     }
   }
 
@@ -328,7 +396,9 @@ class _AddressFormState extends State<AddressForm> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(18),
@@ -338,30 +408,81 @@ class _AddressFormState extends State<AddressForm> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.address == null ? 'Add new address' : 'Edit address', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor)),
+                Text(
+                  widget.address == null ? 'Add new address' : 'Edit address',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
                 const SizedBox(height: 18),
-                _buildTextField('customerName', 'Customer name *', Icons.person),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField('phoneNumber', 'Phone number *', Icons.phone)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('streetNumber', 'Street number *', Icons.home)),
-                  ],
-                ),
-                _buildTextField('addressLine1', 'Address line 1 *', Icons.location_on),
-                _buildTextField('addressLine2', 'Address line 2 (optional)', Icons.location_on_outlined),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField('city', 'City *', Icons.location_city)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('ward', 'Ward *', Icons.apartment)),
-                  ],
+                _buildTextField(
+                  'customerName',
+                  'Customer name *',
+                  Icons.person,
                 ),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField('postcode', 'Postcode *', Icons.markunread_mailbox)),
+                    Expanded(
+                      child: _buildTextField(
+                        'phoneNumber',
+                        'Phone number *',
+                        Icons.phone,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField('province', 'Province *', Icons.map)),
+                    Expanded(
+                      child: _buildTextField(
+                        'streetNumber',
+                        'Street number *',
+                        Icons.home,
+                      ),
+                    ),
+                  ],
+                ),
+                _buildTextField(
+                  'addressLine1',
+                  'Address line 1 *',
+                  Icons.location_on,
+                ),
+                _buildTextField(
+                  'addressLine2',
+                  'Address line 2 (optional)',
+                  Icons.location_on_outlined,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        'city',
+                        'City *',
+                        Icons.location_city,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField('ward', 'Ward *', Icons.apartment),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        'postcode',
+                        'Postcode *',
+                        Icons.markunread_mailbox,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        'province',
+                        'Province *',
+                        Icons.map,
+                      ),
+                    ),
                   ],
                 ),
                 _buildTextField('countryName', 'Country *', Icons.flag),
@@ -372,7 +493,7 @@ class _AddressFormState extends State<AddressForm> {
                       onChanged: (v) => setState(() => isDefault = v ?? false),
                       activeColor: primaryColor,
                     ),
-                    const Text('Set as default address'),
+                    const Text('Đặt làm địa chỉ mặc định'),
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -381,7 +502,7 @@ class _AddressFormState extends State<AddressForm> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                      child: const Text('Hủy'),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
@@ -389,11 +510,25 @@ class _AddressFormState extends State<AddressForm> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: isLoading
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text(widget.address == null ? 'Add address' : 'Update'),
+                      child:
+                          isLoading
+                              ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Text(
+                                widget.address == null
+                                    ? 'Add address'
+                                    : 'Update',
+                              ),
                     ),
                   ],
                 ),
@@ -415,8 +550,12 @@ class _AddressFormState extends State<AddressForm> {
           prefixIcon: Icon(icon),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (val) => (label.contains('*') && (val == null || val.isEmpty)) ? 'This field is required' : null,
+        validator:
+            (val) =>
+                (label.contains('*') && (val == null || val.isEmpty))
+                    ? 'This field is required'
+                    : null,
       ),
     );
   }
-} 
+}

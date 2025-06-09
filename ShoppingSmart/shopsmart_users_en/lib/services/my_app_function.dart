@@ -40,7 +40,7 @@ class MyAppFunctions {
                         Navigator.pop(context);
                       },
                       child: const SubtitleTextWidget(
-                        label: "Cancel",
+                        label: "Hủy",
                         color: Colors.green,
                       ),
                     ),
@@ -74,7 +74,7 @@ class MyAppFunctions {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Center(child: TitlesTextWidget(label: "Choose option")),
+          title: const Center(child: TitlesTextWidget(label: "Chọn tùy chọn")),
           content: SingleChildScrollView(
             child: ListBody(
               children: [
@@ -86,7 +86,7 @@ class MyAppFunctions {
                     }
                   },
                   icon: const Icon(Icons.camera),
-                  label: const Text("Camera"),
+                  label: const Text("Máy ảnh"),
                 ),
                 TextButton.icon(
                   onPressed: () {
@@ -96,7 +96,7 @@ class MyAppFunctions {
                     }
                   },
                   icon: const Icon(Icons.browse_gallery),
-                  label: const Text("Gallery"),
+                  label: const Text("Thư viện"),
                 ),
                 TextButton.icon(
                   onPressed: () {
@@ -106,7 +106,7 @@ class MyAppFunctions {
                     }
                   },
                   icon: const Icon(Icons.remove_circle_outline),
-                  label: const Text("Remove"),
+                  label: const Text("Xóa"),
                 ),
               ],
             ),

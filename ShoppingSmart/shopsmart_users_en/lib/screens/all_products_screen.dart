@@ -64,7 +64,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
         ),
         title: Consumer<ProductsProvider>(
           builder: (context, productsProvider, child) {
-            return TitlesTextWidget(label: "All Products");
+            return TitlesTextWidget(label: "Tất cả sản phẩm");
           },
         ),
         actions: [
@@ -121,9 +121,9 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                     ).textTheme.bodySmall?.color?.withOpacity(0.5),
                   ),
                   const SizedBox(height: 16),
-                  const TitlesTextWidget(label: "No products available"),
+                  const TitlesTextWidget(label: "Không có sản phẩm nào"),
                   const SizedBox(height: 16),
-                  const Text("Pull to refresh or try again later"),
+                  const Text("Kéo để làm mới hoặc thử lại sau"),
                 ],
               ),
             );
@@ -143,7 +143,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                           productsProvider.getProducts.length +
                           (productsProvider.isLoadingMore ? 1 : 0),
                       crossAxisCount: 2,
-                      mainAxisSpacing: 12,
+                      mainAxisSpacing: 15,
                       crossAxisSpacing: 12,
                       builder: (context, index) {
                         // Show loading indicator at the end while loading more
@@ -156,9 +156,12 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                           );
                         }
 
-                        return ProductWidget(
-                          productId:
-                              productsProvider.getProducts[index].productId,
+                        return SizedBox(
+                          height: 360,
+                          child: ProductWidget(
+                            productId:
+                                productsProvider.getProducts[index].productId,
+                          ),
                         );
                       },
                     ),
@@ -173,7 +176,7 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                     padding: const EdgeInsets.all(16),
                     child: ElevatedButton(
                       onPressed: () => productsProvider.loadMoreProducts(),
-                      child: const Text('Load More Products'),
+                      child: const Text('Tải thêm sản phẩm'),
                     ),
                   ),
 

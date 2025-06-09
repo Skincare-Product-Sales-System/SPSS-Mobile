@@ -4,7 +4,6 @@ import 'package:shopsmart_users_en/models/product_model.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
 import 'package:shopsmart_users_en/providers/categories_provider.dart';
 
-import '../services/assets_manager.dart';
 import '../widgets/products/product_widget.dart';
 import '../widgets/title_text.dart';
 import 'package:dynamic_height_grid_view/dynamic_height_grid_view.dart';
@@ -25,21 +24,11 @@ class _SearchScreenState extends State<SearchScreen> {
   String? categoryName;
   String? selectedSortBy;
   bool showFilters = false;
-  bool _isApplyingFilters = false;
-  bool _hasUnappliedFilters =
-      false; // Flag to show when filters need to be applied
 
   @override
   void initState() {
     searchTextController = TextEditingController();
     super.initState();
-  }
-
-  // Helper method to initialize filter state without triggering API calls
-  void _initializeFilterState() {
-    setState(() {
-      _hasUnappliedFilters = false;
-    });
   }
 
   @override
@@ -61,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
         orElse: () => null as dynamic,
       );
 
-      selectedCategoryId = category?.id;
+      selectedCategoryId = category.id;
 
       // Load products for this category if not already loaded
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,7 +60,7 @@ class _SearchScreenState extends State<SearchScreen> {
         );
         if (productsProvider.getProducts.isEmpty ||
             categoriesProvider.selectedCategoryId != selectedCategoryId) {
-          // Don't sync with provider here to avoid triggering listeners
+          categoriesProvider.selectCategory(selectedCategoryId);
           productsProvider.loadProductsByCategory(
             categoryId: selectedCategoryId!,
             refresh: true,
@@ -90,7 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
           listen: false,
         );
 
-        // Don't sync with provider here to avoid triggering listeners
+        categoriesProvider.clearSelection();
         // Load products with pagination of 12 items for "All" products
         productsProvider.loadProducts(refresh: true);
       });
@@ -147,21 +136,24 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _applyFilters() async {
-    if (_isApplyingFilters) return;
-
     final productsProvider = Provider.of<ProductsProvider>(
+      context,
+      listen: false,
+    );
+
+    final categoriesProvider = Provider.of<CategoriesProvider>(
       context,
       listen: false,
     );
 
     setState(() {
       isSearching = true;
-      _isApplyingFilters = true;
     });
 
     try {
       if (selectedCategoryId != null && selectedCategoryId!.isNotEmpty) {
         // Filter by category with optional sorting
+        categoriesProvider.selectCategory(selectedCategoryId);
         await productsProvider.loadProductsByCategory(
           categoryId: selectedCategoryId!,
           sortBy: selectedSortBy,
@@ -169,17 +161,14 @@ class _SearchScreenState extends State<SearchScreen> {
         );
 
         // Update category name for display
-        final categoriesProvider = Provider.of<CategoriesProvider>(
-          context,
-          listen: false,
-        );
         final category = categoriesProvider.getAllCategoriesFlat.firstWhere(
           (cat) => cat.id == selectedCategoryId,
           orElse: () => null as dynamic,
         );
-        categoryName = category?.categoryName ?? 'Unknown Category';
+        categoryName = category.categoryName ?? 'Unknown Category';
       } else {
         // Show all products with optional sorting
+        categoriesProvider.clearSelection();
         await productsProvider.loadProducts(
           sortBy: selectedSortBy,
           refresh: true,
@@ -199,20 +188,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     setState(() {
       isSearching = false;
-      _isApplyingFilters = false;
-      _hasUnappliedFilters = false; // Reset flag after applying filters
     });
-
-    // Show success message when filters are applied
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Filters applied successfully!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
   }
 
   Widget _buildFilterSection() {
@@ -259,66 +235,53 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 20),
 
             // Categories Section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Category Chips - Constrained height to prevent overflow
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 120),
-                  child: SingleChildScrollView(
-                    child: Consumer<CategoriesProvider>(
-                      builder: (context, categoriesProvider, child) {
-                        return Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            // All Categories chip
-                            _buildCategoryChip(
-                              label: 'All Categories',
-                              isSelected: selectedCategoryId == null,
-                              onTap: () {
-                                setState(() {
-                                  selectedCategoryId = null;
-                                  categoryName = null;
-                                  _hasUnappliedFilters = true;
-                                });
-                                // Note: Filters are not applied automatically
-                                // User needs to click "Apply Filters" button
-                              },
-                            ),
-                            // Individual category chips
-                            ...categoriesProvider.getAllCategoriesFlat.map(
-                              (category) => _buildCategoryChip(
-                                label: category.categoryName,
-                                isSelected: selectedCategoryId == category.id,
-                                onTap: () {
-                                  setState(() {
-                                    selectedCategoryId = category.id;
-                                    categoryName = category.categoryName;
-                                    _hasUnappliedFilters = true;
-                                  });
-                                  // Note: Filters are not applied automatically
-                                  // User needs to click "Apply Filters" button
-                                },
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+            Consumer<CategoriesProvider>(
+              builder: (context, categoriesProvider, child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Danh mục',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                    const SizedBox(height: 12),
+
+                    // Category Chips
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        // All Categories chip
+                        _buildCategoryChip(
+                          label: 'Tất cả danh mục',
+                          isSelected: selectedCategoryId == null,
+                          onTap: () {
+                            setState(() {
+                              selectedCategoryId = null;
+                            });
+                          },
+                        ),
+                        // Individual category chips
+                        ...categoriesProvider.getAllCategoriesFlat.map(
+                          (category) => _buildCategoryChip(
+                            label: category.categoryName,
+                            isSelected: selectedCategoryId == category.id,
+                            onTap: () {
+                              setState(() {
+                                selectedCategoryId = category.id;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -343,17 +306,17 @@ class _SearchScreenState extends State<SearchScreen> {
                   runSpacing: 8,
                   children: [
                     _buildPriceFilterChip(
-                      label: 'Default',
+                      label: 'Mặc định',
                       value: null,
                       icon: Icons.sort,
                     ),
                     _buildPriceFilterChip(
-                      label: 'Low to High',
+                      label: 'Thấp đến cao',
                       value: 'price_asc',
                       icon: Icons.trending_up,
                     ),
                     _buildPriceFilterChip(
-                      label: 'High to Low',
+                      label: 'Cao đến thấp',
                       value: 'price_desc',
                       icon: Icons.trending_down,
                     ),
@@ -369,33 +332,20 @@ class _SearchScreenState extends State<SearchScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isApplyingFilters ? null : _applyFilters,
+                    onPressed: _applyFilters,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _hasUnappliedFilters
-                              ? Theme.of(context).primaryColor
-                              : Theme.of(context).primaryColor.withOpacity(0.7),
+                      backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: _hasUnappliedFilters ? 2 : 0,
+                      elevation: 0,
                     ),
-                    icon:
-                        _isApplyingFilters
-                            ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                            : const Icon(Icons.filter_alt, size: 18),
-                    label: Text(
-                      _isApplyingFilters ? 'Applying...' : 'Apply Filters',
-                      style: const TextStyle(
+                    icon: const Icon(Icons.filter_alt, size: 18),
+                    label: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -405,18 +355,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed:
-                        _isApplyingFilters
-                            ? null
-                            : () {
-                              setState(() {
-                                selectedCategoryId = null;
-                                selectedSortBy = null;
-                                categoryName = null;
-                                _hasUnappliedFilters = false;
-                              });
-                              _applyFilters();
-                            },
+                    onPressed: () {
+                      setState(() {
+                        selectedCategoryId = null;
+                        selectedSortBy = null;
+                        categoryName = null;
+                      });
+                      _applyFilters();
+                    },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Theme.of(context).primaryColor,
                       side: BorderSide(
@@ -439,39 +385,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ],
             ),
-
-            // Unapplied Filters Notice
-            if (_hasUnappliedFilters) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Colors.orange.shade700,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Filters changed. Click "Apply Filters" to see results.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.orange.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
 
             // Active Filters Summary
             if (selectedCategoryId != null || selectedSortBy != null) ...[
@@ -515,12 +428,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                     (cat) => cat.id == selectedCategoryId,
                                     orElse: () => null as dynamic,
                                   );
-                              return category?.categoryName ?? 'Unknown';
+                              return category.categoryName ?? 'Unknown';
                             })(),
                             () {
                               setState(() {
                                 selectedCategoryId = null;
-                                _hasUnappliedFilters = true;
                               });
                             },
                           ),
@@ -532,7 +444,6 @@ class _SearchScreenState extends State<SearchScreen> {
                             () {
                               setState(() {
                                 selectedSortBy = null;
-                                _hasUnappliedFilters = true;
                               });
                             },
                           ),
@@ -617,10 +528,7 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () {
         setState(() {
           selectedSortBy = value;
-          _hasUnappliedFilters = true;
         });
-        // Note: Filters are not applied automatically
-        // User needs to click "Apply Filters" button
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -712,14 +620,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use listen: false to prevent unnecessary rebuilds that cause filter issues
-    final productsProvider = Provider.of<ProductsProvider>(
-      context,
-      listen: false,
-    );
+    final productsProvider = Provider.of<ProductsProvider>(context);
 
     // Use products based on whether we're filtering by category or showing all
-    List<ProductModel> productList = [];
+    List<ProductModel> productList = productsProvider.getProducts;
 
     return GestureDetector(
       onTap: () {
@@ -826,14 +730,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // Filter Section (Wrapped in flexible to prevent overflow)
-            Flexible(
-              flex: 0,
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: _buildFilterSection(),
-              ),
-            ),
+            // Filter Section
+            _buildFilterSection(),
 
             // Show results count and category info
             Padding(
@@ -905,25 +803,15 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // Content area - Use Consumer to listen to products provider
-            Expanded(
-              child: Consumer<ProductsProvider>(
-                builder: (context, productsProvider, child) {
-                  List<ProductModel> productList = productsProvider.getProducts;
-                  return _buildContent(productList, productsProvider);
-                },
-              ),
-            ),
+            // Content area
+            Expanded(child: _buildContent(productList)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(
-    List<ProductModel> productList,
-    ProductsProvider productsProvider,
-  ) {
+  Widget _buildContent(List<ProductModel> productList) {
     // Show loading indicator when loading initial products
     if (productsProvider.isLoading && productList.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -961,7 +849,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   productsProvider.loadProducts(refresh: true);
                 }
               },
-              child: const Text('Retry'),
+              child: const Text('Thử lại'),
             ),
           ],
         ),
@@ -996,7 +884,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ).textTheme.bodySmall?.color?.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
-              const TitlesTextWidget(label: "No products found"),
+              const TitlesTextWidget(label: "Không tìm thấy sản phẩm"),
               const SizedBox(height: 8),
               Text(
                 'No results for "${searchTextController.text}"',
@@ -1026,7 +914,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   });
                 },
                 icon: const Icon(Icons.clear),
-                label: const Text('Clear Search'),
+                label: const Text('Xóa tìm kiếm'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(
                     context,

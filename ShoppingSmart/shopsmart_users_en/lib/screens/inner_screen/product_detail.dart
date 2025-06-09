@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../../providers/cart_provider.dart';
-import '../../widgets/app_name_text.dart';
 import '../../widgets/products/heart_btn.dart';
 import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
@@ -189,7 +188,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
               : _errorMessage != null
               ? _buildErrorWidget()
               : _detailedProduct == null
-              ? const Center(child: Text('Product not found'))
+              ? const Center(child: Text('Không tìm thấy sản phẩm'))
               : _buildProductContent(cartProvider),
       bottomNavigationBar:
           _detailedProduct != null
@@ -234,7 +233,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   _loadReviews(productId);
                 }
               },
-              child: const Text('Retry'),
+              child: const Text('Thử lại'),
             ),
           ],
         ),
@@ -325,7 +324,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
           ),
           items:
               images.map((imageUrl) {
-                return Container(
+                return SizedBox(
                   width: double.infinity,
                   child: FancyShimmerImage(
                     imageUrl: imageUrl,
@@ -537,7 +536,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   }),
                   const SizedBox(width: 8),
                   Text(
-                    "${_detailedProduct!.rating.toStringAsFixed(1)}",
+                    _detailedProduct!.rating.toStringAsFixed(1),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -1038,7 +1037,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
@@ -1120,7 +1119,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          "No reviews yet",
+                          "Chưa có đánh giá nào",
                           style: TextStyle(
                             fontSize: 16,
                             color:
@@ -1164,7 +1163,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            Future<void> _pickImages() async {
+            Future<void> pickImages() async {
               final ImagePicker picker = ImagePicker();
               final List<XFile> images = await picker.pickMultiImage();
               if (images.isNotEmpty) {
@@ -1178,18 +1177,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
               }
             }
 
-            Future<void> _removeImage(int index) async {
+            Future<void> removeImage(int index) async {
               setState(() {
                 selectedImages.removeAt(index);
               });
             }
 
-            Future<void> _submitReview() async {
+            Future<void> submitReview() async {
               if (reviewController.text.trim().isEmpty ||
                   _selectedProductItemId == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("Please enter a review comment"),
+                    content: Text("Vui lòng nhập nội dung đánh giá"),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -1224,7 +1223,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Thank you for your review!"),
+                      content: Text("Cảm ơn bạn đã đánh giá!"),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -1239,7 +1238,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        response.message ?? "Failed to submit review",
+                        response.message ?? "Không thể gửi đánh giá",
                       ),
                       backgroundColor: Colors.red,
                     ),
@@ -1444,7 +1443,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                         child:
                             selectedImages.isEmpty
                                 ? InkWell(
-                                  onTap: _pickImages,
+                                  onTap: pickImages,
                                   borderRadius: BorderRadius.circular(8),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1490,7 +1489,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                               // Add more button
                                               return selectedImages.length < 5
                                                   ? GestureDetector(
-                                                    onTap: _pickImages,
+                                                    onTap: pickImages,
                                                     child: Container(
                                                       width: 60,
                                                       margin:
@@ -1551,7 +1550,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                                     right: -4,
                                                     child: GestureDetector(
                                                       onTap:
-                                                          () => _removeImage(
+                                                          () => removeImage(
                                                             index,
                                                           ),
                                                       child: Container(
@@ -1586,7 +1585,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isSubmitting ? null : _submitReview,
+                          onPressed: isSubmitting ? null : submitReview,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Colors.white,
@@ -1607,7 +1606,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                                       ),
                                     ),
                                   )
-                                  : const Text("Submit Review"),
+                                  : const Text("Gửi đánh giá"),
                         ),
                       ),
                     ],
@@ -1763,7 +1762,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
           if (review.variationOptionValues.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              "Variation: ${review.variationOptionValues.join(', ')}",
+              "Biến thể: ${review.variationOptionValues.join(', ')}",
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).primaryColor,
@@ -1873,7 +1872,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                   // Show a snackbar first to confirm button works
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Opening blog..."),
+                      content: Text("Đang mở bài viết..."),
                       duration: Duration(milliseconds: 500),
                     ),
                   );
@@ -1940,6 +1939,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                       // Add to cart logic with selected variation and quantity
                       cartProvider.addProductToCart(
                         productId: _detailedProduct!.id,
+                        productItemId: _selectedProductItemId!,
                         title: _detailedProduct!.name,
                         price: _currentPrice,
                       );

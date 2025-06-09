@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../models/api_response_model.dart';
 import '../models/product_model.dart';
@@ -8,7 +9,10 @@ import '../models/detailed_product_model.dart';
 import '../models/blog_model.dart';
 import '../models/review_models.dart';
 import '../models/order_models.dart';
+import '../models/skin_analysis_models.dart';
 import '../services/jwt_service.dart';
+import '../models/address_model.dart';
+import '../models/payment_method_model.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -852,6 +856,169 @@ class ApiService {
     }
   }
 
+  static Future<ApiResponse<PaginatedResponse<AddressModel>>> getAddresses({
+    required int pageNumber,
+    required int pageSize,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<AddressModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/addresses/user').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      print('getAddresses response.body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => AddressModel.fromJson(item),
+          ),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<PaginatedResponse<AddressModel>>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to load addresses',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<AddressModel>>(
+        success: false,
+        message: e.toString(),
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  static Future<ApiResponse<PaginatedResponse<PaymentMethodModel>>>
+  getPaymentMethods({required int pageNumber, required int pageSize}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payment-methods').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final data = jsonData['data'];
+        final items =
+            (data['items'] as List)
+                .map((item) => PaymentMethodModel.fromJson(item))
+                .toList();
+
+        return ApiResponse(
+          success: true,
+          data: PaginatedResponse(
+            items: items,
+            totalCount: data['totalCount'],
+            pageNumber: data['pageNumber'],
+            pageSize: data['pageSize'],
+            totalPages: data['totalPages'],
+          ),
+          message: jsonData['message'],
+        );
+      }
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      return ApiResponse(
+        success: false,
+        message: jsonData['message'] ?? 'Failed to load payment methods',
+      );
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  static Future<ApiResponse<OrderResponse>> createOrderRaw(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+      final uri = Uri.parse('$baseUrl/orders');
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(data),
+          )
+          .timeout(timeout);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderResponse.fromJson(data),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to create order',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
   // Upload image for review (if you have a separate endpoint for image upload)
   static Future<ApiResponse<String>> uploadReviewImage(File imageFile) async {
     try {
@@ -901,6 +1068,112 @@ class ApiService {
         success: false,
         message: 'Failed to upload image: ${e.toString()}',
         errors: [e.toString()],
+      );
+    }
+  }
+
+  // Skin analysis API call
+  static Future<ApiResponse<SkinAnalysisResult>> analyzeSkin(
+    File imageFile,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: 'Vui lòng đăng nhập để sử dụng tính năng này',
+          errors: ['Người dùng chưa đăng nhập'],
+        );
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/skin-analysis/analyze'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath('faceImage', imageFile.path),
+      );
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>.fromJson(
+          jsonData,
+          (data) => SkinAnalysisResult.fromJson(data),
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        String errorMessage = 'Không thể phân tích da';
+
+        if (errorData != null && errorData['message'] != null) {
+          errorMessage = errorData['message'];
+        } else {
+          // Provide specific error messages based on status code
+          switch (response.statusCode) {
+            case 400:
+              errorMessage =
+                  'Không thể nhận diện khuôn mặt trong ảnh. Vui lòng thử lại với ảnh khác.';
+              break;
+            case 401:
+              errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+              break;
+            case 500:
+              errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau.';
+              break;
+            default:
+              errorMessage =
+                  'Không thể phân tích da. Vui lòng thử lại với ảnh khác.';
+          }
+        }
+
+        List<String> errors = [];
+        if (errorData != null && errorData['errors'] != null) {
+          errors = List<String>.from(errorData['errors']);
+        }
+
+        if (errors.isEmpty) {
+          errors.add(
+            'Vui lòng thử lại với ảnh rõ nét và chụp trực diện khuôn mặt',
+          );
+        }
+
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: errorMessage,
+          errors: errors,
+        );
+      }
+    } on SocketException {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Không có kết nối mạng',
+        errors: ['Vui lòng kiểm tra kết nối internet của bạn và thử lại'],
+      );
+    } on TimeoutException {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Hệ thống phản hồi chậm',
+        errors: ['Vui lòng thử lại sau'],
+      );
+    } catch (e) {
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Đã xảy ra lỗi khi phân tích da',
+        errors: ['Vui lòng thử lại với ảnh khác'],
       );
     }
   }

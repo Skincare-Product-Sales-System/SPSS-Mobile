@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -60,6 +62,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         title: const AppNameTextWidget(fontSize: 20),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, SearchScreen.routeName);
+            },
+          ),
           Consumer<ProductsProvider>(
             builder: (context, productsProvider, child) {
               if (productsProvider.errorMessage != null) {
@@ -92,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
                     Text(
-                      'Connection Error',
+                      'Lỗi Kết Nối',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -115,18 +123,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Troubleshooting:',
+                            'Khắc phục sự cố:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 4),
-                          Text('• Make sure your API server is running'),
+                          Text('• Đảm bảo máy chủ API đang chạy'),
                           Text(
-                            '• Check if http://localhost:5041/api/products works in browser',
+                            '• Kiểm tra xem http://localhost:5041/api/products hoạt động trong trình duyệt',
                           ),
                           Text(
-                            '• For Android emulator: API should be accessible at 10.0.2.2:5041',
+                            '• Đối với máy ảo Android: API nên được truy cập tại 10.0.2.2:5041',
                           ),
-                          Text('• Check console for detailed error logs'),
+                          Text(
+                            '• Kiểm tra bảng điều khiển để biết nhật ký lỗi chi tiết',
+                          ),
                         ],
                       ),
                     ),
@@ -134,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ElevatedButton(
                       onPressed:
                           () => productsProvider.loadBestSellers(refresh: true),
-                      child: const Text('Retry Connection'),
+                      child: const Text('Thử Kết Nối Lại'),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
@@ -142,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Test API connection
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Testing API connection...'),
+                            content: Text('Đang kiểm tra kết nối API...'),
                           ),
                         );
 
@@ -161,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         }
                       },
-                      child: const Text('Test API Connection'),
+                      child: const Text('Kiểm Tra Kết Nối API'),
                     ),
                   ],
                 ),
@@ -197,7 +207,28 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (BuildContext context, int index) {
                             return Image.asset(
                               AppConstants.bannersImage[index],
-                              fit: BoxFit.fill,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 40,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Lỗi: ${error.toString().substring(0, math.min(error.toString().length, 50))}',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             );
                           },
                           itemCount: AppConstants.bannersImage.length,
@@ -228,8 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             TitlesTextWidget(
                               label:
                                   categoriesProvider.selectedCategoryId != null
-                                      ? "Products in ${categoriesProvider.getSelectedCategoryName()}"
-                                      : "Best Sellers",
+                                      ? "Sản phẩm trong ${categoriesProvider.getSelectedCategoryName()}"
+                                      : "Bán Chạy Nhất",
                             ),
                             TextButton(
                               onPressed: () {
@@ -241,11 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                               null
                                           ? categoriesProvider
                                               .getSelectedCategoryName()
-                                          : "All",
+                                          : "Tất Cả",
                                 );
                               },
                               child: Text(
-                                'See All',
+                                'Xem Tất Cả',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -263,11 +294,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (productsProvider.getProducts.isEmpty)
                     SizedBox(
                       height: size.height * 0.25,
-                      child: const Center(child: Text('No products available')),
+                      child: const Center(child: Text('Không có sản phẩm')),
                     )
                   else
                     SizedBox(
-                      height: size.height * 0.25,
+                      height: 330,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         scrollDirection: Axis.horizontal,
@@ -276,11 +307,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? 10
                                 : productsProvider.getProducts.length,
                         itemBuilder: (context, index) {
-                          return SizedBox(
-                            width: size.width * 0.45,
-                            child: ChangeNotifierProvider.value(
-                              value: productsProvider.getProducts[index],
-                              child: const LatestArrivalProductsWidget(),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: SizedBox(
+                              width: 200,
+                              child: ChangeNotifierProvider.value(
+                                value: productsProvider.getProducts[index],
+                                child: const LatestArrivalProductsWidget(),
+                              ),
                             ),
                           );
                         },
@@ -295,17 +329,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const TitlesTextWidget(label: "All Products"),
+                        const TitlesTextWidget(label: "Tất Cả Sản Phẩm"),
                         TextButton(
                           onPressed: () {
                             Navigator.pushNamed(
                               context,
                               SearchScreen.routeName,
-                              arguments: "All",
+                              arguments: "Tất Cả",
                             );
                           },
                           child: Text(
-                            'See All',
+                            'Xem Tất Cả',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -321,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (productsProvider.getProducts.isEmpty)
                     SizedBox(
                       height: size.height * 0.3,
-                      child: const Center(child: Text('No products available')),
+                      child: const Center(child: Text('Không có sản phẩm')),
                     )
                   else
                     Padding(
@@ -333,8 +367,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: 0.85,
+                              mainAxisSpacing: 15,
+                              childAspectRatio: 0.65,
                             ),
                         itemCount:
                             productsProvider.getProducts.length > 10
