@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
-import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/payment/payment_screen.dart';
 
 class SkinAnalysisIntroScreen extends StatelessWidget {
   static const routeName = '/skin-analysis-intro';
@@ -77,7 +77,7 @@ class SkinAnalysisIntroScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(
                       context,
-                    ).pushNamed(SkinAnalysisCameraScreen.routeName);
+                    ).pushNamed(SkinAnalysisPaymentScreen.routeName);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
@@ -87,7 +87,7 @@ class SkinAnalysisIntroScreen extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Tiến hành quét mặt',
+                    'Tiến hành phân tích da',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),

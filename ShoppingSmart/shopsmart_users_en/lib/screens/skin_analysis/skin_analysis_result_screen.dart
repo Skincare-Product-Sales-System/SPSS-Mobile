@@ -1,213 +1,260 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
+import 'package:shopsmart_users_en/providers/skin_analysis_provider.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
 import 'package:shopsmart_users_en/services/currency_formatter.dart';
 
-class SkinAnalysisResultScreen extends StatelessWidget {
+class SkinAnalysisResultScreen extends StatefulWidget {
   static const routeName = '/skin-analysis-result';
   final SkinAnalysisResult result;
 
   const SkinAnalysisResultScreen({super.key, required this.result});
 
   @override
+  State<SkinAnalysisResultScreen> createState() =>
+      _SkinAnalysisResultScreenState();
+}
+
+class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Ngắt kết nối SignalR và đặt lại trạng thái khi màn hình kết quả được hiển thị
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<SkinAnalysisProvider>(
+        context,
+        listen: false,
+      );
+      // Ngắt kết nối SignalR
+      provider.disconnectSignalR();
+      // Đặt lại biến kiểm tra giao dịch
+      provider.resetTransactionCheck();
+      // Đặt lại trạng thái để lần sau người dùng có thể tạo giao dịch mới
+      provider.resetAfterAnalysis();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Sắp xếp các bước skincare routine theo thứ tự
-    final sortedRoutineSteps = [...result.routineSteps]
+    final sortedRoutineSteps = [...widget.result.routineSteps]
       ..sort((a, b) => a.order.compareTo(b.order));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kết Quả Phân Tích Da'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User image
-              Center(
-                child: Container(
-                  width: double.infinity,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).primaryColor,
-                      width: 2,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      result.imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            Icons.error_outline,
-                            size: 50,
-                            color: Colors.red[300],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Skin type
-              _buildSectionTitle(context, 'Loại Da'),
-              _buildInfoCard(
-                context,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.face,
-                      size: 30,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            result.skinCondition.skinType,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Điểm sức khỏe da: ${_normalizeScore(result.skinCondition.healthScore).toStringAsFixed(1)}/10',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Reset trạng thái trước khi quay lại
+        final provider = Provider.of<SkinAnalysisProvider>(
+          context,
+          listen: false,
+        );
+        provider.resetAfterAnalysis();
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Kết Quả Phân Tích Da'),
+          centerTitle: true,
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User image
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).primaryColor,
+                        width: 2,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Skin condition scores
-              _buildSectionTitle(context, 'Chỉ Số Da'),
-              _buildInfoCard(
-                context,
-                child: Column(
-                  children: [
-                    _buildScoreItem(
-                      context,
-                      'Mụn',
-                      result.skinCondition.acneScore,
-                      Colors.orange,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        widget.result.imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.error_outline,
+                              size: 50,
+                              color: Colors.red[300],
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    const Divider(),
-                    _buildScoreItem(
-                      context,
-                      'Nếp nhăn',
-                      result.skinCondition.wrinkleScore,
-                      Colors.purple,
-                    ),
-                    const Divider(),
-                    _buildScoreItem(
-                      context,
-                      'Quầng thâm',
-                      result.skinCondition.darkCircleScore,
-                      Colors.blue,
-                    ),
-                    const Divider(),
-                    _buildScoreItem(
-                      context,
-                      'Đốm nâu/tàn nhang',
-                      result.skinCondition.darkSpotScore,
-                      Colors.brown,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Skin issues
-              if (result.skinIssues.isNotEmpty) ...[
-                _buildSectionTitle(context, 'Vấn Đề Da'),
-                ...result.skinIssues.map(
-                  (issue) => _buildIssueCard(context, issue),
+                  ),
                 ),
                 const SizedBox(height: 24),
-              ],
 
-              // Skincare Routine - PHẦN MỚI THÊM VÀO
-              if (result.routineSteps.isNotEmpty) ...[
-                _buildSectionTitle(context, 'Quy Trình Chăm Sóc Da'),
-                ...sortedRoutineSteps.map(
-                  (step) => _buildRoutineStepCard(context, step),
-                ),
-                const SizedBox(height: 24),
-              ],
-
-              // Recommended products
-              _buildSectionTitle(context, 'Sản Phẩm Đề Xuất'),
-              ...result.recommendedProducts.map(
-                (product) => _buildProductCard(context, product),
-              ),
-              const SizedBox(height: 24),
-
-              // Skin care advice
-              _buildSectionTitle(context, 'Lời Khuyên Chăm Sóc Da'),
-              _buildInfoCard(
-                context,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      result.skinCareAdvice.map((advice) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                size: 20,
-                                color: Colors.green,
+                // Skin type
+                _buildSectionTitle(context, 'Loại Da'),
+                _buildInfoCard(
+                  context,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.face,
+                        size: 30,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.result.skinCondition.skinType,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(advice)),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Điểm sức khỏe da: ${_normalizeScore(widget.result.skinCondition.healthScore).toStringAsFixed(1)}/10',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 24),
 
-              // Home button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text(
-                    'Về Trang Chủ',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                // Skin condition scores
+                _buildSectionTitle(context, 'Chỉ Số Da'),
+                _buildInfoCard(
+                  context,
+                  child: Column(
+                    children: [
+                      _buildScoreItem(
+                        context,
+                        'Mụn',
+                        widget.result.skinCondition.acneScore,
+                        Colors.orange,
+                      ),
+                      const Divider(),
+                      _buildScoreItem(
+                        context,
+                        'Nếp nhăn',
+                        widget.result.skinCondition.wrinkleScore,
+                        Colors.purple,
+                      ),
+                      const Divider(),
+                      _buildScoreItem(
+                        context,
+                        'Quầng thâm',
+                        widget.result.skinCondition.darkCircleScore,
+                        Colors.blue,
+                      ),
+                      const Divider(),
+                      _buildScoreItem(
+                        context,
+                        'Đốm nâu/tàn nhang',
+                        widget.result.skinCondition.darkSpotScore,
+                        Colors.brown,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 24),
+
+                // Skin issues
+                if (widget.result.skinIssues.isNotEmpty) ...[
+                  _buildSectionTitle(context, 'Vấn Đề Da'),
+                  ...widget.result.skinIssues.map(
+                    (issue) => _buildIssueCard(context, issue),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Skincare Routine - PHẦN MỚI THÊM VÀO
+                if (widget.result.routineSteps.isNotEmpty) ...[
+                  _buildSectionTitle(context, 'Quy Trình Chăm Sóc Da'),
+                  ...sortedRoutineSteps.map(
+                    (step) => _buildRoutineStepCard(context, step),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Recommended products
+                _buildSectionTitle(context, 'Sản Phẩm Đề Xuất'),
+                ...widget.result.recommendedProducts.map(
+                  (product) => _buildProductCard(context, product),
+                ),
+                const SizedBox(height: 24),
+
+                // Skin care advice
+                _buildSectionTitle(context, 'Lời Khuyên Chăm Sóc Da'),
+                _buildInfoCard(
+                  context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children:
+                        widget.result.skinCareAdvice.map((advice) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 20,
+                                  color: Colors.green,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(advice)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                // Home button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Reset trạng thái trước khi quay về trang chủ
+                      final provider = Provider.of<SkinAnalysisProvider>(
+                        context,
+                        listen: false,
+                      );
+                      provider.resetAfterAnalysis();
+
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text(
+                      'Về Trang Chủ',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

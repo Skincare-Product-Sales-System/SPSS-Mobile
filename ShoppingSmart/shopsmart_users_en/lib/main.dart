@@ -13,10 +13,12 @@ import 'package:shopsmart_users_en/screens/checkout/checkout_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/providers/chat_provider.dart';
+import 'package:shopsmart_users_en/providers/skin_analysis_provider.dart';
 import 'package:shopsmart_users_en/screens/chat_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_intro_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/payment/payment_screen.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 import 'package:shopsmart_users_en/screens/orders/order_detail_screen.dart';
 import 'package:shopsmart_users_en/screens/chat_ai_screen.dart';
@@ -131,6 +133,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return provider;
           },
         ),
+        ChangeNotifierProvider(
+          create: (_) {
+            return SkinAnalysisProvider();
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -174,6 +181,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                         as SkinAnalysisResult;
                 return SkinAnalysisResultScreen(result: result);
               },
+              SkinAnalysisPaymentScreen.routeName:
+                  (context) => const SkinAnalysisPaymentScreen(),
               '/order-success': (context) => const OrderSuccessScreen(),
               SkinAnalysisHistoryScreen.routeName:
                   (context) => const SkinAnalysisHistoryScreen(),
