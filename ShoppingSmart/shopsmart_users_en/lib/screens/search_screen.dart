@@ -18,6 +18,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   late TextEditingController searchTextController;
+  late ScrollController _scrollController;
   List<ProductModel> productListSearch = [];
   bool isSearching = false;
   String? selectedCategoryId;
@@ -28,6 +29,16 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     searchTextController = TextEditingController();
+    _scrollController = ScrollController();
+
+    // Add pagination listener
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMoreProducts();
+      }
+    });
+
     super.initState();
   }
 
@@ -35,60 +46,66 @@ class _SearchScreenState extends State<SearchScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Get the passed category name from route arguments
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    if (arguments is String && arguments.isNotEmpty && arguments != "All") {
-      categoryName = arguments;
-
-      // Find the category ID from the categories provider
+    // Initialize categories if not loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final categoriesProvider = Provider.of<CategoriesProvider>(
         context,
         listen: false,
       );
-      final category = categoriesProvider.getAllCategoriesFlat.firstWhere(
-        (cat) => cat.categoryName == categoryName,
-        orElse: () => null as dynamic,
-      );
 
-      selectedCategoryId = category.id;
+      // Load categories if empty
+      if (categoriesProvider.getCategories.isEmpty) {
+        debugPrint('SearchScreen - Loading categories...');
+        await categoriesProvider.loadCategories();
+      }
 
-      // Load products for this category if not already loaded
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final productsProvider = Provider.of<ProductsProvider>(
-          context,
-          listen: false,
+      // Get the passed category name from route arguments
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      debugPrint('SearchScreen - Route arguments: $arguments');
+
+      if (arguments is String && arguments.isNotEmpty && arguments != "All") {
+        categoryName = arguments;
+
+        // Find the category ID from the categories provider
+        final allCategories = categoriesProvider.getAllCategoriesFlat;
+        debugPrint(
+          'SearchScreen - Looking for category: $categoryName in ${allCategories.length} categories',
         );
-        if (productsProvider.getProducts.isEmpty ||
-            categoriesProvider.selectedCategoryId != selectedCategoryId) {
+
+        final category = allCategories.firstWhere(
+          (cat) => cat.categoryName == categoryName,
+          orElse: () => null as dynamic,
+        );
+
+        if (category != null) {
+          selectedCategoryId = category.id;
+          debugPrint('SearchScreen - Found category ID: $selectedCategoryId');
+
+          // Set category selection but DON'T auto-load products
           categoriesProvider.selectCategory(selectedCategoryId);
-          productsProvider.loadProductsByCategory(
-            categoryId: selectedCategoryId!,
-            refresh: true,
-          );
-        }
-      });
-    } else {
-      // Load basic products with pagination for "All" products
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final productsProvider = Provider.of<ProductsProvider>(
-          context,
-          listen: false,
-        );
-        final categoriesProvider = Provider.of<CategoriesProvider>(
-          context,
-          listen: false,
-        );
 
+          setState(() {
+            // Update UI to show the category is selected
+          });
+        } else {
+          debugPrint('SearchScreen - Category not found: $categoryName');
+        }
+      } else {
+        debugPrint('SearchScreen - Set to show all products');
+        // Clear selection but DON'T auto-load products
         categoriesProvider.clearSelection();
-        // Load products with pagination of 12 items for "All" products
-        productsProvider.loadProducts(refresh: true);
-      });
-    }
+        setState(() {
+          categoryName = null;
+          selectedCategoryId = null;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     searchTextController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -151,8 +168,13 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     try {
+      debugPrint(
+        'Applying filters - selectedCategoryId: $selectedCategoryId, sortBy: $selectedSortBy',
+      );
+
       if (selectedCategoryId != null && selectedCategoryId!.isNotEmpty) {
         // Filter by category with optional sorting
+        debugPrint('Loading products by category: $selectedCategoryId');
         categoriesProvider.selectCategory(selectedCategoryId);
         await productsProvider.loadProductsByCategory(
           categoryId: selectedCategoryId!,
@@ -165,22 +187,54 @@ class _SearchScreenState extends State<SearchScreen> {
           (cat) => cat.id == selectedCategoryId,
           orElse: () => null as dynamic,
         );
-        categoryName = category.categoryName ?? 'Unknown Category';
+        categoryName = category?.categoryName ?? 'Unknown Category';
+
+        debugPrint(
+          'Products loaded for category $categoryName: ${productsProvider.getProducts.length}',
+        );
       } else {
         // Show all products with optional sorting
+        debugPrint('Loading all products with sortBy: $selectedSortBy');
         categoriesProvider.clearSelection();
         await productsProvider.loadProducts(
           sortBy: selectedSortBy,
           refresh: true,
         );
         categoryName = null;
+
+        debugPrint(
+          'All products loaded: ${productsProvider.getProducts.length}',
+        );
+      }
+
+      // Force UI refresh after loading products
+      setState(() {
+        // This will trigger rebuild and show correct products
+      });
+
+      // Show success message
+      if (mounted) {
+        final productCount = productsProvider.getProducts.length;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              selectedCategoryId != null
+                  ? 'Tìm thấy $productCount sản phẩm trong danh mục ${categoryName ?? "đã chọn"}'
+                  : 'Tìm thấy $productCount sản phẩm',
+            ),
+            backgroundColor: productCount > 0 ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
+      debugPrint('Error applying filters: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to apply filters: ${e.toString()}'),
+            content: Text('Lỗi khi áp dụng bộ lọc: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -189,6 +243,28 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       isSearching = false;
     });
+  }
+
+  Future<void> _loadMoreProducts() async {
+    final productsProvider = Provider.of<ProductsProvider>(
+      context,
+      listen: false,
+    );
+
+    // Only load more if not already loading and has more data
+    if (productsProvider.isLoadingMore || !productsProvider.hasMoreData) {
+      return;
+    }
+
+    try {
+      if (selectedCategoryId != null && selectedCategoryId!.isNotEmpty) {
+        await productsProvider.loadMoreProductsByCategory(selectedCategoryId!);
+      } else {
+        await productsProvider.loadMoreProducts();
+      }
+    } catch (e) {
+      debugPrint('Error loading more products: $e');
+    }
   }
 
   Widget _buildFilterSection() {
@@ -250,34 +326,39 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Category Chips
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        // All Categories chip
-                        _buildCategoryChip(
-                          label: 'Tất cả danh mục',
-                          isSelected: selectedCategoryId == null,
-                          onTap: () {
-                            setState(() {
-                              selectedCategoryId = null;
-                            });
-                          },
+                    // Category Chips - Fixed overflow issue with SingleChildScrollView
+                    SizedBox(
+                      height: 120, // Fixed height to prevent overflow
+                      child: SingleChildScrollView(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            // All Categories chip
+                            _buildCategoryChip(
+                              label: 'Tất cả danh mục',
+                              isSelected: selectedCategoryId == null,
+                              onTap: () {
+                                setState(() {
+                                  selectedCategoryId = null;
+                                });
+                              },
+                            ),
+                            // Individual category chips
+                            ...categoriesProvider.getAllCategoriesFlat.map(
+                              (category) => _buildCategoryChip(
+                                label: category.categoryName,
+                                isSelected: selectedCategoryId == category.id,
+                                onTap: () {
+                                  setState(() {
+                                    selectedCategoryId = category.id;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        // Individual category chips
-                        ...categoriesProvider.getAllCategoriesFlat.map(
-                          (category) => _buildCategoryChip(
-                            label: category.categoryName,
-                            isSelected: selectedCategoryId == category.id,
-                            onTap: () {
-                              setState(() {
-                                selectedCategoryId = category.id;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 );
@@ -300,27 +381,30 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Price Filter Options
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildPriceFilterChip(
-                      label: 'Mặc định',
-                      value: null,
-                      icon: Icons.sort,
-                    ),
-                    _buildPriceFilterChip(
-                      label: 'Thấp đến cao',
-                      value: 'price_asc',
-                      icon: Icons.trending_up,
-                    ),
-                    _buildPriceFilterChip(
-                      label: 'Cao đến thấp',
-                      value: 'price_desc',
-                      icon: Icons.trending_down,
-                    ),
-                  ],
+                // Price Filter Options - Fixed overflow
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildPriceFilterChip(
+                        label: 'Mặc định',
+                        value: null,
+                        icon: Icons.sort,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildPriceFilterChip(
+                        label: 'Thấp đến cao',
+                        value: 'price_asc',
+                        icon: Icons.trending_up,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildPriceFilterChip(
+                        label: 'Cao đến thấp',
+                        value: 'price_desc',
+                        icon: Icons.trending_down,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -332,7 +416,13 @@ class _SearchScreenState extends State<SearchScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _applyFilters,
+                    onPressed: () {
+                      _applyFilters();
+                      // Close filters after applying
+                      setState(() {
+                        showFilters = false;
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
@@ -428,7 +518,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     (cat) => cat.id == selectedCategoryId,
                                     orElse: () => null as dynamic,
                                   );
-                              return category.categoryName ?? 'Unknown';
+                              return category?.categoryName ?? 'Unknown';
                             })(),
                             () {
                               setState(() {
@@ -439,8 +529,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         if (selectedSortBy != null)
                           _buildActiveFilterChip(
                             selectedSortBy == 'price_asc'
-                                ? 'Low to High'
-                                : 'High to Low',
+                                ? 'Thấp đến cao'
+                                : 'Cao đến thấp',
                             () {
                               setState(() {
                                 selectedSortBy = null;
@@ -468,7 +558,8 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        margin: const EdgeInsets.only(right: 4, bottom: 4),
         decoration: BoxDecoration(
           color:
               isSelected
@@ -500,15 +591,19 @@ class _SearchScreenState extends State<SearchScreen> {
               Icon(Icons.check_circle, size: 16, color: Colors.white),
               const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                color:
-                    isSelected
-                        ? Colors.white
-                        : Theme.of(context).textTheme.bodyMedium?.color,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontSize: 13,
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color:
+                      isSelected
+                          ? Colors.white
+                          : Theme.of(context).textTheme.bodyMedium?.color,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],
@@ -532,7 +627,7 @@ class _SearchScreenState extends State<SearchScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color:
               isSelected
@@ -620,198 +715,264 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productsProvider = Provider.of<ProductsProvider>(context);
+    return Consumer<ProductsProvider>(
+      builder: (context, productsProvider, child) {
+        // Use products based on whether we're filtering by category or showing all
+        List<ProductModel> productList = productsProvider.getProducts;
 
-    // Use products based on whether we're filtering by category or showing all
-    List<ProductModel> productList = productsProvider.getProducts;
+        debugPrint(
+          'SearchScreen build - Products count: ${productList.length}',
+        );
+        debugPrint(
+          'SearchScreen build - Selected category: $selectedCategoryId',
+        );
+        debugPrint('SearchScreen build - Category name: $categoryName');
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.arrow_back_ios, size: 20),
-          ),
-          title: TitlesTextWidget(
-            label:
-                categoryName != null
-                    ? "Products - $categoryName"
-                    : "Search products",
-          ),
-          actions: [
-            // Show category indicator if filtering by category
-            if (categoryName != null && categoryName != "All")
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Chip(
-                  label: Text(
-                    categoryName!,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  backgroundColor: Theme.of(
-                    context,
-                  ).primaryColor.withOpacity(0.1),
-                  onDeleted: () {
-                    // Clear category filter
-                    final categoriesProvider = Provider.of<CategoriesProvider>(
-                      context,
-                      listen: false,
-                    );
-                    categoriesProvider.clearSelection();
-                    productsProvider.loadProducts(refresh: true);
-                    setState(() {
-                      categoryName = null;
-                      selectedCategoryId = null;
-                    });
-                  },
-                ),
+        return GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.arrow_back_ios, size: 20),
               ),
-          ],
-        ),
-        body: Column(
-          children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: searchTextController,
-                decoration: InputDecoration(
-                  hintText:
-                      categoryName != null
-                          ? "Search in $categoryName..."
-                          : "Search products...",
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
+              title: TitlesTextWidget(
+                label:
+                    categoryName != null
+                        ? "Products - $categoryName"
+                        : "Search products",
+              ),
+              actions: [
+                // Show category indicator if filtering by category
+                if (categoryName != null && categoryName != "All")
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Chip(
+                      label: Text(
+                        categoryName!,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).primaryColor.withOpacity(0.1),
+                      onDeleted: () {
+                        // Clear category filter
+                        final categoriesProvider =
+                            Provider.of<CategoriesProvider>(
+                              context,
+                              listen: false,
+                            );
+                        categoriesProvider.clearSelection();
+                        productsProvider.loadProducts(refresh: true);
+                        setState(() {
+                          categoryName = null;
+                          selectedCategoryId = null;
+                        });
+                      },
+                    ),
+                  ),
+              ],
+            ),
+            body: Column(
+              children: [
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
                     children: [
-                      if (isSearching)
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                      Expanded(
+                        child: TextField(
+                          controller: searchTextController,
+                          decoration: InputDecoration(
+                            hintText:
+                                categoryName != null
+                                    ? "Search in $categoryName..."
+                                    : "Search products...",
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isSearching)
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                GestureDetector(
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus();
+                                    searchTextController.clear();
+                                    setState(() {
+                                      productListSearch = [];
+                                      isSearching = false;
+                                    });
+                                  },
+                                  child: const Icon(
+                                    Icons.clear,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          onChanged: (value) {
+                            // DON'T auto-search, only clear results if empty
+                            if (value.trim().isEmpty) {
+                              setState(() {
+                                productListSearch = [];
+                                isSearching = false;
+                              });
+                            }
+                          },
+                          onSubmitted: (value) {
+                            _performSearch(value);
+                          },
                         ),
-                      GestureDetector(
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          searchTextController.clear();
-                          setState(() {
-                            productListSearch = [];
-                            isSearching = false;
-                          });
-                        },
-                        child: const Icon(Icons.clear, color: Colors.red),
                       ),
                       const SizedBox(width: 8),
-                    ],
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onChanged: (value) {
-                  // Debounce search
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    if (searchTextController.text == value) {
-                      _performSearch(value);
-                    }
-                  });
-                },
-                onSubmitted: (value) {
-                  _performSearch(value);
-                },
-              ),
-            ),
-
-            // Filter Section
-            _buildFilterSection(),
-
-            // Show results count and category info
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  if (searchTextController.text.isNotEmpty)
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).primaryColor.withOpacity(0.3),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (searchTextController.text.trim().isNotEmpty) {
+                            _performSearch(searchTextController.text);
+                          }
+                        },
+                        icon: const Icon(Icons.search, size: 18),
+                        label: const Text('Tìm'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              size: 16,
-                              color: Theme.of(context).primaryColor,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Filter Section
+                _buildFilterSection(),
+
+                // Show results count and category info
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      if (searchTextController.text.isNotEmpty)
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Results for "${searchTextController.text}"',
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.3),
                               ),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  size: 16,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Kết quả cho "${searchTextController.text}"',
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (categoryName != null && categoryName != "All")
+                                Text(
+                                  'Category: $categoryName',
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                    fontSize: 14,
+                                  ),
+                                )
+                              else
+                                Text(
+                                  'Tất cả sản phẩm',
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              // Pagination info
+                              if (productList.isNotEmpty)
+                                Text(
+                                  'Hiển thị ${productList.length}${productsProvider.hasMoreData ? '+' : ''} trong ${productsProvider.totalCount} sản phẩm',
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    )
-                  else if (categoryName != null && categoryName != "All")
-                    Text(
-                      'Category: $categoryName',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    )
-                  else
-                    Text(
-                      'All products',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                    ],
+                  ),
+                ),
 
-            // Content area
-            Expanded(child: _buildContent(productList)),
-          ],
-        ),
-      ),
+                // Content area
+                Expanded(child: _buildContent(productList, productsProvider)),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildContent(List<ProductModel> productList) {
+  Widget _buildContent(
+    List<ProductModel> productList,
+    ProductsProvider productsProvider,
+  ) {
     // Show loading indicator when loading initial products
     if (productsProvider.isLoading && productList.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -824,32 +985,42 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.search_off,
+              Icons.filter_list_outlined,
               size: 64,
               color: Theme.of(
                 context,
               ).textTheme.bodySmall?.color?.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
-            TitlesTextWidget(
-              label:
-                  categoryName != null
-                      ? "No products in $categoryName"
-                      : "No products available",
+            TitlesTextWidget(label: "Chọn danh mục và bấm Apply Filter"),
+            const SizedBox(height: 8),
+            Text(
+              selectedCategoryId != null
+                  ? "Bấm Apply Filter để xem sản phẩm trong danh mục đã chọn"
+                  : "Chọn danh mục hoặc bấm Apply Filter để xem tất cả sản phẩm",
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () {
-                if (selectedCategoryId != null) {
-                  productsProvider.loadProductsByCategory(
-                    categoryId: selectedCategoryId!,
-                    refresh: true,
-                  );
-                } else {
-                  productsProvider.loadProducts(refresh: true);
-                }
+                _applyFilters();
               },
-              child: const Text('Thử lại'),
+              icon: const Icon(Icons.filter_alt),
+              label: Text(
+                selectedCategoryId != null
+                    ? 'Apply Filter'
+                    : 'Xem tất cả sản phẩm',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         ),
@@ -865,7 +1036,7 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Searching products...'),
+              Text('Đang tìm kiếm sản phẩm...'),
             ],
           ),
         );
@@ -887,7 +1058,7 @@ class _SearchScreenState extends State<SearchScreen> {
               const TitlesTextWidget(label: "Không tìm thấy sản phẩm"),
               const SizedBox(height: 8),
               Text(
-                'No results for "${searchTextController.text}"',
+                'Không có kết quả cho "${searchTextController.text}"',
                 style: TextStyle(
                   color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.w500,
@@ -896,7 +1067,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Try searching with different keywords',
+                'Thử tìm kiếm với từ khóa khác',
                 style: TextStyle(
                   color: Theme.of(
                     context,
@@ -927,24 +1098,53 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       }
 
-      return _buildProductGrid(productListSearch);
+      return _buildProductGrid(productListSearch, productsProvider);
     }
 
-    return _buildProductGrid(productList);
+    return _buildProductGrid(productList, productsProvider);
   }
 
-  Widget _buildProductGrid(List<ProductModel> products) {
-    return DynamicHeightGridView(
-      itemCount: products.length,
-      crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      builder: (context, index) {
-        return ProductWidget(productId: products[index].productId);
-      },
+  Widget _buildProductGrid(
+    List<ProductModel> products,
+    ProductsProvider productsProvider,
+  ) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: DynamicHeightGridView(
+          controller: _scrollController,
+          itemCount: products.length + (productsProvider.isLoadingMore ? 1 : 0),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 8,
+          builder: (context, index) {
+            // Show loading indicator at the end if loading more
+            if (index == products.length) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 8),
+                      Text(
+                        'Đang tải thêm sản phẩm...',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360, minHeight: 280),
+              child: ProductWidget(productId: products[index].productId),
+            );
+          },
+        ),
+      ),
     );
   }
-
-  ProductsProvider get productsProvider =>
-      Provider.of<ProductsProvider>(context, listen: false);
 }
