@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/skin_analysis_provider.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_camera_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shopsmart_users_en/services/currency_formatter.dart';
 
 class SkinAnalysisPaymentScreen extends StatefulWidget {
   static const routeName = '/skin-analysis-payment';
@@ -104,13 +105,13 @@ class _SkinAnalysisPaymentScreenState extends State<SkinAnalysisPaymentScreen> {
             ),
             child: Column(
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Phí dịch vụ:', style: TextStyle(fontSize: 16)),
+                    const Text('Phí dịch vụ:', style: TextStyle(fontSize: 16)),
                     Text(
-                      '20.000 VNĐ',
-                      style: TextStyle(
+                      '${CurrencyFormatter.formatNumber(20000.0)} VNĐ',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -294,7 +295,7 @@ class _SkinAnalysisPaymentScreenState extends State<SkinAnalysisPaymentScreen> {
                   const SizedBox(height: 12),
                   _buildPaymentInfoRow(
                     'Số tiền:',
-                    '${provider.currentTransaction!.amount.toStringAsFixed(0)} VNĐ',
+                    '${CurrencyFormatter.formatNumber(provider.currentTransaction!.amount)} VNĐ',
                   ),
                   _buildPaymentInfoRow(
                     'Thông tin ngân hàng:',
