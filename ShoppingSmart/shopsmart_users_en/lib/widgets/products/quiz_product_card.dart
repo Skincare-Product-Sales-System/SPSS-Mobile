@@ -21,7 +21,7 @@ class QuizProductCard extends StatelessWidget {
           ),
       child: Container(
         width: 180,
-        height: 330, // Tăng từ 320px lên 330px
+        height: 400, // Tăng chiều cao card để tránh tràn
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -101,8 +101,7 @@ class QuizProductCard extends StatelessWidget {
 
             const SizedBox(height: 6), // Tăng từ 4px lên 6px
             // Phần mô tả sản phẩm
-            SizedBox(
-              height: 64, // Tăng từ 60px lên 64px
+            Flexible(
               child: Text(
                 plainDescription,
                 maxLines: 3,
@@ -117,10 +116,13 @@ class QuizProductCard extends StatelessWidget {
             const Spacer(), // Đảm bảo nút luôn ở dưới cùng
             // Phần giá và nút
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Text(
                     '${product['price']?.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} đ',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Theme.of(context).primaryColor,
                       fontSize: 12,

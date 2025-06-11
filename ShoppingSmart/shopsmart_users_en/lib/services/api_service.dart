@@ -14,21 +14,12 @@ import '../models/voucher_model.dart';
 import '../services/jwt_service.dart';
 import '../models/address_model.dart' as address_lib;
 import '../models/payment_method_model.dart';
+import '../models/transaction_model.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      // For Android emulator, use 10.0.2.2 instead of localhost
-      return 'http://10.0.2.2:5041/api';
-    } else if (Platform.isIOS) {
-      // For iOS simulator, use localhost (or your machine's IP)
-      return 'http://localhost:5041/api';
-      // Alternative: return 'http://YOUR_MACHINE_IP:5041/api';
-    } else {
-      // For web or other platforms
-      return 'http://localhost:5041/api';
-    }
+    return 'http://10.0.2.2:5041/api';
   }
 
   static const Duration timeout = Duration(seconds: 30);
@@ -1341,12 +1332,150 @@ class ApiService {
         );
       }
 
-      final url = Uri.parse('$baseUrl/skin-analysis');
+      final url = Uri.parse('$baseUrl/skin-analysis/analyze');
       final request =
           http.MultipartRequest('POST', url)
             ..headers.addAll({'Authorization': 'Bearer $token'})
             ..files.add(
-              await http.MultipartFile.fromPath('image', imageFile.path),
+              await http.MultipartFile.fromPath('faceImage', imageFile.path),
+            );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // Parse response data
+      Map<String, dynamic> responseData = {};
+      try {
+        responseData = json.decode(response.body);
+      } catch (e) {
+        print('Lỗi khi parse response data: $e');
+        return ApiResponse(
+          success: false,
+          message: 'Lỗi khi xử lý dữ liệu từ server',
+          errors: ['Lỗi parse JSON'],
+        );
+      }
+
+      // Thành công
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          responseData['success'] == true) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: true,
+          message: responseData['message'] ?? 'Phân tích da thành công',
+          data:
+              responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
+          errors: null,
+        );
+      }
+      // Lỗi từ server với status code 200 nhưng success = false
+      else if (response.statusCode >= 200 && response.statusCode < 300) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: responseData['message'] ?? 'Có lỗi xảy ra khi phân tích da',
+          data: null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      }
+      // Lỗi từ server với status code khác 200
+      else {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: responseData['message'] ?? 'Có lỗi xảy ra khi phân tích da',
+          data: null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : ['Lỗi server: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      print('Lỗi ngoại lệ khi phân tích da: $e');
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Lỗi khi phân tích da: ${e.toString()}',
+        data: null,
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Tạo yêu cầu thanh toán cho phân tích da
+  static Future<ApiResponse<TransactionDto>> createSkinAnalysisPayment() async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/create-payment');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<TransactionDto>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? TransactionDto.fromJson(responseData['data'])
+                  : null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Phân tích da sau khi thanh toán được duyệt
+  static Future<ApiResponse<SkinAnalysisResult>> analyzeSkinWithPayment(
+    File imageFile,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/analyze-with-payment');
+      final request =
+          http.MultipartRequest('POST', url)
+            ..headers.addAll({'Authorization': 'Bearer $token'})
+            ..files.add(
+              await http.MultipartFile.fromPath('faceImage', imageFile.path),
             );
 
       final streamedResponse = await request.send();
@@ -1382,9 +1511,11 @@ class ApiService {
     }
   }
 
-  // Lấy lịch sử phân tích da của người dùng
-  static Future<ApiResponse<List<SkinAnalysisResult>>>
-  getSkinAnalysisHistory() async {
+  // Lấy lịch sử phân tích da của người dùng (có phân trang)
+  static Future<ApiResponse<List<SkinAnalysisResult>>> getSkinAnalysisHistory({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
     try {
       final token = await JwtService.getStoredToken();
       if (token == null) {
@@ -1395,7 +1526,13 @@ class ApiService {
         );
       }
 
-      final url = Uri.parse('$baseUrl/skin-analysis/user');
+      final url = Uri.parse('$baseUrl/skin-analysis/user/paged').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
       final response = await http.get(
         url,
         headers: {
@@ -1411,10 +1548,63 @@ class ApiService {
           message: responseData['message'] ?? 'Unknown message',
           data:
               responseData['success'] == true && responseData['data'] != null
-                  ? (responseData['data'] as List)
+                  ? ((responseData['data']['items'] as List?) ?? [])
                       .map((item) => SkinAnalysisResult.fromJson(item))
                       .toList()
                   : [],
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Lấy chi tiết phân tích da theo ID
+  static Future<ApiResponse<SkinAnalysisResult>> getSkinAnalysisById(
+    String id,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xem chi tiết phân tích da',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/$id');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
           errors:
               responseData['errors'] != null
                   ? List<String>.from(responseData['errors'])
