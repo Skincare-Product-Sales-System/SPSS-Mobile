@@ -39,7 +39,7 @@ class _OrdersWidgetFreeState extends State<OrdersWidgetFree> {
                     children: [
                       const Flexible(
                         child: TitlesTextWidget(
-                          label: 'productTitle',
+                          label: 'Tên sản phẩm',
                           maxLines: 2,
                           fontSize: 15,
                         ),
@@ -56,7 +56,7 @@ class _OrdersWidgetFreeState extends State<OrdersWidgetFree> {
                   ),
                   const Row(
                     children: [
-                      TitlesTextWidget(label: 'Price:  ', fontSize: 15),
+                      TitlesTextWidget(label: 'Giá:  ', fontSize: 15),
                       Flexible(
                         child: SubtitleTextWidget(
                           label: "11.99 \$",
@@ -67,7 +67,7 @@ class _OrdersWidgetFreeState extends State<OrdersWidgetFree> {
                     ],
                   ),
                   const SizedBox(height: 5),
-                  const SubtitleTextWidget(label: "Qty: 10", fontSize: 15),
+                  const SubtitleTextWidget(label: "SL: 10", fontSize: 15),
                   const SizedBox(height: 5),
                 ],
               ),

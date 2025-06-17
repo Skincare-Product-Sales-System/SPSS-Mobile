@@ -1,0 +1,1628 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import '../models/api_response_model.dart';
+import '../models/product_model.dart';
+import '../models/category_model.dart';
+import '../models/detailed_product_model.dart';
+import '../models/blog_model.dart';
+import '../models/review_models.dart';
+import '../models/order_models.dart';
+import '../models/skin_analysis_models.dart';
+import '../models/voucher_model.dart';
+import '../services/jwt_service.dart';
+import '../models/address_model.dart' as address_lib;
+import '../models/payment_method_model.dart';
+import '../models/transaction_model.dart';
+
+class ApiService {
+  // Use different base URLs for different platforms
+  static String get baseUrl {
+    return 'http://10.0.2.2:5041/api';
+  }
+
+  static const Duration timeout = Duration(seconds: 30);
+
+  static Future<ApiResponse<PaginatedResponse<ProductModel>>> getProducts({
+    int pageNumber = 1,
+    int pageSize = 10,
+    String? sortBy,
+    String? categoryId,
+  }) async {
+    try {
+      Map<String, String> queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
+
+      if (categoryId != null) {
+        queryParams['categoryId'] = categoryId;
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/products',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => ProductModel.fromJson(item),
+          ),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<ProductModel>>(
+          success: false,
+          message:
+              'Failed to load products. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get latest products (using sortBy=newest)
+  static Future<ApiResponse<PaginatedResponse<ProductModel>>>
+  getLatestProducts({int pageNumber = 1, int pageSize = 10}) async {
+    return getProducts(
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      sortBy: 'newest',
+    );
+  }
+
+  // Get best seller products
+  static Future<ApiResponse<PaginatedResponse<ProductModel>>> getBestSellers({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/products/best-sellers').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => ProductModel.fromJson(item),
+          ),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<ProductModel>>(
+          success: false,
+          message:
+              'Failed to load best sellers. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Failed to load best sellers: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get product categories
+  static Future<ApiResponse<PaginatedResponse<CategoryModel>>> getCategories({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/product-categories').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => CategoryModel.fromJson(item),
+          ),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<CategoryModel>>(
+          success: false,
+          message:
+              'Failed to load categories. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<CategoryModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<CategoryModel>>(
+        success: false,
+        message: 'Failed to load categories: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get products by category
+  static Future<ApiResponse<PaginatedResponse<ProductModel>>>
+  getProductsByCategory({
+    required String categoryId,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    return getProducts(
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+      categoryId: categoryId,
+    );
+  }
+
+  // Search products by name
+  static Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
+    required String searchQuery,
+    int pageNumber = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      Map<String, String> queryParams = {
+        'name': searchQuery,
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      final uri = Uri.parse(
+        '$baseUrl/products',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => ProductModel.fromJson(item),
+          ),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<ProductModel>>(
+          success: false,
+          message: 'Search failed. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<ProductModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get product by ID
+  static Future<ApiResponse<DetailedProductModel>> getProductById(
+    String productId,
+  ) async {
+    try {
+      final uri = Uri.parse('$baseUrl/products/$productId');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => DetailedProductModel.fromJson(data),
+        );
+      } else {
+        return ApiResponse<DetailedProductModel>(
+          success: false,
+          message:
+              'Failed to load product. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<DetailedProductModel>(
+        success: false,
+        message: 'Failed to load product: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get blogs with pagination
+  static Future<ApiResponse<PaginatedResponse<BlogModel>>> getBlogs({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/blogs').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => BlogModel.fromJson(item),
+          ),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<BlogModel>>(
+          success: false,
+          message: 'Failed to load blogs. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<BlogModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<BlogModel>>(
+        success: false,
+        message: 'Failed to load blogs: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get blog by ID
+  static Future<ApiResponse<DetailedBlogModel>> getBlogById(
+    String blogId,
+  ) async {
+    try {
+      final uri = Uri.parse('$baseUrl/blogs/$blogId');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => DetailedBlogModel.fromJson(data),
+        );
+      } else {
+        return ApiResponse<DetailedBlogModel>(
+          success: false,
+          message: 'Failed to load blog. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<DetailedBlogModel>(
+        success: false,
+        message: 'Failed to load blog: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Test API connectivity
+  static Future<ApiResponse<String>> testConnection() async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/products',
+      ).replace(queryParameters: {'pageNumber': '1', 'pageSize': '1'});
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return ApiResponse<String>(
+          success: true,
+          data: 'Connection successful!',
+          message: 'API is reachable. Status: ${response.statusCode}',
+        );
+      } else {
+        return ApiResponse<String>(
+          success: false,
+          data: null,
+          message: 'API returned status: ${response.statusCode}',
+          errors: ['Response: ${response.body}'],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<String>(
+        success: false,
+        data: null,
+        message: 'Cannot connect to $baseUrl',
+        errors: [
+          'SocketException: ${e.message}',
+          'Make sure your API server is running on port 5041',
+          'URL being tested: $baseUrl/products',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<String>(
+        success: false,
+        data: null,
+        message: 'Connection test failed',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get product reviews
+  static Future<ApiResponse<ReviewResponse>> getProductReviews(
+    String productId, {
+    int? ratingFilter,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (ratingFilter != null) {
+        queryParams['ratingFilter'] = ratingFilter.toString();
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/reviews/product/$productId',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => ReviewResponse.fromJson(data),
+        );
+      } else {
+        return ApiResponse<ReviewResponse>(
+          success: false,
+          message:
+              'Failed to load reviews. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<ReviewResponse>(
+        success: false,
+        message: 'Failed to load reviews: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Create new order
+  static Future<ApiResponse<OrderResponse>> createOrder(
+    CreateOrderRequest request,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/orders');
+
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(request.toJson()),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderResponse.fromJson(data),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to create order',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get orders with pagination
+  static Future<ApiResponse<PaginatedResponse<OrderModel>>> getOrders({
+    required int pageNumber,
+    required int pageSize,
+    String? status,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        print('No token found'); // Debug log
+        return ApiResponse<PaginatedResponse<OrderModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/orders/user',
+      ).replace(queryParameters: queryParams);
+
+      print('Request URL: ${uri.toString()}'); // Debug log
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      print('Response Status Code: ${response.statusCode}'); // Debug log
+      print('Response Body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        print('Parsed JSON Data: $jsonData'); // Debug log
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => OrderModel.fromJson(item),
+          ),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          print('Error response data: $jsonData'); // Debug log
+          return ApiResponse<PaginatedResponse<OrderModel>>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get orders',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          print('Error parsing error response: $e'); // Debug log
+          return ApiResponse<PaginatedResponse<OrderModel>>(
+            success: false,
+            message: 'Failed to get orders',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      print('Socket Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      print('HTTP Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      print('Format Exception: $e'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e, stackTrace) {
+      print('Unexpected Error: $e'); // Debug log
+      print('Stack trace: $stackTrace'); // Debug log
+      return ApiResponse<PaginatedResponse<OrderModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get order detail by ID
+  static Future<ApiResponse<OrderDetailModel>> getOrderDetail(
+    String orderId,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderDetailModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/orders/$orderId');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderDetailModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<OrderDetailModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get order detail',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<OrderDetailModel>(
+            success: false,
+            message: 'Failed to get order detail',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<OrderDetailModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get vouchers with pagination
+  static Future<ApiResponse<PaginatedResponse<VoucherModel>>> getVouchers({
+    int pageNumber = 1,
+    int pageSize = 10,
+    String? status,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<VoucherModel>>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final queryParams = {
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/voucher',
+      ).replace(queryParameters: queryParams);
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => VoucherModel.fromJson(item),
+          ),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<PaginatedResponse<VoucherModel>>(
+            success: false,
+            message: jsonData['message'] ?? 'Failed to get vouchers',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<PaginatedResponse<VoucherModel>>(
+            success: false,
+            message: 'Failed to get vouchers',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } on HttpException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'HTTP error occurred: ${e.message}',
+        errors: ['HTTP request failed', e.toString()],
+      );
+    } on FormatException catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'Invalid response format: ${e.message}',
+        errors: ['Server returned invalid data', e.toString()],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<VoucherModel>>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Validate voucher by code
+  static Future<ApiResponse<VoucherModel>> validateVoucher(
+    String voucherCode,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<VoucherModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/voucher/validate/$voucherCode');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => VoucherModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Voucher not valid',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: 'Failed to validate voucher',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Post a review
+  static Future<ApiResponse<Map<String, dynamic>>> postReview({
+    required String productItemId,
+    required List<String> reviewImages,
+    required int ratingValue,
+    required String comment,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final requestBody = {
+        'productItemId': productItemId,
+        'reviewImages': reviewImages,
+        'ratingValue': ratingValue,
+        'comment': comment,
+      };
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/reviews'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(requestBody),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<Map<String, dynamic>>(
+          success: true,
+          message: 'Review posted successfully',
+          data: jsonData,
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        return ApiResponse<Map<String, dynamic>>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Failed to post review. Status code: ${response.statusCode}',
+          errors:
+              errorData?['errors'] ?? ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<Map<String, dynamic>>(
+        success: false,
+        message: 'Failed to post review: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  static Future<ApiResponse<PaginatedResponse<address_lib.AddressModel>>>
+  getAddresses({required int pageNumber, required int pageSize}) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/addresses/user').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      print('getAddresses response.body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => address_lib.AddressModel.fromJson(item),
+          ),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to load addresses',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<address_lib.AddressModel>>(
+        success: false,
+        message: e.toString(),
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  static Future<ApiResponse<PaginatedResponse<PaymentMethodModel>>>
+  getPaymentMethods({required int pageNumber, required int pageSize}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/payment-methods').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final data = jsonData['data'];
+        final items =
+            (data['items'] as List)
+                .map((item) => PaymentMethodModel.fromJson(item))
+                .toList();
+
+        return ApiResponse(
+          success: true,
+          data: PaginatedResponse(
+            items: items,
+            totalCount: data['totalCount'],
+            pageNumber: data['pageNumber'],
+            pageSize: data['pageSize'],
+            totalPages: data['totalPages'],
+          ),
+          message: jsonData['message'],
+        );
+      }
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      return ApiResponse(
+        success: false,
+        message: jsonData['message'] ?? 'Failed to load payment methods',
+      );
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  static Future<ApiResponse<OrderResponse>> createOrderRaw(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+      final uri = Uri.parse('$baseUrl/orders');
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(data),
+          )
+          .timeout(timeout);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => OrderResponse.fromJson(data),
+        );
+      } else {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<OrderResponse>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to create order',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<OrderResponse>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Upload image for review (if you have a separate endpoint for image upload)
+  static Future<ApiResponse<String>> uploadReviewImage(File imageFile) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<String>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload/review-image'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imageFile.path),
+      );
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        return ApiResponse<String>(
+          success: true,
+          message: 'Image uploaded successfully',
+          data: jsonData['imageUrl'] ?? jsonData['url'] ?? '',
+        );
+      } else {
+        return ApiResponse<String>(
+          success: false,
+          message:
+              'Failed to upload image. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<String>(
+        success: false,
+        message: 'Failed to upload image: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Phân tích da
+  static Future<ApiResponse<SkinAnalysisResult>> analyzeSkin(
+    File imageFile,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/analyze');
+      final request =
+          http.MultipartRequest('POST', url)
+            ..headers.addAll({'Authorization': 'Bearer $token'})
+            ..files.add(
+              await http.MultipartFile.fromPath('faceImage', imageFile.path),
+            );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // Parse response data
+      Map<String, dynamic> responseData = {};
+      try {
+        responseData = json.decode(response.body);
+      } catch (e) {
+        print('Lỗi khi parse response data: $e');
+        return ApiResponse(
+          success: false,
+          message: 'Lỗi khi xử lý dữ liệu từ server',
+          errors: ['Lỗi parse JSON'],
+        );
+      }
+
+      // Thành công
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          responseData['success'] == true) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: true,
+          message: responseData['message'] ?? 'Phân tích da thành công',
+          data:
+              responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
+          errors: null,
+        );
+      }
+      // Lỗi từ server với status code 200 nhưng success = false
+      else if (response.statusCode >= 200 && response.statusCode < 300) {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: responseData['message'] ?? 'Có lỗi xảy ra khi phân tích da',
+          data: null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      }
+      // Lỗi từ server với status code khác 200
+      else {
+        return ApiResponse<SkinAnalysisResult>(
+          success: false,
+          message: responseData['message'] ?? 'Có lỗi xảy ra khi phân tích da',
+          data: null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : ['Lỗi server: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      print('Lỗi ngoại lệ khi phân tích da: $e');
+      return ApiResponse<SkinAnalysisResult>(
+        success: false,
+        message: 'Lỗi khi phân tích da: ${e.toString()}',
+        data: null,
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Tạo yêu cầu thanh toán cho phân tích da
+  static Future<ApiResponse<TransactionDto>> createSkinAnalysisPayment() async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/create-payment');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<TransactionDto>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? TransactionDto.fromJson(responseData['data'])
+                  : null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Phân tích da sau khi thanh toán được duyệt
+  static Future<ApiResponse<SkinAnalysisResult>> analyzeSkinWithPayment(
+    File imageFile,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để sử dụng tính năng này',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/analyze-with-payment');
+      final request =
+          http.MultipartRequest('POST', url)
+            ..headers.addAll({'Authorization': 'Bearer $token'})
+            ..files.add(
+              await http.MultipartFile.fromPath('faceImage', imageFile.path),
+            );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Lấy lịch sử phân tích da của người dùng (có phân trang)
+  static Future<ApiResponse<List<SkinAnalysisResult>>> getSkinAnalysisHistory({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xem lịch sử phân tích da',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/user/paged').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<List<SkinAnalysisResult>>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? ((responseData['data']['items'] as List?) ?? [])
+                      .map((item) => SkinAnalysisResult.fromJson(item))
+                      .toList()
+                  : [],
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Lấy chi tiết phân tích da theo ID
+  static Future<ApiResponse<SkinAnalysisResult>> getSkinAnalysisById(
+    String id,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xem chi tiết phân tích da',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/skin-analysis/$id');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<SkinAnalysisResult>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Unknown message',
+          data:
+              responseData['success'] == true && responseData['data'] != null
+                  ? SkinAnalysisResult.fromJson(responseData['data'])
+                  : null,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: 'Có lỗi xảy ra: ${response.statusCode}',
+          errors: ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+}

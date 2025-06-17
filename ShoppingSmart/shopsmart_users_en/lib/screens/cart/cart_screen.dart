@@ -21,10 +21,10 @@ class CartScreen extends StatelessWidget {
         ? Scaffold(
           body: EmptyBagWidget(
             imagePath: AssetsManager.shoppingBasket,
-            title: "Your cart is empty",
+            title: "Giỏ hàng của bạn trống",
             subtitle:
-                "Looks like your cart is empty add something and make me happy",
-            buttonText: "Shop now",
+                "Có vẻ như giỏ hàng của bạn đang trống, hãy thêm gì đó để làm tôi vui",
+            buttonText: "Mua sắm ngay",
           ),
         )
         : Scaffold(
@@ -35,15 +35,14 @@ class CartScreen extends StatelessWidget {
               child: Image.asset(AssetsManager.shoppingCart),
             ),
             title: TitlesTextWidget(
-              label: "Cart (${cartProvider.getCartitems.length})",
+              label: "Giỏ hàng (${cartProvider.getCartitems.length})",
             ),
             actions: [
               IconButton(
                 onPressed: () {
                   MyAppFunctions.showErrorOrWarningDialog(
-                    isError: false,
                     context: context,
-                    subtitle: "Clear cart?",
+                    subtitle: "Xóa giỏ hàng?",
                     fct: () {
                       cartProvider.clearLocalCart();
                     },

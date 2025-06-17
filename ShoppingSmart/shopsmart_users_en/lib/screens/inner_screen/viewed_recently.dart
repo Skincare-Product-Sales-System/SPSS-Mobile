@@ -20,10 +20,10 @@ class ViewedRecentlyScreen extends StatelessWidget {
         ? Scaffold(
           body: EmptyBagWidget(
             imagePath: AssetsManager.orderBag,
-            title: "No viewed products yet",
+            title: "Chưa có sản phẩm đã xem",
             subtitle:
-                "Looks like your cart is empty add something and make me happy",
-            buttonText: "Shop now",
+                "Có vẻ như bạn chưa xem sản phẩm nào, hãy khám phá cửa hàng",
+            buttonText: "Mua sắm ngay",
           ),
         )
         : Scaffold(
@@ -34,7 +34,7 @@ class ViewedRecentlyScreen extends StatelessWidget {
             ),
             title: TitlesTextWidget(
               label:
-                  "Viewed recently (${viewedProdProvider.getViewedProds.length})",
+                  "Đã xem gần đây (${viewedProdProvider.getViewedProds.length})",
             ),
             actions: [
               IconButton(

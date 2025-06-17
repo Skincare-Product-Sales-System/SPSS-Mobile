@@ -6,6 +6,10 @@ import 'package:shopsmart_users_en/screens/cart/cart_screen.dart';
 import 'package:shopsmart_users_en/screens/home_screen.dart';
 import 'package:shopsmart_users_en/screens/profile_screen.dart';
 import 'package:shopsmart_users_en/screens/search_screen.dart';
+import 'package:shopsmart_users_en/screens/quiz_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_screen.dart';
+import 'package:shopsmart_users_en/widgets/chat/chat_widget.dart';
+import 'package:shopsmart_users_en/screens/chat_ai_screen.dart';
 
 class RootScreen extends StatefulWidget {
   static const routeName = '/RootScreen';
@@ -24,7 +28,8 @@ class _RootScreenState extends State<RootScreen> {
     super.initState();
     screens = const [
       HomeScreen(),
-      SearchScreen(),
+      QuizScreen(),
+      SkinAnalysisScreen(),
       CartScreen(),
       ProfileScreen(),
     ];
@@ -35,10 +40,18 @@ class _RootScreenState extends State<RootScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     return Scaffold(
-      body: PageView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: controller,
-        children: screens,
+      body: Stack(
+        children: [
+          // Main content
+          PageView(
+            physics: const NeverScrollableScrollPhysics(),
+            controller: controller,
+            children: screens,
+          ),
+
+          // Chat widget
+          const ChatWidget(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentScreen,
@@ -55,12 +68,20 @@ class _RootScreenState extends State<RootScreen> {
           const NavigationDestination(
             selectedIcon: Icon(IconlyBold.home),
             icon: Icon(IconlyLight.home),
-            label: "Home",
+            label: "Trang Chủ",
           ),
           const NavigationDestination(
-            selectedIcon: Icon(IconlyBold.search),
-            icon: Icon(IconlyLight.search),
-            label: "Search",
+            selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
+            icon: Icon(Icons.quiz_outlined),
+            label: "Trắc nghiệm",
+          ),
+          const NavigationDestination(
+            selectedIcon: Icon(
+              Icons.face_retouching_natural,
+              color: Colors.pink,
+            ),
+            icon: Icon(Icons.face_retouching_natural_outlined),
+            label: "Phân Tích Da",
           ),
           NavigationDestination(
             selectedIcon: const Icon(IconlyBold.bag_2),
@@ -70,12 +91,12 @@ class _RootScreenState extends State<RootScreen> {
               label: Text(cartProvider.getCartitems.length.toString()),
               child: const Icon(IconlyLight.bag_2),
             ),
-            label: "Cart",
+            label: "Giỏ Hàng",
           ),
           const NavigationDestination(
             selectedIcon: Icon(IconlyBold.profile),
             icon: Icon(IconlyLight.profile),
-            label: "Profile",
+            label: "Cá Nhân",
           ),
         ],
       ),

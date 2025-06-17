@@ -2,18 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/screens/auth/login.dart';
+import 'package:shopsmart_users_en/screens/auth/change_password.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/wishlist.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_history_screen.dart';
 import 'package:shopsmart_users_en/services/assets_manager.dart';
+import 'package:shopsmart_users_en/services/auth_service.dart';
+import 'package:shopsmart_users_en/services/my_app_function.dart';
 import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
+import 'package:shopsmart_users_en/models/auth_models.dart';
+import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
+import 'package:shopsmart_users_en/screens/profile/edit_profile_screen.dart';
+import 'package:shopsmart_users_en/screens/profile/address_screen.dart';
 
 import '../providers/theme_provider.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
-import 'inner_screen/orders/orders_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggedIn = false;
+  UserInfo? _userInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    final userInfo = await AuthService.getStoredUserInfo();
+
+    if (mounted) {
+      setState(() {
+        _isLoggedIn = isLoggedIn;
+        _userInfo = userInfo;
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    await MyAppFunctions.showErrorOrWarningDialog(
+      context: context,
+      subtitle: "Bạn có chắc chắn muốn đăng xuất không?",
+      fct: () async {
+        await AuthService.logout();
+        if (mounted) {
+          setState(() {
+            _isLoggedIn = false;
+            _userInfo = null;
+          });
+        }
+      },
+      isError: false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,23 +81,24 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Visibility(
-              visible: false,
-              child: Padding(
+            Visibility(
+              visible: !_isLoggedIn,
+              child: const Padding(
                 padding: EdgeInsets.all(18.0),
                 child: TitlesTextWidget(
-                  label: "Please login to have unlimited access",
+                  label: "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
                 ),
               ),
             ),
             Visibility(
-              visible: true,
+              visible: _isLoggedIn,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 5,
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: 60,
@@ -56,7 +107,7 @@ class ProfileScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: Theme.of(context).cardColor,
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.background,
+                          color: Theme.of(context).colorScheme.surface,
                           width: 3,
                         ),
                         image: const DecorationImage(
@@ -68,13 +119,39 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TitlesTextWidget(label: "Hadi Kachmar"),
-                        SizedBox(height: 6),
-                        SubtitleTextWidget(label: "Coding.with.hadi@gmail.com"),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TitlesTextWidget(
+                            label: _userInfo?.userName ?? "User",
+                          ),
+                          const SizedBox(height: 6),
+                          SubtitleTextWidget(
+                            label: _userInfo?.email ?? "user@example.com",
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit,
+                        color: Theme.of(context).primaryColor,
+                        size: 28,
+                      ),
+                      tooltip: 'Chỉnh sửa hồ sơ',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
+                          ),
+                        ).then((needReload) {
+                          if (needReload == true) {
+                            _checkLoginStatus();
+                          }
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -88,24 +165,24 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   const Divider(thickness: 1),
                   const SizedBox(height: 10),
-                  const TitlesTextWidget(label: "General"),
+                  const TitlesTextWidget(label: "Chung"),
                   const SizedBox(height: 10),
                   CustomListTile(
-                    text: "All Order",
+                    text: "Tất cả đơn hàng",
                     imagePath: AssetsManager.orderSvg,
                     function: () {
-                      Navigator.pushNamed(context, OrdersScreenFree.routeName);
+                      Navigator.pushNamed(context, OrdersScreen.routeName);
                     },
                   ),
                   CustomListTile(
-                    text: "Wishlist",
+                    text: "Danh sách yêu thích",
                     imagePath: AssetsManager.wishlistSvg,
                     function: () {
                       Navigator.pushNamed(context, WishlistScreen.routName);
                     },
                   ),
                   CustomListTile(
-                    text: "Viewed recently",
+                    text: "Đã xem gần đây",
                     imagePath: AssetsManager.recent,
                     function: () {
                       Navigator.pushNamed(
@@ -115,19 +192,50 @@ class ProfileScreen extends StatelessWidget {
                     },
                   ),
                   CustomListTile(
-                    text: "Address",
+                    text: "Địa chỉ",
                     imagePath: AssetsManager.address,
-                    function: () {},
+                    function: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AddressScreen(),
+                        ),
+                      );
+                    },
                   ),
+                  if (_isLoggedIn)
+                    CustomListTile(
+                      text: "Lịch sử phân tích da",
+                      imagePath: AssetsManager.recent,
+                      function: () {
+                        Navigator.pushNamed(
+                          context,
+                          SkinAnalysisHistoryScreen.routeName,
+                        );
+                      },
+                    ),
+                  if (_isLoggedIn)
+                    CustomListTile(
+                      text: "Đổi mật khẩu",
+                      imagePath: AssetsManager.orderSvg,
+                      function: () {
+                        Navigator.pushNamed(
+                          context,
+                          ChangePasswordScreen.routeName,
+                        );
+                      },
+                    ),
                   const SizedBox(height: 6),
                   const Divider(thickness: 1),
                   const SizedBox(height: 6),
-                  const TitlesTextWidget(label: "Settings"),
+                  const TitlesTextWidget(label: "Cài đặt"),
                   const SizedBox(height: 10),
                   SwitchListTile(
                     secondary: Image.asset(AssetsManager.theme, height: 34),
                     title: Text(
-                      themeProvider.getIsDarkTheme ? "Dark Mode" : "Light Mode",
+                      themeProvider.getIsDarkTheme
+                          ? "Chế độ tối"
+                          : "Chế độ sáng",
                     ),
                     value: themeProvider.getIsDarkTheme,
                     onChanged: (value) {
@@ -140,20 +248,23 @@ class ProfileScreen extends StatelessWidget {
             Center(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: _isLoggedIn ? Colors.red : Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0),
                   ),
                 ),
-                icon: const Icon(Icons.login),
-                label: const Text("Login"),
+                icon: Icon(_isLoggedIn ? Icons.logout : Icons.login),
+                label: Text(_isLoggedIn ? "Đăng xuất" : "Đăng nhập"),
                 onPressed: () async {
-                  Navigator.pushNamed(context, LoginScreen.routeName);
-                  // await MyAppFunctions.showErrorOrWarningDialog(
-                  //     context: context,
-                  //     subtitle: "Are you sure you want to signout",
-                  //     fct: () {},
-                  //     isError: false,);
+                  if (_isLoggedIn) {
+                    await _logout();
+                  } else {
+                    Navigator.pushNamed(context, LoginScreen.routeName).then((
+                      _,
+                    ) {
+                      _checkLoginStatus();
+                    });
+                  }
                 },
               ),
             ),

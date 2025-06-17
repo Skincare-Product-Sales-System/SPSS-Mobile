@@ -7,41 +7,36 @@ class AppConstants {
   static const String imageUrl =
       "https://images.unsplash.com/photo-1465572089651-8fde36c892dd?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80";
 
-  static const List<String> bannersImage = [
-    'assets/images/banners/banner1.png',
-    'assets/images/banners/banner2.png',
+  static final List<String> bannersImage = [
+    AssetsManager.bannerImage1,
+    AssetsManager.bannerImage2,
+    AssetsManager.bannerImage3,
   ];
 
   static List<CategoriesModel> categoriesList = [
     CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Phones",
+      id: "mobiles",
+      name: "Điện thoại",
       image: AssetsManager.mobiles,
     ),
     CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Phones",
-      image: AssetsManager.mobiles,
+      id: "fashion",
+      name: "Thời trang",
+      image: AssetsManager.fashion,
     ),
+    CategoriesModel(id: "watches", name: "Đồng hồ", image: AssetsManager.watch),
+    CategoriesModel(id: "books", name: "Sách", image: AssetsManager.book),
     CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Phones",
-      image: AssetsManager.mobiles,
-    ),
-    CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Phones",
-      image: AssetsManager.mobiles,
-    ),
-    CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Cosmetics",
+      id: "cosmetics",
+      name: "Mỹ phẩm",
       image: AssetsManager.cosmetics,
     ),
     CategoriesModel(
-      id: AssetsManager.mobiles,
-      name: "Phones",
+      id: "electronics",
+      name: "Điện tử",
       image: AssetsManager.electronics,
     ),
+    CategoriesModel(id: "shoes", name: "Giày dép", image: AssetsManager.shoes),
+    CategoriesModel(id: "computers", name: "Máy tính", image: AssetsManager.pc),
   ];
 }

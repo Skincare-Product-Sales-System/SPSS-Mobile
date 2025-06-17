@@ -29,102 +29,288 @@ class _ProductWidgetState extends State<ProductWidget> {
 
     return getCurrProduct == null
         ? const SizedBox.shrink()
-        : Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: GestureDetector(
-            onTap: () async {
-              viewedProdProvider.addViewedProd(
-                productId: getCurrProduct.productId,
-              );
-              await Navigator.pushNamed(
-                context,
-                ProductDetailsScreen.routName,
-                arguments: getCurrProduct.productId,
-              );
-            },
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: FancyShimmerImage(
-                    imageUrl: getCurrProduct.productImage,
-                    height: size.height * 0.22,
-                    width: double.infinity,
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Row(
-                    children: [
-                      Flexible(
-                        flex: 5,
-                        child: TitlesTextWidget(
-                          label: getCurrProduct.productTitle,
-                          fontSize: 18,
-                          maxLines: 2,
+        : Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                viewedProdProvider.addViewedProd(
+                  productId: getCurrProduct.productId,
+                );
+                await Navigator.pushNamed(
+                  context,
+                  ProductDetailsScreen.routName,
+                  arguments: getCurrProduct.productId,
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        height: size.height * 0.22,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      Flexible(
-                        flex: 2,
-                        child: HeartButtonWidget(
-                          productId: getCurrProduct.productId,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6.0),
-                Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        flex: 1,
-                        child: SubtitleTextWidget(
-                          label: "${getCurrProduct.productPrice}\$",
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      Flexible(
-                        child: Material(
-                          borderRadius: BorderRadius.circular(12.0),
-                          color: Colors.lightBlue,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12.0),
-                            onTap: () {
-                              if (cartProvider.isProdinCart(
-                                productId: getCurrProduct.productId,
-                              )) {
-                                return;
-                              }
-                              cartProvider.addProductToCart(
-                                productId: getCurrProduct.productId,
-                              );
-                            },
-                            splashColor: Colors.red,
-                            child: Padding(
-                              padding: const EdgeInsets.all(6.0),
-                              child: Icon(
-                                cartProvider.isProdinCart(
-                                      productId: getCurrProduct.productId,
-                                    )
-                                    ? Icons.check
-                                    : Icons.add_shopping_cart_outlined,
-                                size: 20,
-                                color: Colors.white,
-                              ),
+                        child: FancyShimmerImage(
+                          imageUrl: getCurrProduct.productImage,
+                          height: size.height * 0.22,
+                          width: double.infinity,
+                          boxFit: BoxFit.contain,
+                          errorWidget: Container(
+                            height: size.height * 0.22,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 42,
+                              color: Theme.of(context).disabledColor,
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    Row(
+                      children: [
+                        Flexible(
+                          flex: 5,
+                          child: TitlesTextWidget(
+                            label: getCurrProduct.productTitle,
+                            fontSize: 18,
+                            maxLines: 2,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        Flexible(
+                          flex: 2,
+                          child: HeartButtonWidget(
+                            productId: getCurrProduct.productId,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "From ",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.color
+                                            ?.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          "${getCurrProduct.formattedPrice} VND",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (getCurrProduct.marketPrice >
+                                  getCurrProduct.price) ...[
+                                const SizedBox(height: 4),
+                                SubtitleTextWidget(
+                                  label:
+                                      "${getCurrProduct.formattedMarketPrice} VND",
+                                  fontWeight: FontWeight.w400,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.6),
+                                  fontSize: 13,
+                                  textDecoration: TextDecoration.lineThrough,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Flexible(
+                          child: Material(
+                            borderRadius: BorderRadius.circular(8.0),
+                            color:
+                                cartProvider.isProdinCart(
+                                      productId: getCurrProduct.productId,
+                                    )
+                                    ? Colors.green
+                                    : Theme.of(context).primaryColor,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8.0),
+                              onTap: () {
+                                if (cartProvider.isProdinCart(
+                                  productId: getCurrProduct.productId,
+                                )) {
+                                  return;
+                                }
+                                debugPrint(
+                                  'Product ID: ${getCurrProduct.productId}',
+                                );
+                                debugPrint(
+                                  'Product Items: ${getCurrProduct.productItems.length}',
+                                );
+                                debugPrint(
+                                  'Product Items Data: ${getCurrProduct.productItems}',
+                                );
+
+                                if (getCurrProduct.productItems.isEmpty) {
+                                  debugPrint(
+                                    'No product items available, using product model price',
+                                  );
+
+                                  // Fallback: use product model price when productItems is empty
+                                  if (getCurrProduct.price <= 0) {
+                                    debugPrint(
+                                      'Invalid price in product model',
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Sản phẩm không có giá. Vui lòng thử lại sau.',
+                                        ),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // Use a default productItemId when not available
+                                  cartProvider.addProductToCart(
+                                    productId: getCurrProduct.productId,
+                                    productItemId:
+                                        getCurrProduct
+                                            .productId, // Use productId as fallback
+                                    title: getCurrProduct.productTitle,
+                                    price: getCurrProduct.price.toDouble(),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Đã thêm vào giỏ hàng'),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                // Get the first product item with valid price and quantity
+                                final validItem = getCurrProduct.productItems
+                                    .firstWhere(
+                                      (item) =>
+                                          item.price > 0 &&
+                                          item.quantityInStock > 0,
+                                      orElse: () {
+                                        debugPrint(
+                                          'No valid item found, using first item',
+                                        );
+                                        return getCurrProduct
+                                            .productItems
+                                            .first;
+                                      },
+                                    );
+
+                                debugPrint(
+                                  'Selected Item Price: ${validItem.price}',
+                                );
+                                debugPrint('Selected Item ID: ${validItem.id}');
+                                debugPrint(
+                                  'Selected Item Quantity: ${validItem.quantityInStock}',
+                                );
+
+                                if (validItem.price <= 0) {
+                                  debugPrint('Invalid price for selected item');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sản phẩm không có giá. Vui lòng thử lại sau.',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                if (validItem.quantityInStock <= 0) {
+                                  debugPrint(
+                                    'No stock available for selected item',
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sản phẩm đã hết hàng. Vui lòng thử lại sau.',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                cartProvider.addProductToCart(
+                                  productId: getCurrProduct.productId,
+                                  productItemId: validItem.id,
+                                  title: getCurrProduct.productTitle,
+                                  price: validItem.price.toDouble(),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Đã thêm vào giỏ hàng'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  cartProvider.isProdinCart(
+                                        productId: getCurrProduct.productId,
+                                      )
+                                      ? Icons.check
+                                      : Icons.add_shopping_cart_outlined,
+                                  size: 22,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12.0),
-              ],
+              ),
             ),
           ),
         );
