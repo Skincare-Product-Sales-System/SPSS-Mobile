@@ -46,9 +46,13 @@ class ProductsProvider with ChangeNotifier {
 
       if (response.success && response.data != null) {
         final paginatedData = response.data!;
-        debugPrint('Loading products - Total items: ${paginatedData.items.length}');
+        debugPrint(
+          'Loading products - Total items: ${paginatedData.items.length}',
+        );
         for (var product in paginatedData.items) {
-          debugPrint('Product ${product.id} - Items count: ${product.productItems.length}');
+          debugPrint(
+            'Product ${product.id} - Items count: ${product.productItems.length}',
+          );
         }
 
         if (refresh) {
@@ -184,6 +188,39 @@ class ProductsProvider with ChangeNotifier {
     } catch (e) {
       _currentPage--; // Revert page number on error
       _errorMessage = 'Failed to load more products: ${e.toString()}';
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  // Load more products by category for pagination
+  Future<void> loadMoreProductsByCategory(String categoryId) async {
+    if (_isLoadingMore || !_hasMoreData) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      _currentPage++;
+      final response = await ApiService.getProducts(
+        categoryId: categoryId,
+        pageNumber: _currentPage,
+        pageSize: _pageSize,
+      );
+
+      if (response.success && response.data != null) {
+        final paginatedData = response.data!;
+        _products.addAll(paginatedData.items);
+        _hasMoreData = _currentPage < paginatedData.totalPages;
+      } else {
+        _currentPage--; // Revert page number on error
+        _errorMessage = response.message;
+      }
+    } catch (e) {
+      _currentPage--; // Revert page number on error
+      _errorMessage =
+          'Failed to load more products by category: ${e.toString()}';
     } finally {
       _isLoadingMore = false;
       notifyListeners();
