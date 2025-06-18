@@ -305,6 +305,7 @@ class _AddressFormState extends State<AddressForm> {
   late Map<String, TextEditingController> _ctrl;
   bool isDefault = false;
   bool isLoading = false;
+  bool _addressListEmpty = true;
 
   @override
   void initState() {
@@ -324,7 +325,39 @@ class _AddressFormState extends State<AddressForm> {
       'province': TextEditingController(text: a?['province'] ?? ''),
       'countryName': TextEditingController(text: a?['countryName'] ?? ''),
     };
-    isDefault = a?['isDefault'] ?? false;
+
+    if (a != null) {
+      isDefault = a['isDefault'] ?? false;
+    } else {
+      _checkAddressListEmpty();
+    }
+  }
+
+  Future<void> _checkAddressListEmpty() async {
+    final token = await JwtService.getStoredToken();
+    final res = await http.get(
+      Uri.parse(
+        'http://10.0.2.2:5041/api/addresses/user?pageNumber=1&pageSize=1',
+      ),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      final items = data['data']['items'] as List;
+
+      if (mounted) {
+        setState(() {
+          _addressListEmpty = items.isEmpty;
+          if (_addressListEmpty) {
+            isDefault = true;
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -351,7 +384,7 @@ class _AddressFormState extends State<AddressForm> {
       'ward': _ctrl['ward']!.text,
       'postcode': _ctrl['postcode']!.text,
       'province': _ctrl['province']!.text,
-      'countryId': 2, // mặc định Hoa Kỳ, có thể sửa lại dropdown nếu cần
+      'countryId': 1, // mặc định Việt Nam
       'isDefault': isDefault,
     };
     http.Response res;
@@ -409,7 +442,7 @@ class _AddressFormState extends State<AddressForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.address == null ? 'Add new address' : 'Edit address',
+                  widget.address == null ? 'Thêm địa chỉ mới' : 'Sửa địa chỉ',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -419,50 +452,33 @@ class _AddressFormState extends State<AddressForm> {
                 const SizedBox(height: 18),
                 _buildTextField(
                   'customerName',
-                  'Customer name *',
+                  'Tên khách hàng *',
                   Icons.person,
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'phoneNumber',
-                        'Phone number *',
-                        Icons.phone,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField(
-                        'streetNumber',
-                        'Street number *',
-                        Icons.home,
-                      ),
-                    ),
-                  ],
-                ),
-                _buildTextField(
-                  'addressLine1',
-                  'Address line 1 *',
-                  Icons.location_on,
-                ),
+                _buildTextField('phoneNumber', 'Số điện thoại *', Icons.phone),
+                _buildTextField('streetNumber', 'Số nhà *', Icons.home),
+                _buildTextField('addressLine1', 'Đường *', Icons.location_on),
                 _buildTextField(
                   'addressLine2',
-                  'Address line 2 (optional)',
+                  'Địa chỉ chi tiết (tùy chọn)',
                   Icons.location_on_outlined,
                 ),
                 Row(
                   children: [
                     Expanded(
                       child: _buildTextField(
-                        'city',
-                        'City *',
-                        Icons.location_city,
+                        'ward',
+                        'Phường/Xã *',
+                        Icons.apartment,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildTextField('ward', 'Ward *', Icons.apartment),
+                      child: _buildTextField(
+                        'city',
+                        'Quận/Huyện *',
+                        Icons.location_city,
+                      ),
                     ),
                   ],
                 ),
@@ -470,22 +486,21 @@ class _AddressFormState extends State<AddressForm> {
                   children: [
                     Expanded(
                       child: _buildTextField(
-                        'postcode',
-                        'Postcode *',
-                        Icons.markunread_mailbox,
+                        'province',
+                        'Tỉnh/Thành phố *',
+                        Icons.map,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildTextField(
-                        'province',
-                        'Province *',
-                        Icons.map,
+                        'postcode',
+                        'Mã bưu điện',
+                        Icons.markunread_mailbox,
                       ),
                     ),
                   ],
                 ),
-                _buildTextField('countryName', 'Country *', Icons.flag),
                 Row(
                   children: [
                     Checkbox(
@@ -526,8 +541,8 @@ class _AddressFormState extends State<AddressForm> {
                               )
                               : Text(
                                 widget.address == null
-                                    ? 'Add address'
-                                    : 'Update',
+                                    ? 'Thêm địa chỉ'
+                                    : 'Cập nhật',
                               ),
                     ),
                   ],
@@ -553,7 +568,7 @@ class _AddressFormState extends State<AddressForm> {
         validator:
             (val) =>
                 (label.contains('*') && (val == null || val.isEmpty))
-                    ? 'This field is required'
+                    ? 'Trường này là bắt buộc'
                     : null,
       ),
     );

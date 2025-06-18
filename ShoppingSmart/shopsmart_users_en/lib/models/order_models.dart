@@ -264,6 +264,36 @@ class OrderDetailModel {
     required this.statusChanges,
   });
 
+  OrderDetailModel copyWith({
+    String? id,
+    String? status,
+    double? originalOrderTotal,
+    double? discountedOrderTotal,
+    String? voucherCode,
+    double? discountAmount,
+    String? cancelReasonId,
+    DateTime? createdTime,
+    String? paymentMethodId,
+    List<OrderDetail>? orderDetails,
+    AddressModel? address,
+    List<StatusChangeModel>? statusChanges,
+  }) {
+    return OrderDetailModel(
+      id: id ?? this.id,
+      status: status ?? this.status,
+      originalOrderTotal: originalOrderTotal ?? this.originalOrderTotal,
+      discountedOrderTotal: discountedOrderTotal ?? this.discountedOrderTotal,
+      voucherCode: voucherCode ?? this.voucherCode,
+      discountAmount: discountAmount ?? this.discountAmount,
+      cancelReasonId: cancelReasonId ?? this.cancelReasonId,
+      createdTime: createdTime ?? this.createdTime,
+      paymentMethodId: paymentMethodId ?? this.paymentMethodId,
+      orderDetails: orderDetails ?? this.orderDetails,
+      address: address ?? this.address,
+      statusChanges: statusChanges ?? this.statusChanges,
+    );
+  }
+
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
     return OrderDetailModel(
       id: json['id'] ?? '',

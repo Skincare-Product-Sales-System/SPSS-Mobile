@@ -242,7 +242,7 @@ class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen>
 
       // Sử dụng provider để phân tích da với thanh toán
       // Không cần kết nối SignalR lại ở đây
-      final success = await provider.analyzeSkin();
+      final bool success = await provider.analyzeSkin();
 
       if (mounted) {
         Navigator.of(context).pop(); // Đóng dialog tiến trình

@@ -1935,23 +1935,53 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                 Expanded(
                   flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Add to cart logic with selected variation and quantity
-                      cartProvider.addProductToCart(
-                        productId: _detailedProduct!.id,
-                        productItemId: _selectedProductItemId!,
-                        title: _detailedProduct!.name,
-                        price: _currentPrice,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "Added $_selectedQuantity item(s) to cart",
-                          ),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    },
+                    onPressed:
+                        cartProvider.isLoading
+                            ? null
+                            : () async {
+                              if (_selectedProductItemId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Vui lòng chọn phiên bản sản phẩm",
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Add to cart logic with selected variation and quantity
+                              await cartProvider.addProductToCart(
+                                productId: _detailedProduct!.id,
+                                productItemId: _selectedProductItemId!,
+                                title: _detailedProduct!.name,
+                                price: _currentPrice,
+                              );
+
+                              if (cartProvider.errorMessage != null) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(cartProvider.errorMessage!),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  cartProvider.clearError();
+                                }
+                              } else {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Đã thêm $_selectedQuantity sản phẩm vào giỏ hàng",
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
@@ -1960,10 +1990,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: const Icon(Icons.shopping_cart),
-                    label: const Text(
-                      "Add to Cart",
-                      style: TextStyle(
+                    icon:
+                        cartProvider.isLoading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.0,
+                              ),
+                            )
+                            : const Icon(Icons.shopping_cart),
+                    label: Text(
+                      cartProvider.isLoading
+                          ? "Đang xử lý..."
+                          : "Thêm vào giỏ hàng",
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),

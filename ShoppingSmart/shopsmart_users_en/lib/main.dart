@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
 import 'package:shopsmart_users_en/providers/theme_provider.dart';
 import 'package:shopsmart_users_en/providers/categories_provider.dart';
+import 'package:shopsmart_users_en/providers/order_provider.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/viewed_recently.dart';
@@ -136,6 +137,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(
           create: (_) {
             return SkinAnalysisProvider();
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            return OrderProvider();
           },
         ),
       ],

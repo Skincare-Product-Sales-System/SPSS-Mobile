@@ -82,7 +82,7 @@ class VoucherCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Apply Voucher',
+                'Áp dụng mã giảm giá',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -91,7 +91,7 @@ class VoucherCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Tap to select and save money',
+                'Chạm để chọn và tiết kiệm',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
@@ -179,7 +179,7 @@ class VoucherCardWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'You save',
+                  'Tiết kiệm',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 Text(
@@ -211,7 +211,7 @@ class VoucherCardWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${selectedVoucher!.discountRate}% discount applied • Minimum order ${CurrencyFormatter.formatVND(selectedVoucher!.minimumOrderValue)}',
+                  'Giảm ${selectedVoucher!.discountRate}% • Đơn tối thiểu ${CurrencyFormatter.formatVND(selectedVoucher!.minimumOrderValue)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.green[700],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shopsmart_users_en/models/cart_model.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
+import 'package:shopsmart_users_en/services/api_service.dart';
 import 'package:uuid/uuid.dart';
 
 class CartProvider with ChangeNotifier {
@@ -9,52 +10,167 @@ class CartProvider with ChangeNotifier {
     return _cartItems;
   }
 
-  void addProductToCart({
-    required String productId,
-    required String productItemId,
-    required String title,
-    required double price
-  }) {
-    assert(price > 0, 'Giá sản phẩm phải lớn hơn 0');
-    assert(productId.isNotEmpty, 'ProductId không được để trống');
-    assert(productItemId.isNotEmpty, 'ProductItemId không được để trống');
-    
-    _cartItems.putIfAbsent(
-      productId,
-      () => CartModel(
-        cartId: const Uuid().v4(),
-        productId: productId,
-        productItemId: productItemId,
-        id: productId,
-        title: title,
-        price: price,
-        quantity: 1,
-      ),
-    );
-    notifyListeners();
-  }
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  void updateQty({required String productId, required int qty}) {
-    final cartItem = _cartItems[productId];
-    if (cartItem != null) {
-      _cartItems.update(
-        productId,
-        (cartItem) => CartModel(
-          cartId: cartItem.cartId,
-          productId: productId,
-          productItemId: cartItem.productItemId,
-          id: cartItem.id,
-          title: cartItem.title,
-          price: cartItem.price,
-          quantity: qty,
-        ),
-      );
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
+  // Tải giỏ hàng từ server khi ứng dụng khởi động
+  Future<void> fetchCartFromServer() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.getCartItems();
+      if (response.success && response.data != null) {
+        // Xóa giỏ hàng cục bộ
+        _cartItems.clear();
+
+        // Thêm từng sản phẩm vào giỏ hàng cục bộ từ dữ liệu server
+        if (response.data!.items.isNotEmpty) {
+          for (var item in response.data!.items) {
+            final id = item['id']?.toString() ?? '';
+            final productItemId = item['productItemId']?.toString() ?? '';
+            final productId = item['productId']?.toString() ?? '';
+            final title = item['productName']?.toString() ?? 'Sản phẩm';
+            final imageUrl = item['productImageUrl']?.toString() ?? '';
+            final price = (item['price'] ?? 0.0).toDouble();
+            final marketPrice = (item['marketPrice'] ?? 0.0).toDouble();
+            final quantity = item['quantity'] ?? 1;
+            final stockQuantity = item['stockQuantity'] ?? 0;
+            final totalPrice = (item['totalPrice'] ?? 0.0).toDouble();
+            final inStock = item['inStock'] ?? true;
+            final variationOptionValues =
+                (item['variationOptionValues'] as List<dynamic>?)
+                    ?.map((e) => e.toString())
+                    .toList() ??
+                [];
+
+            _cartItems[productItemId] = CartModel(
+              cartId: id,
+              productId: productId,
+              productItemId: productItemId,
+              id: productId,
+              title: title,
+              price: price,
+              marketPrice: marketPrice,
+              quantity: quantity,
+              stockQuantity: stockQuantity,
+              productImageUrl: imageUrl,
+              inStock: inStock,
+              totalPrice: totalPrice,
+              variationOptionValues: variationOptionValues,
+            );
+
+            debugPrint(
+              'Đã thêm sản phẩm vào giỏ hàng cục bộ: $title, SL: $quantity',
+            );
+          }
+        }
+        _errorMessage = null;
+        debugPrint(
+          'Đồng bộ giỏ hàng thành công: ${_cartItems.length} sản phẩm',
+        );
+      } else {
+        _errorMessage = response.message;
+        debugPrint('Không thể lấy giỏ hàng: ${response.message}');
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi khi tải giỏ hàng: ${e.toString()}';
+      debugPrint(_errorMessage);
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  bool isProdinCart({required String productId}) {
-    return _cartItems.containsKey(productId);
+  Future<void> addProductToCart({
+    required String productId,
+    required String productItemId,
+    required String title,
+    required double price,
+  }) async {
+    assert(price > 0, 'Giá sản phẩm phải lớn hơn 0');
+    assert(productId.isNotEmpty, 'ProductId không được để trống');
+    assert(productItemId.isNotEmpty, 'ProductItemId không được để trống');
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Thêm vào giỏ hàng trên server
+      final response = await ApiService.addToCart(
+        productItemId: productItemId,
+        quantity: 1,
+      );
+
+      if (response.success) {
+        // Nếu thành công, cập nhật giỏ hàng cục bộ từ server
+        await fetchCartFromServer();
+        _errorMessage = null;
+      } else {
+        _errorMessage = response.message;
+        debugPrint('Lỗi khi thêm vào giỏ hàng: ${response.message}');
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi khi thêm vào giỏ hàng: ${e.toString()}';
+      debugPrint(_errorMessage);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateQty({
+    required String productItemId,
+    required int qty,
+  }) async {
+    if (qty <= 0) {
+      debugPrint('Số lượng phải lớn hơn 0');
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Lấy cartId từ productItemId
+      final cartItem = _cartItems[productItemId];
+      if (cartItem == null) {
+        _errorMessage = 'Không tìm thấy sản phẩm trong giỏ hàng';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final cartId = cartItem.cartId;
+
+      // Cập nhật số lượng trên server
+      final response = await ApiService.updateCartItemQuantity(
+        cartItemId: cartId,
+        quantity: qty,
+      );
+
+      if (response.success) {
+        // Sau khi cập nhật thành công, lấy lại dữ liệu từ server để đồng bộ
+        await fetchCartFromServer();
+        _errorMessage = null;
+      } else {
+        _errorMessage = response.message;
+        debugPrint('Lỗi khi cập nhật số lượng: ${response.message}');
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi khi cập nhật số lượng: ${e.toString()}';
+      debugPrint(_errorMessage);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool isProdinCart({required String productItemId}) {
+    return _cartItems.containsKey(productItemId);
   }
 
   double getTotal({required ProductsProvider productsProvider}) {
@@ -74,13 +190,49 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
-  void clearLocalCart() {
+  Future<void> clearLocalCart() async {
     _cartItems.clear();
     notifyListeners();
   }
 
-  void removeOneItem({required String productId}) {
-    _cartItems.remove(productId);
+  Future<void> removeOneItem({required String productItemId}) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Lấy cartId từ productItemId
+      final cartItem = _cartItems[productItemId];
+      if (cartItem == null) {
+        _errorMessage = 'Không tìm thấy sản phẩm trong giỏ hàng';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final cartId = cartItem.cartId;
+
+      // Xóa sản phẩm khỏi giỏ hàng trên server
+      final response = await ApiService.removeFromCart(cartId);
+
+      if (response.success) {
+        // Nếu thành công, xóa khỏi giỏ hàng cục bộ
+        _cartItems.remove(productItemId);
+        _errorMessage = null;
+      } else {
+        _errorMessage = response.message;
+        debugPrint('Lỗi khi xóa sản phẩm khỏi giỏ hàng: ${response.message}');
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi khi xóa sản phẩm khỏi giỏ hàng: ${e.toString()}';
+      debugPrint(_errorMessage);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
-import '../services/api_service.dart';
+import '../repositories/product_repository.dart';
 
 class ProductsProvider with ChangeNotifier {
+  final ProductRepository _productRepository = ProductRepository();
+
   List<ProductModel> _products = [];
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -38,7 +40,7 @@ class ProductsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getProducts(
+      final response = await _productRepository.getProducts(
         pageNumber: _currentPage,
         pageSize: _pageSize,
         sortBy: sortBy,
@@ -88,7 +90,48 @@ class ProductsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getBestSellers(
+      final response = await _productRepository.getLatestProducts(
+        pageNumber: _currentPage,
+        pageSize: _pageSize,
+      );
+
+      if (response.success && response.data != null) {
+        final paginatedData = response.data!;
+
+        if (refresh) {
+          _products = paginatedData.items;
+        } else {
+          _products.addAll(paginatedData.items);
+        }
+
+        _totalPages = paginatedData.totalPages;
+        _totalCount = paginatedData.totalCount;
+        _hasMoreData = _currentPage < _totalPages;
+      } else {
+        _errorMessage = response.message;
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to load latest products: ${e.toString()}';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Load best sellers products
+  Future<void> loadBestSellers({bool refresh = false}) async {
+    if (refresh) {
+      _products.clear();
+      _currentPage = 1;
+      _hasMoreData = true;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _productRepository.getBestSellers(
         pageNumber: _currentPage,
         pageSize: _pageSize,
       );
@@ -133,7 +176,7 @@ class ProductsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getProducts(
+      final response = await _productRepository.getProducts(
         categoryId: categoryId,
         pageNumber: _currentPage,
         pageSize: _pageSize,
@@ -172,7 +215,7 @@ class ProductsProvider with ChangeNotifier {
 
     try {
       _currentPage++;
-      final response = await ApiService.getProducts(
+      final response = await _productRepository.getProducts(
         pageNumber: _currentPage,
         pageSize: _pageSize,
       );
@@ -203,7 +246,7 @@ class ProductsProvider with ChangeNotifier {
 
     try {
       _currentPage++;
-      final response = await ApiService.getProducts(
+      final response = await _productRepository.getProducts(
         categoryId: categoryId,
         pageNumber: _currentPage,
         pageSize: _pageSize,
@@ -245,10 +288,10 @@ class ProductsProvider with ChangeNotifier {
     }
 
     try {
-      final response = await ApiService.searchProducts(
+      final response = await _productRepository.searchProducts(
         searchQuery: searchText,
         pageNumber: 1,
-        pageSize: 50, // Get more results for search
+        pageSize: 20,
       );
 
       if (response.success && response.data != null) {
@@ -257,7 +300,6 @@ class ProductsProvider with ChangeNotifier {
         return [];
       }
     } catch (e) {
-      debugPrint('Search error: ${e.toString()}');
       return [];
     }
   }
@@ -298,46 +340,5 @@ class ProductsProvider with ChangeNotifier {
   // Refresh products
   Future<void> refreshProducts() async {
     await loadProducts(refresh: true);
-  }
-
-  // Load best seller products
-  Future<void> loadBestSellers({bool refresh = false}) async {
-    if (refresh) {
-      _products.clear();
-      _currentPage = 1;
-      _hasMoreData = true;
-    }
-
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      final response = await ApiService.getBestSellers(
-        pageNumber: _currentPage,
-        pageSize: _pageSize,
-      );
-
-      if (response.success && response.data != null) {
-        final paginatedData = response.data!;
-
-        if (refresh) {
-          _products = paginatedData.items;
-        } else {
-          _products.addAll(paginatedData.items);
-        }
-
-        _totalPages = paginatedData.totalPages;
-        _totalCount = paginatedData.totalCount;
-        _hasMoreData = _currentPage < _totalPages;
-      } else {
-        _errorMessage = response.message;
-      }
-    } catch (e) {
-      _errorMessage = 'Failed to load best sellers: ${e.toString()}';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
   }
 }
