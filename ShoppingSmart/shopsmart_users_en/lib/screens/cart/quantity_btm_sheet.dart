@@ -33,7 +33,7 @@ class QuantityBottomSheetWidget extends StatelessWidget {
               return InkWell(
                 onTap: () {
                   cartProvider.updateQty(
-                    productId: cartModel.productId,
+                    productItemId: cartModel.productItemId,
                     qty: index + 1,
                   );
                   Navigator.pop(context);

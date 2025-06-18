@@ -15,6 +15,8 @@ import '../services/jwt_service.dart';
 import '../models/address_model.dart' as address_lib;
 import '../models/payment_method_model.dart';
 import '../models/transaction_model.dart';
+import '../models/cart_model.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -1523,6 +1525,7 @@ class ApiService {
           success: false,
           message: 'Bạn cần đăng nhập để xem lịch sử phân tích da',
           errors: ['Không tìm thấy token người dùng'],
+          data: [], // Trả về danh sách rỗng thay vì null
         );
       }
 
@@ -1551,7 +1554,7 @@ class ApiService {
                   ? ((responseData['data']['items'] as List?) ?? [])
                       .map((item) => SkinAnalysisResult.fromJson(item))
                       .toList()
-                  : [],
+                  : [], // Trả về danh sách rỗng thay vì null
           errors:
               responseData['errors'] != null
                   ? List<String>.from(responseData['errors'])
@@ -1562,6 +1565,7 @@ class ApiService {
           success: false,
           message: 'Có lỗi xảy ra: ${response.statusCode}',
           errors: ['Lỗi kết nối API'],
+          data: [], // Trả về danh sách rỗng thay vì null
         );
       }
     } catch (e) {
@@ -1569,6 +1573,7 @@ class ApiService {
         success: false,
         message: 'Lỗi: ${e.toString()}',
         errors: ['Lỗi không xác định'],
+        data: [], // Trả về danh sách rỗng thay vì null
       );
     }
   }
@@ -1622,6 +1627,426 @@ class ApiService {
         success: false,
         message: 'Lỗi: ${e.toString()}',
         errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Các phương thức API cho giỏ hàng
+
+  // Lấy danh sách sản phẩm trong giỏ hàng
+  static Future<ApiResponse<PaginatedResponse<Map<String, dynamic>>>>
+  getCartItems() async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xem giỏ hàng',
+          errors: ['Không tìm thấy token người dùng'],
+          data: null,
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/cart-items/user/cart');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+
+        // Xử lý dữ liệu theo cấu trúc mới
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final paginatedData = responseData['data'];
+          final items = (paginatedData['items'] as List<dynamic>?) ?? [];
+
+          return ApiResponse<PaginatedResponse<Map<String, dynamic>>>(
+            success: true,
+            message: responseData['message'] ?? 'Lấy giỏ hàng thành công',
+            data: PaginatedResponse<Map<String, dynamic>>(
+              items:
+                  items
+                      .map((item) => Map<String, dynamic>.from(item as Map))
+                      .toList(),
+              totalCount: paginatedData['totalCount'] ?? 0,
+              pageNumber: paginatedData['pageNumber'] ?? 1,
+              pageSize: paginatedData['pageSize'] ?? 10,
+              totalPages: paginatedData['totalPages'] ?? 1,
+            ),
+            errors: null,
+          );
+        } else {
+          return ApiResponse<PaginatedResponse<Map<String, dynamic>>>(
+            success: false,
+            message: responseData['message'] ?? 'Không thể lấy giỏ hàng',
+            data: null,
+            errors:
+                responseData['errors'] != null
+                    ? List<String>.from(responseData['errors'])
+                    : null,
+          );
+        }
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        return ApiResponse<PaginatedResponse<Map<String, dynamic>>>(
+          success: false,
+          message:
+              errorData?['message'] ?? 'Có lỗi xảy ra: ${response.statusCode}',
+          data: null,
+          errors: errorData?['errors'] ?? ['Lỗi kết nối API'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<Map<String, dynamic>>>(
+        success: false,
+        message: 'Lỗi: ${e.toString()}',
+        data: null,
+        errors: ['Lỗi không xác định'],
+      );
+    }
+  }
+
+  // Thêm sản phẩm vào giỏ hàng
+  static Future<ApiResponse<bool>> addToCart({
+    required String productItemId,
+    required int quantity,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng',
+          errors: ['Không tìm thấy token người dùng'],
+          data: false,
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/cart-items');
+      final requestBody = {
+        'productItemId': productItemId,
+        'quantity': quantity,
+      };
+
+      debugPrint('Đang thêm sản phẩm vào giỏ hàng: $requestBody');
+
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(requestBody),
+          )
+          .timeout(timeout);
+
+      debugPrint('Phản hồi API [${response.statusCode}]: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+        return ApiResponse<bool>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Đã thêm sản phẩm vào giỏ hàng',
+          data: true,
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+          debugPrint(
+            'Lỗi khi thêm sản phẩm vào giỏ hàng: ${errorData?['message']}',
+          );
+        } catch (e) {
+          errorData = null;
+          debugPrint('Không thể phân tích phản hồi lỗi: $e');
+        }
+
+        return ApiResponse<bool>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Không thể thêm sản phẩm vào giỏ hàng. Mã lỗi: ${response.statusCode}',
+          errors:
+              errorData?['errors'] != null
+                  ? List<String>.from(errorData!['errors'])
+                  : ['Lỗi HTTP: ${response.statusCode}'],
+          data: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Ngoại lệ khi thêm sản phẩm vào giỏ hàng: $e');
+      return ApiResponse<bool>(
+        success: false,
+        message: 'Lỗi khi thêm sản phẩm vào giỏ hàng: ${e.toString()}',
+        errors: [e.toString()],
+        data: false,
+      );
+    }
+  }
+
+  // Cập nhật số lượng sản phẩm trong giỏ hàng
+  static Future<ApiResponse<CartItemDto>> updateCartItemQuantity({
+    required String cartItemId,
+    required int quantity,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để cập nhật giỏ hàng',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      // Thay đổi URI để phù hợp với API endpoint
+      final url = Uri.parse('$baseUrl/cart-items/$cartItemId');
+      final requestBody = {'quantity': quantity};
+
+      debugPrint(
+        'Đang cập nhật số lượng sản phẩm, cartItemId: $cartItemId, SL: $quantity',
+      );
+
+      final response = await http
+          .patch(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(requestBody),
+          )
+          .timeout(timeout);
+
+      debugPrint('Phản hồi API [${response.statusCode}]: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = json.decode(response.body);
+
+        // API trả về boolean thay vì object khi thành công
+        // Không cần chuyển đổi sang CartItemDto
+        return ApiResponse<CartItemDto>(
+          success: responseData['success'] ?? false,
+          message: responseData['message'] ?? 'Đã cập nhật giỏ hàng',
+          data: null, // Không có dữ liệu CartItemDto từ API
+          errors:
+              responseData['errors'] != null
+                  ? List<String>.from(responseData['errors'])
+                  : null,
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+          debugPrint('Lỗi khi cập nhật giỏ hàng: ${errorData?['message']}');
+        } catch (e) {
+          errorData = null;
+          debugPrint('Không thể phân tích phản hồi lỗi: $e');
+        }
+
+        return ApiResponse<CartItemDto>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Không thể cập nhật giỏ hàng. Mã lỗi: ${response.statusCode}',
+          errors:
+              errorData?['errors'] != null
+                  ? List<String>.from(errorData!['errors'])
+                  : ['Lỗi HTTP: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      debugPrint('Ngoại lệ khi cập nhật giỏ hàng: $e');
+      return ApiResponse<CartItemDto>(
+        success: false,
+        message: 'Lỗi khi cập nhật giỏ hàng: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Xóa sản phẩm khỏi giỏ hàng
+  static Future<ApiResponse<bool>> removeFromCart(String cartItemId) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Bạn cần đăng nhập để xóa sản phẩm khỏi giỏ hàng',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/cart-items/$cartItemId');
+
+      debugPrint('Đang xóa sản phẩm khỏi giỏ hàng với cartItemId: $cartItemId');
+
+      final response = await http
+          .delete(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      debugPrint('Phản hồi API [${response.statusCode}]: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        Map<String, dynamic>? responseData;
+        try {
+          responseData = json.decode(response.body);
+        } catch (e) {
+          debugPrint(
+            'Phản hồi không phải JSON, nhưng thành công với statusCode=${response.statusCode}',
+          );
+          return ApiResponse<bool>(
+            success: true,
+            message: 'Đã xóa sản phẩm khỏi giỏ hàng',
+            data: true,
+          );
+        }
+
+        return ApiResponse<bool>(
+          success: responseData?['success'] ?? true,
+          message: responseData?['message'] ?? 'Đã xóa sản phẩm khỏi giỏ hàng',
+          data: true,
+          errors:
+              responseData?['errors'] != null
+                  ? List<String>.from(responseData!['errors'])
+                  : null,
+        );
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+          debugPrint(
+            'Lỗi khi xóa sản phẩm khỏi giỏ hàng: ${errorData?['message']}',
+          );
+        } catch (e) {
+          errorData = null;
+          debugPrint('Không thể phân tích phản hồi lỗi: $e');
+        }
+
+        return ApiResponse<bool>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Không thể xóa sản phẩm khỏi giỏ hàng. Mã lỗi: ${response.statusCode}',
+          errors:
+              errorData?['errors'] != null
+                  ? List<String>.from(errorData!['errors'])
+                  : ['Lỗi HTTP: ${response.statusCode}'],
+          data: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Ngoại lệ khi xóa sản phẩm khỏi giỏ hàng: $e');
+      return ApiResponse<bool>(
+        success: false,
+        message: 'Lỗi khi xóa sản phẩm khỏi giỏ hàng: ${e.toString()}',
+        errors: [e.toString()],
+        data: false,
+      );
+    }
+  }
+
+  // Phương thức để hủy đơn hàng
+  static Future<ApiResponse<bool>> cancelOrder({
+    required String orderId,
+    String cancelReasonId = '3b3a9749-3435-452e-bbbc-554a23b1f531',
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<bool>(
+          success: false,
+          message: 'Bạn cần đăng nhập để hủy đơn hàng',
+          errors: ['Không tìm thấy token người dùng'],
+        );
+      }
+
+      final url = Uri.parse('$baseUrl/orders/$orderId/status');
+      final requestBody = {
+        'newStatus': 'Cancelled',
+        'cancelReasonId': cancelReasonId,
+      };
+
+      debugPrint('Đang gửi yêu cầu hủy đơn hàng: $orderId');
+
+      final response = await http
+          .patch(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(requestBody),
+          )
+          .timeout(timeout);
+
+      debugPrint('Phản hồi API [${response.statusCode}]: ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        Map<String, dynamic>? responseData;
+        try {
+          responseData = json.decode(response.body);
+          return ApiResponse<bool>(
+            success: responseData?['success'] ?? true,
+            message: responseData?['message'] ?? 'Đã hủy đơn hàng thành công',
+            data: true,
+            errors:
+                responseData?['errors'] != null
+                    ? List<String>.from(responseData!['errors'])
+                    : null,
+          );
+        } catch (e) {
+          return ApiResponse<bool>(
+            success: true,
+            message: 'Đã hủy đơn hàng thành công',
+            data: true,
+          );
+        }
+      } else {
+        Map<String, dynamic>? errorData;
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          errorData = null;
+        }
+
+        return ApiResponse<bool>(
+          success: false,
+          message:
+              errorData?['message'] ??
+              'Không thể hủy đơn hàng. Mã lỗi: ${response.statusCode}',
+          errors: errorData?['errors'] ?? ['Lỗi HTTP: ${response.statusCode}'],
+          data: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Ngoại lệ khi hủy đơn hàng: $e');
+      return ApiResponse<bool>(
+        success: false,
+        message: 'Lỗi khi hủy đơn hàng: ${e.toString()}',
+        errors: [e.toString()],
+        data: false,
       );
     }
   }

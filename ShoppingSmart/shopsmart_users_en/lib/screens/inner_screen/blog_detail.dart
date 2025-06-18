@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import '../../models/blog_model.dart';
-import '../../services/api_service.dart';
+import '../../repositories/blog_repository.dart';
 import '../../widgets/app_name_text.dart';
 
 class BlogDetailScreen extends StatefulWidget {
@@ -13,6 +13,7 @@ class BlogDetailScreen extends StatefulWidget {
 }
 
 class _BlogDetailScreenState extends State<BlogDetailScreen> {
+  final BlogRepository _blogRepository = BlogRepository();
   DetailedBlogModel? _detailedBlog;
   bool _isLoading = true;
   String? _errorMessage;
@@ -36,7 +37,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     });
 
     try {
-      final response = await ApiService.getBlogById(blogId);
+      final response = await _blogRepository.getBlogById(blogId);
       if (response.success && response.data != null) {
         setState(() {
           _detailedBlog = response.data;
@@ -50,7 +51,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error loading blog: ${e.toString()}';
+        _errorMessage = 'Lỗi khi tải bài viết: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -88,7 +89,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Error',
+                      'Lỗi',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -193,7 +194,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'By ${_detailedBlog!.author}',
+                                  'Bởi ${_detailedBlog!.author}',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -245,7 +246,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Summary',
+                                  'Tóm tắt',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -274,7 +275,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
 
                           // Blog Sections
                           Text(
-                            'Article Content',
+                            'Nội dung bài viết',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
+import 'package:provider/provider.dart';
 import '../../models/order_models.dart';
-import '../../services/api_service.dart';
+import '../../providers/order_provider.dart';
 import '../../services/jwt_service.dart';
 import '../../services/currency_formatter.dart';
 import '../../widgets/subtitle_text.dart';
@@ -20,14 +21,9 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-  bool _isLoading = true;
   bool _isAuthenticated = false;
-  List<OrderModel> _orders = [];
-  int _currentPage = 1;
-  int _totalPages = 1;
-  final int _pageSize = 10;
-  bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
+  late OrderProvider _orderProvider;
 
   // Status filter
   final List<String> _statusOptions = [
@@ -46,14 +42,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthentication();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthentication();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      if (_currentPage < _totalPages && !_isLoading) {
+      if (_orderProvider.hasMoreData && !_orderProvider.isLoadingMore) {
         _loadMoreOrders();
       }
     }
@@ -62,180 +67,94 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Future<void> _checkAuthentication() async {
     final isAuth = await JwtService.isAuthenticated();
     if (!isAuth) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
         Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
-      });
+      }
       return;
     }
 
     setState(() {
       _isAuthenticated = true;
     });
+
+    _orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
+    // Reset provider state before loading
+    _orderProvider.reset();
+
     _loadOrders();
   }
 
   Future<void> _loadOrders() async {
     if (!_isAuthenticated) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    print('OrdersScreen: Loading orders, status = $_selectedStatus');
 
     try {
-      final response = await ApiService.getOrders(
-        pageNumber: _currentPage,
-        pageSize: _pageSize,
+      await _orderProvider.loadOrders(
+        refresh: true,
         status:
             _selectedStatus == 'Tất cả'
                 ? null
                 : _convertStatusToEnglish(_selectedStatus),
       );
 
-      print('Orders API Response: ${response.toString()}'); // Debug log
-
-      if (response.success && response.data != null) {
-        try {
-          print('Response data: ${response.data}'); // Debug log
-          print('Response items: ${response.data!.items}'); // Debug log
-
-          final orders = response.data!.items;
-          print('Final orders list: ${orders.length} orders'); // Debug log
-
-          if (mounted) {
-            setState(() {
-              _orders = orders;
-              _totalPages = response.data!.totalPages;
-              _hasMore = _currentPage < _totalPages;
-              _isLoading = false;
-            });
-          }
-        } catch (e) {
-          print('Error processing orders: $e'); // Debug log
-          if (mounted) {
-            MyAppFunctions.showErrorOrWarningDialog(
-              context: context,
-              subtitle: 'Error processing orders: ${e.toString()}',
-              isError: true,
-              fct: () {},
-            );
-          }
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('API response not successful: ${response.message}'); // Debug log
-        if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: response.message ?? 'Failed to load orders',
-            isError: true,
-            fct: () {},
-          );
-        }
+      // Đảm bảo UI được cập nhật sau khi tải xong
+      if (mounted) {
         setState(() {
-          _isLoading = false;
+          print(
+            'OrdersScreen: setState after loading, orders count = ${_orderProvider.orders.length}, isLoading = ${_orderProvider.isLoading}',
+          );
         });
       }
-    } catch (e) {
-      print('Error loading orders: $e'); // Debug log
-      if (mounted) {
+
+      if (_orderProvider.errorMessage != null && mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'An error occurred while loading orders: ${e.toString()}',
+          subtitle: _orderProvider.errorMessage ?? 'Không thể tải đơn hàng',
           isError: true,
           fct: () {},
         );
       }
-      setState(() {
-        _isLoading = false;
-      });
+    } catch (e) {
+      print('OrdersScreen: Exception during loading: ${e.toString()}');
+      if (mounted) {
+        MyAppFunctions.showErrorOrWarningDialog(
+          context: context,
+          subtitle: 'Đã xảy ra lỗi khi tải đơn hàng: ${e.toString()}',
+          isError: true,
+          fct: () {},
+        );
+      }
     }
   }
 
   Future<void> _loadMoreOrders() async {
-    if (!_hasMore || _isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      final response = await ApiService.getOrders(
-        pageNumber: _currentPage + 1,
-        pageSize: _pageSize,
+      await _orderProvider.loadMoreOrders(
         status:
             _selectedStatus == 'Tất cả'
                 ? null
                 : _convertStatusToEnglish(_selectedStatus),
       );
 
-      print(
-        'Load More Orders API Response: ${response.toString()}',
-      ); // Debug log
-
-      if (response.success && response.data != null) {
-        try {
-          print('Load more data: ${response.data}'); // Debug log
-          print('Load more items: ${response.data!.items}'); // Debug log
-
-          final newOrders = response.data!.items;
-          print(
-            'Final new orders list: ${newOrders.length} orders',
-          ); // Debug log
-
-          if (mounted) {
-            setState(() {
-              _orders.addAll(newOrders);
-              _currentPage++;
-              _hasMore = _currentPage < _totalPages;
-              _isLoading = false;
-            });
-          }
-        } catch (e) {
-          print('Error processing more orders: $e'); // Debug log
-          if (mounted) {
-            MyAppFunctions.showErrorOrWarningDialog(
-              context: context,
-              subtitle: 'Error processing more orders: ${e.toString()}',
-              isError: true,
-              fct: () {},
-            );
-          }
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else {
-        print(
-          'Load more API response not successful: ${response.message}',
-        ); // Debug log
-        if (mounted) {
-          MyAppFunctions.showErrorOrWarningDialog(
-            context: context,
-            subtitle: response.message ?? 'Failed to load more orders',
-            isError: true,
-            fct: () {},
-          );
-        }
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading more orders: $e'); // Debug log
-      if (mounted) {
-        MyAppFunctions.showErrorOrWarningDialog(
-          context: context,
-          subtitle:
-              'An error occurred while loading more orders: ${e.toString()}',
-          isError: true,
-          fct: () {},
+      if (_orderProvider.errorMessage != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_orderProvider.errorMessage!),
+            duration: const Duration(seconds: 2),
+          ),
         );
       }
-      setState(() {
-        _isLoading = false;
-      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể tải thêm đơn hàng: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -318,230 +237,254 @@ class _OrdersScreenState extends State<OrdersScreen> {
           icon: const Icon(IconlyLight.arrow_left_2, size: 24),
         ),
       ),
-      body: Column(
-        children: [
-          // Status filter row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children:
-                  _statusOptions.map((status) {
-                    final isSelected = _selectedStatus == status;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4.0,
-                        vertical: 8.0,
-                      ),
-                      child: ChoiceChip(
-                        label: Text(status),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _selectedStatus = status;
-                              _currentPage = 1;
-                            });
-                            _loadOrders();
-                          }
-                        },
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ),
-          // Expanded order list
-          Expanded(
-            child:
-                _isLoading && _orders.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : _orders.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            IconlyBold.bag,
-                            size: 80,
-                            color: Theme.of(context).disabledColor,
-                          ),
-                          const SizedBox(height: 16),
-                          const TitlesTextWidget(
-                            label: 'Chưa có đơn hàng nào',
-                            fontSize: 18,
-                          ),
-                          const SizedBox(height: 8),
-                          const SubtitleTextWidget(
-                            label: 'Lịch sử đơn hàng của bạn sẽ hiển thị ở đây',
-                          ),
-                        ],
-                      ),
-                    )
-                    : RefreshIndicator(
-                      onRefresh: () async {
-                        _currentPage = 1;
-                        await _loadOrders();
-                      },
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _orders.length + (_hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _orders.length) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: CircularProgressIndicator(),
+      body:
+          !_isAuthenticated
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  // Status filter row
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children:
+                          _statusOptions.map((status) {
+                            final isSelected = _selectedStatus == status;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                                vertical: 8.0,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(status),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() {
+                                      _selectedStatus = status;
+                                    });
+                                    _loadOrders();
+                                  }
+                                },
                               ),
                             );
-                          }
+                          }).toList(),
+                    ),
+                  ),
+                  // Expanded order list
+                  Expanded(
+                    child: Consumer<OrderProvider>(
+                      builder: (context, orderProvider, _) {
+                        print(
+                          'OrdersScreen Consumer: isLoading = ${orderProvider.isLoading}, orders count = ${orderProvider.orders.length}',
+                        );
 
-                          final order = _orders[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 2,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  OrderDetailScreen.routeName,
-                                  arguments: order.id,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            'Đơn hàng #${order.id}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Color(
-                                              int.parse(
-                                                _getStatusColor(
-                                                  order.status,
-                                                ).replaceAll('#', '0xFF'),
-                                              ),
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            _translateStatusToVietnamese(
-                                              order.status,
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Ngày: ${order.createdAt.toString().split('.')[0]}',
-                                      style: TextStyle(color: Colors.grey[700]),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Divider(),
-                                    ...order.orderDetails.map(
-                                      (detail) => Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4.0,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                detail.productName,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Text(
-                                              'x${detail.quantity}',
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              CurrencyFormatter.formatVND(
-                                                detail.price,
-                                              ),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.blue,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Divider(),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          'Tổng cộng:',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          CurrencyFormatter.formatVND(
-                                            order.totalAmount,
-                                          ),
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                        if (orderProvider.isLoading &&
+                            orderProvider.orders.isEmpty) {
+                          print(
+                            'OrdersScreen Consumer: Showing loading indicator',
+                          );
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (!orderProvider.isLoading &&
+                            orderProvider.orders.isEmpty) {
+                          print('OrdersScreen Consumer: Showing empty state');
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  IconlyBold.bag,
+                                  size: 80,
+                                  color: Theme.of(context).disabledColor,
                                 ),
-                              ),
+                                const SizedBox(height: 16),
+                                const TitlesTextWidget(
+                                  label: 'Chưa có đơn hàng nào',
+                                  fontSize: 18,
+                                ),
+                                const SizedBox(height: 8),
+                                const SubtitleTextWidget(
+                                  label:
+                                      'Lịch sử đơn hàng của bạn sẽ hiển thị ở đây',
+                                ),
+                              ],
                             ),
                           );
-                        },
-                      ),
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
+                        } else {
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              _loadOrders();
+                            },
+                            child: ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(16),
+                              itemCount:
+                                  orderProvider.orders.length +
+                                  (orderProvider.hasMoreData ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == orderProvider.orders.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+                                final order = orderProvider.orders[index];
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        OrderDetailScreen.routeName,
+                                        arguments: order.id,
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  'Đơn hàng #${order.id}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Color(
+                                                    int.parse(
+                                                      _getStatusColor(
+                                                        order.status,
+                                                      ).replaceAll('#', '0xFF'),
+                                                    ),
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  _translateStatusToVietnamese(
+                                                    order.status,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Ngày: ${order.createdAt.toString().split('.')[0]}',
+                                            style: TextStyle(
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Divider(),
+                                          ...order.orderDetails.map(
+                                            (detail) => Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 4.0,
+                                                  ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      detail.productName,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'x${detail.quantity}',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    CurrencyFormatter.formatVND(
+                                                      detail.price,
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.blue,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Divider(),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                'Tổng cộng:',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                CurrencyFormatter.formatVND(
+                                                  order.totalAmount,
+                                                ),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+    );
   }
 }

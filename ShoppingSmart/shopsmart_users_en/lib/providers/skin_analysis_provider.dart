@@ -5,6 +5,7 @@ import '../models/skin_analysis_models.dart';
 import '../models/transaction_model.dart';
 import '../services/api_service.dart';
 import '../services/transaction_signalr_service.dart';
+import '../repositories/skin_analysis_repository.dart';
 import 'package:image_picker/image_picker.dart';
 
 enum SkinAnalysisStatus {
@@ -18,6 +19,9 @@ enum SkinAnalysisStatus {
 }
 
 class SkinAnalysisProvider with ChangeNotifier {
+  // Repository
+  final SkinAnalysisRepository _repository = SkinAnalysisRepository();
+
   // Dịch vụ SignalR cho giao dịch
   final TransactionSignalRService _signalRService = TransactionSignalRService();
 
@@ -37,8 +41,6 @@ class SkinAnalysisProvider with ChangeNotifier {
       false; // Biến để theo dõi việc đang kết nối SignalR
   bool _hasCheckedTransaction =
       false; // Biến để theo dõi việc đã kiểm tra giao dịch
-
-  final ApiService _apiService = ApiService();
 
   // Getters
   SkinAnalysisStatus get status => _status;
@@ -121,6 +123,12 @@ class SkinAnalysisProvider with ChangeNotifier {
     }
   }
 
+  // Ngắt kết nối SignalR
+  void disconnectSignalR() {
+    print('Ngắt kết nối SignalR');
+    _signalRService.disconnect();
+  }
+
   // Đặt lại trạng thái về ban đầu
   void resetState() {
     _status = SkinAnalysisStatus.initial;
@@ -129,6 +137,12 @@ class SkinAnalysisProvider with ChangeNotifier {
     _selectedImage = null;
     _analysisResult = null;
     notifyListeners();
+  }
+
+  // Đặt lại biến kiểm tra giao dịch
+  void resetTransactionCheck() {
+    _hasCheckedTransaction = false;
+    print('Đã đặt lại biến kiểm tra giao dịch');
   }
 
   // Đặt lại trạng thái sau khi hoàn thành phân tích da
@@ -249,132 +263,132 @@ class SkinAnalysisProvider with ChangeNotifier {
     }
   }
 
-  // Phân tích da với thanh toán
+  // Phân tích da từ ảnh đã chọn
   Future<bool> analyzeSkin() async {
     if (_selectedImage == null) {
-      _errorMessage = 'Vui lòng chọn ảnh trước khi phân tích';
+      _errorMessage = 'Vui lòng chọn ảnh để phân tích';
       notifyListeners();
       return false;
     }
 
     try {
       _status = SkinAnalysisStatus.analyzing;
+      _errorMessage = null;
       notifyListeners();
 
-      final result = await ApiService.analyzeSkin(_selectedImage!);
+      final result = await _repository.analyzeSkin(_selectedImage!);
 
       if (result.success && result.data != null) {
-        _analysisResult = result.data;
         _status = SkinAnalysisStatus.analyzed;
-
-        // Ngắt kết nối SignalR sau khi phân tích thành công
-        await _signalRService.disconnect();
-        print('Đã ngắt kết nối SignalR sau khi phân tích da thành công');
-
+        _analysisResult = result.data;
         notifyListeners();
         return true;
       } else {
         _status = SkinAnalysisStatus.error;
-        // Lấy thông báo lỗi từ API
-        _errorMessage = result.message;
-
-        // Log thông báo lỗi để debug
-        print('Lỗi phân tích da: ${result.message}');
-        if (result.errors != null && result.errors!.isNotEmpty) {
-          print('Chi tiết lỗi: ${result.errors!.join(', ')}');
-        }
-
+        _errorMessage = result.message ?? 'Không thể phân tích da';
         notifyListeners();
         return false;
       }
     } catch (e) {
       _status = SkinAnalysisStatus.error;
-      _errorMessage = 'Lỗi: ${e.toString()}';
-      print('Exception khi phân tích da: ${e.toString()}');
+      _errorMessage = 'Lỗi phân tích da: ${e.toString()}';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Phân tích da từ ảnh đã chọn sau khi thanh toán được duyệt
+  Future<bool> analyzeSkinWithPayment() async {
+    if (_selectedImage == null) {
+      _errorMessage = 'Vui lòng chọn ảnh để phân tích';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      _status = SkinAnalysisStatus.analyzing;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await _repository.analyzeSkinWithPayment(_selectedImage!);
+
+      if (result.success && result.data != null) {
+        _status = SkinAnalysisStatus.analyzed;
+        _analysisResult = result.data;
+        notifyListeners();
+        return true;
+      } else {
+        _status = SkinAnalysisStatus.error;
+        _errorMessage = result.message ?? 'Không thể phân tích da';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _status = SkinAnalysisStatus.error;
+      _errorMessage = 'Lỗi phân tích da: ${e.toString()}';
       notifyListeners();
       return false;
     }
   }
 
   // Lấy lịch sử phân tích da
-  Future<void> getAnalysisHistory({bool refresh = false}) async {
+  Future<void> loadAnalysisHistory({bool refresh = false}) async {
     if (_isLoading) return;
 
+    if (refresh) {
+      _currentPage = 1;
+      _analysisHistory = [];
+      _hasMoreHistory = true;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
     try {
-      _isLoading = true;
-      if (refresh) {
-        _currentPage = 1;
-        _hasMoreHistory = true;
-        _analysisHistory = [];
-      }
-      notifyListeners();
-
-      if (!_hasMoreHistory && !refresh) {
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      final response = await ApiService.getSkinAnalysisHistory(
+      final result = await _repository.getSkinAnalysisHistory(
         pageNumber: _currentPage,
         pageSize: 10,
       );
 
-      if (response.success && response.data != null) {
-        if (response.data!.isEmpty) {
+      if (result.success && result.data != null) {
+        // Đã đảm bảo data không null từ repository và API service
+        if (result.data!.isEmpty) {
           _hasMoreHistory = false;
         } else {
-          _analysisHistory.addAll(response.data!);
+          _analysisHistory.addAll(result.data!);
           _currentPage++;
         }
       } else {
-        _errorMessage = response.message;
+        _errorMessage = result.message ?? 'Không thể lấy lịch sử phân tích da';
       }
-
-      _isLoading = false;
-      notifyListeners();
     } catch (e) {
+      _errorMessage = 'Lỗi khi lấy lịch sử phân tích da: ${e.toString()}';
+    } finally {
       _isLoading = false;
-      _errorMessage = e.toString();
       notifyListeners();
     }
   }
 
-  // Lấy chi tiết kết quả phân tích theo id
-  Future<SkinAnalysisResult?> getSkinAnalysisById(String id) async {
+  // Lấy chi tiết phân tích da theo ID
+  Future<void> loadAnalysisDetail(String id) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      final response = await ApiService.getSkinAnalysisById(id);
-      if (response.success && response.data != null) {
-        return response.data;
+      final result = await _repository.getSkinAnalysisById(id);
+
+      if (result.success && result.data != null) {
+        _analysisResult = result.data;
       } else {
-        _errorMessage = response.message;
-        return null;
+        _errorMessage = result.message ?? 'Không thể lấy chi tiết phân tích da';
       }
     } catch (e) {
-      _errorMessage = e.toString();
-      return null;
+      _errorMessage = 'Lỗi khi lấy chi tiết phân tích da: ${e.toString()}';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-  }
-
-  // Ngắt kết nối với SignalR hub
-  Future<void> disconnectSignalR() async {
-    try {
-      await _signalRService.disconnect();
-      print('Đã ngắt kết nối với SignalR hub');
-    } catch (e) {
-      print('Lỗi khi ngắt kết nối SignalR: ${e.toString()}');
-    }
-  }
-
-  // Kiểm tra xem đã kết nối SignalR chưa
-  bool isSignalRConnected() {
-    return _signalRService.isConnected;
-  }
-
-  // Đặt lại biến kiểm tra giao dịch
-  void resetTransactionCheck() {
-    _hasCheckedTransaction = false;
-    print('Đã đặt lại biến kiểm tra giao dịch');
   }
 
   @override

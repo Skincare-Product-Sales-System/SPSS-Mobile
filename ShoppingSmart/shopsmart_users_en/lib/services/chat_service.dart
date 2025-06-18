@@ -1,6 +1,8 @@
 // import 'package:signalr_netcore/signalr_client.dart'; // Package not available
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:shopsmart_users_en/services/auth_service.dart';
 
 enum MessageType { user, staff, system }
 
@@ -43,22 +45,7 @@ class ChatMessage {
   }
 }
 
-// Dummy HubConnection class since signalr_netcore is not available
-class HubConnection {
-  void on(String method, Function callback) {}
-  void onreconnecting(Function callback) {}
-  void onreconnected(Function callback) {}
-  void onclose(Function callback) {}
-  Future<void> start() async {}
-  Future<void> stop() async {}
-  Future<void> invoke(String method, {List<Object>? args}) async {}
-}
-
-class HubConnectionBuilder {
-  HubConnectionBuilder withUrl(String url) => this;
-  HubConnectionBuilder withAutomaticReconnect({List<int>? retryDelays}) => this;
-  HubConnection build() => HubConnection();
-}
+// Xóa bỏ các lớp giả HubConnection và HubConnectionBuilder
 
 class ChatService {
   HubConnection? _connection;
@@ -102,9 +89,18 @@ class ChatService {
         await _connection!.stop();
       }
 
+      // Lấy JWT token
+      String? token = await AuthService.getStoredToken();
+
+      // Tạo options cho kết nối HTTP
+      final httpConnectionOptions = HttpConnectionOptions(
+        accessTokenFactory: token != null ? () async => token : null,
+      );
+
+      // Tạo kết nối hub với các options
       _connection =
           HubConnectionBuilder()
-              .withUrl(hubUrl)
+              .withUrl(hubUrl, options: httpConnectionOptions)
               .withAutomaticReconnect(retryDelays: [2000, 5000, 10000, 30000])
               .build();
 

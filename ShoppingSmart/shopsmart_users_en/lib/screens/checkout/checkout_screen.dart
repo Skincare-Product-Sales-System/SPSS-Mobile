@@ -14,6 +14,7 @@ import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
 import '../../models/payment_method_model.dart';
 import '../orders/orders_screen.dart';
+import '../../screens/profile_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/voucher_model.dart';
@@ -133,7 +134,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'An error occurred while loading data: ${e.toString()}',
+          subtitle: 'Đã xảy ra lỗi khi tải dữ liệu: ${e.toString()}',
           isError: true,
           fct: () {},
         );
@@ -157,7 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               CircularProgressIndicator(color: Theme.of(context).primaryColor),
               const SizedBox(height: 16),
               Text(
-                'Verifying authentication...',
+                'Đang xác thực...',
                 style: TextStyle(
                   color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontSize: 16,
@@ -256,9 +257,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       'Đến trang Hồ sơ để thêm địa chỉ',
                                     ),
                                     onPressed: () {
-                                      Navigator.of(context).pushNamed(
-                                        '/profile',
-                                      ); // Đổi route nếu cần
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) =>
+                                                  const ProfileScreen(),
+                                        ),
+                                      );
                                     },
                                   ),
                                 ],
@@ -449,10 +455,175 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     itemCount: cartItems.length,
                                     itemBuilder: (context, index) {
                                       final item = cartItems[index];
-                                      return ListTile(
-                                        title: Text(item.productId),
-                                        subtitle: Text(
-                                          '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                                      // Get product details using the product ID
+                                      final product = productsProvider
+                                          .findByProdId(item.productId);
+
+                                      // Sử dụng thông tin trực tiếp từ CartModel và chỉ sử dụng productsProvider làm backup
+                                      String itemName = item.title;
+                                      String imageUrl =
+                                          item.productImageUrl; // Sử dụng hình ảnh từ giỏ hàng
+
+                                      // Hiển thị biến thể từ dữ liệu giỏ hàng
+                                      String itemVariation = '';
+                                      if (item
+                                          .variationOptionValues
+                                          .isNotEmpty) {
+                                        itemVariation =
+                                            'Phiên bản: ${item.variationOptionValues.join(", ")}';
+                                      }
+
+                                      // Backup: Nếu không có thông tin trong CartModel, thử lấy từ ProductsProvider
+                                      if (imageUrl.isEmpty && product != null) {
+                                        imageUrl = product.productImage;
+
+                                        // Try to get the specific product item configuration
+                                        if (product.productItems.isNotEmpty) {
+                                          final productItem = product
+                                              .productItems
+                                              .firstWhere(
+                                                (prodItem) =>
+                                                    prodItem.id ==
+                                                    item.productItemId,
+                                                orElse:
+                                                    () =>
+                                                        product
+                                                            .productItems
+                                                            .first,
+                                              );
+
+                                          // Use the product item's image if available
+                                          if (productItem.imageUrl.isNotEmpty) {
+                                            imageUrl = productItem.imageUrl;
+                                          }
+
+                                          // Get the variation details if not already set
+                                          if (itemVariation.isEmpty &&
+                                              productItem
+                                                  .configurations
+                                                  .isNotEmpty) {
+                                            itemVariation = productItem
+                                                .configurations
+                                                .map(
+                                                  (config) =>
+                                                      "${config.variationName}: ${config.optionName}",
+                                                )
+                                                .join(", ");
+                                          }
+                                        }
+                                      }
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // Product image
+                                            Container(
+                                              width: 60,
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: Colors.grey
+                                                      .withOpacity(0.2),
+                                                ),
+                                              ),
+                                              child:
+                                                  imageUrl.isNotEmpty
+                                                      ? ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                        child: Image.network(
+                                                          imageUrl,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return const Icon(
+                                                              Icons
+                                                                  .image_not_supported,
+                                                              color:
+                                                                  Colors.grey,
+                                                              size: 30,
+                                                            );
+                                                          },
+                                                        ),
+                                                      )
+                                                      : const Icon(
+                                                        Icons
+                                                            .image_not_supported,
+                                                        color: Colors.grey,
+                                                        size: 30,
+                                                      ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            // Product info
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    itemName,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  if (itemVariation
+                                                      .isNotEmpty) ...[
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      itemVariation,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .bodySmall
+                                                                ?.color,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'SL: ${item.quantity}',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Theme.of(context)
+                                                              .textTheme
+                                                              .bodySmall
+                                                              ?.color,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Price
+                                            Text(
+                                              CurrencyFormatter.formatVND(
+                                                item.price * item.quantity,
+                                              ),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       );
                                     },
@@ -691,7 +862,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'An error occurred while creating order',
+          subtitle: 'Đã xảy ra lỗi khi tạo đơn hàng',
           isError: true,
           fct: () {},
         );

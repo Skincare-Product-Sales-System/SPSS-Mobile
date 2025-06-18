@@ -160,9 +160,9 @@ class LatestArrivalProductsWidget extends StatelessWidget {
                     ),
                   ),
                   const Spacer(), // Sử dụng Spacer để đảm bảo nút luôn ở dưới cùng
-                  // Action buttons - Smaller and more compact
+                  // Action buttons - Only Heart button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       SizedBox(
                         width: 26,
@@ -170,156 +170,6 @@ class LatestArrivalProductsWidget extends StatelessWidget {
                         child: HeartButtonWidget(
                           productId: productsModel.productId,
                           size: 16,
-                        ),
-                      ),
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          color:
-                              cartProvider.isProdinCart(
-                                    productId: productsModel.productId,
-                                  )
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Theme.of(
-                                    context,
-                                  ).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            if (cartProvider.isProdinCart(
-                              productId: productsModel.productId,
-                            )) {
-                              return;
-                            }
-
-                            debugPrint(
-                              'Product ID: ${productsModel.productId}',
-                            );
-                            debugPrint(
-                              'Product Items: ${productsModel.productItems.length}',
-                            );
-                            debugPrint(
-                              'Product Items Data: ${productsModel.productItems}',
-                            );
-
-                            // Check if we have product items with valid data
-                            if (productsModel.productItems.isEmpty) {
-                              debugPrint(
-                                'No product items available, using product model price',
-                              );
-
-                              // Fallback: use product model price when productItems is empty
-                              if (productsModel.price <= 0) {
-                                debugPrint('Invalid price in product model');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Sản phẩm không có giá. Vui lòng thử lại sau.',
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // Use a default productItemId when not available
-                              cartProvider.addProductToCart(
-                                productId: productsModel.productId,
-                                productItemId:
-                                    productsModel
-                                        .productId, // Use productId as fallback
-                                title: productsModel.productTitle,
-                                price: productsModel.price.toDouble(),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Đã thêm vào giỏ hàng'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                              return;
-                            }
-
-                            // Get the first product item with valid price and quantity
-                            final validItem = productsModel.productItems
-                                .firstWhere(
-                                  (item) =>
-                                      item.price > 0 &&
-                                      item.quantityInStock > 0,
-                                  orElse: () {
-                                    debugPrint(
-                                      'No valid item found, using first item',
-                                    );
-                                    return productsModel.productItems.first;
-                                  },
-                                );
-
-                            debugPrint(
-                              'Selected Item Price: ${validItem.price}',
-                            );
-                            debugPrint('Selected Item ID: ${validItem.id}');
-                            debugPrint(
-                              'Selected Item Quantity: ${validItem.quantityInStock}',
-                            );
-
-                            if (validItem.price <= 0) {
-                              debugPrint('Invalid price for selected item');
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Sản phẩm không có giá. Vui lòng thử lại sau.',
-                                  ),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                              return;
-                            }
-
-                            if (validItem.quantityInStock <= 0) {
-                              debugPrint(
-                                'No stock available for selected item',
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Sản phẩm đã hết hàng. Vui lòng thử lại sau.',
-                                  ),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                              return;
-                            }
-
-                            cartProvider.addProductToCart(
-                              productId: productsModel.productId,
-                              productItemId: validItem.id,
-                              title: productsModel.productTitle,
-                              price: validItem.price.toDouble(),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đã thêm vào giỏ hàng'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            cartProvider.isProdinCart(
-                                  productId: productsModel.productId,
-                                )
-                                ? Icons.check
-                                : Icons.add_shopping_cart_outlined,
-                            size: 14,
-                            color:
-                                cartProvider.isProdinCart(
-                                      productId: productsModel.productId,
-                                    )
-                                    ? Colors.green
-                                    : Theme.of(context).primaryColor,
-                          ),
                         ),
                       ),
                     ],

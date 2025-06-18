@@ -34,6 +34,12 @@ class _RootScreenState extends State<RootScreen> {
       ProfileScreen(),
     ];
     controller = PageController(initialPage: currentScreen);
+
+    // Tải giỏ hàng từ server khi ứng dụng khởi động
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      cartProvider.fetchCartFromServer();
+    });
   }
 
   @override
