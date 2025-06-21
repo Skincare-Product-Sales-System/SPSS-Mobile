@@ -23,6 +23,10 @@ import 'package:shopsmart_users_en/screens/skin_analysis/payment/payment_screen.
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 import 'package:shopsmart_users_en/screens/orders/order_detail_screen.dart';
 import 'package:shopsmart_users_en/screens/chat_ai_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_success_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 
 import 'consts/theme_data.dart';
 import 'providers/cart_provider.dart';
@@ -37,6 +41,10 @@ import 'screens/inner_screen/wishlist.dart';
 import 'screens/search_screen.dart';
 import 'screens/checkout/order_success_screen.dart';
 import 'screens/skin_analysis/skin_analysis_history_screen.dart';
+import 'services/api_service.dart';
+import 'models/order_models.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runApp(const MyApp());
@@ -50,14 +58,78 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri?>? _linkSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    initDeepLinks();
+  }
+
+  Future<void> initDeepLinks() async {
+    _appLinks = AppLinks();
+    // Listen for incoming deep links
+    _linkSub = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (!mounted) return;
+      if (uri != null && uri.scheme == 'spss' && uri.host == 'vnpay-return') {
+        handleVnPayDeepLink(uri);
+      }
+    });
+
+    // Get the initial deep link if the app was opened with one
+    try {
+      final initialUri = await _appLinks.getInitialAppLink();
+      if (!mounted) return;
+      if (initialUri != null && initialUri.scheme == 'spss' && initialUri.host == 'vnpay-return') {
+        handleVnPayDeepLink(initialUri);
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  void handleVnPayDeepLink(Uri uri) async {
+    final orderId = uri.queryParameters['id'];
+    if (orderId == null) return;
+
+    // Thêm delay để backend có thời gian cập nhật trạng thái đơn hàng
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Gọi API backend để lấy trạng thái đơn hàng thực tế
+    final orderDetailResponse = await ApiService.getOrderDetail(orderId);
+    String? orderStatus;
+    if (orderDetailResponse.success && orderDetailResponse.data != null) {
+      orderStatus = orderDetailResponse.data!.status.toLowerCase();
+    }
+
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      if (orderStatus == 'processing' || orderStatus == 'paid') {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => VNPaySuccessScreen(orderId: orderId),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => VNPayFailureScreen(
+              orderId: orderId,
+              errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
+    _linkSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -155,6 +227,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               context: context,
             ),
             home: const RootScreen(),
+            navigatorKey: navigatorKey,
             routes: {
               RootScreen.routeName: (context) => const RootScreen(),
               ProductDetailsScreen.routName:
@@ -193,6 +266,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               SkinAnalysisHistoryScreen.routeName:
                   (context) => const SkinAnalysisHistoryScreen(),
               ChatAIScreen.routeName: (context) => const ChatAIScreen(),
+              VNPaySuccessScreen.routeName: (context) {
+                final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+                return VNPaySuccessScreen(
+                  orderId: args?['orderId'],
+                  amount: args?['amount'],
+                );
+              },
+              VNPayFailureScreen.routeName: (context) {
+                final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+                return VNPayFailureScreen(
+                  orderId: args?['orderId'],
+                  errorMessage: args?['errorMessage'],
+                );
+              },
             },
             onGenerateRoute: (RouteSettings settings) {
               // Handle dynamic routes with parameters
