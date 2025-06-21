@@ -77,19 +77,15 @@ class _SearchScreenState extends State<SearchScreen> {
           orElse: () => null as dynamic,
         );
 
-        if (category != null) {
-          selectedCategoryId = category.id;
-          debugPrint('SearchScreen - Found category ID: $selectedCategoryId');
+        selectedCategoryId = category.id;
+        debugPrint('SearchScreen - Found category ID: $selectedCategoryId');
 
-          // Set category selection but DON'T auto-load products
-          categoriesProvider.selectCategory(selectedCategoryId);
+        // Set category selection but DON'T auto-load products
+        categoriesProvider.selectCategory(selectedCategoryId);
 
-          setState(() {
-            // Update UI to show the category is selected
-          });
-        } else {
-          debugPrint('SearchScreen - Category not found: $categoryName');
-        }
+        setState(() {
+          // Update UI to show the category is selected
+        });
       } else {
         debugPrint('SearchScreen - Set to show all products');
         // Clear selection but DON'T auto-load products
@@ -187,7 +183,7 @@ class _SearchScreenState extends State<SearchScreen> {
           (cat) => cat.id == selectedCategoryId,
           orElse: () => null as dynamic,
         );
-        categoryName = category?.categoryName ?? 'Unknown Category';
+        categoryName = category.categoryName ?? 'Unknown Category';
 
         debugPrint(
           'Products loaded for category $categoryName: ${productsProvider.getProducts.length}',
@@ -518,7 +514,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     (cat) => cat.id == selectedCategoryId,
                                     orElse: () => null as dynamic,
                                   );
-                              return category?.categoryName ?? 'Unknown';
+                              return category.categoryName ?? 'Unknown';
                             })(),
                             () {
                               setState(() {
@@ -743,8 +739,8 @@ class _SearchScreenState extends State<SearchScreen> {
               title: TitlesTextWidget(
                 label:
                     categoryName != null
-                        ? "Products - $categoryName"
-                        : "Search products",
+                        ? "Sản phẩm - $categoryName"
+                        : "Tìm sản phẩm",
               ),
               actions: [
                 // Show category indicator if filtering by category
@@ -790,8 +786,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           decoration: InputDecoration(
                             hintText:
                                 categoryName != null
-                                    ? "Search in $categoryName..."
-                                    : "Search products...",
+                                    ? "Tìm trong $categoryName..."
+                                    : "Tìm sản phẩm...",
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: Row(
                               mainAxisSize: MainAxisSize.min,

@@ -4,7 +4,6 @@ import 'package:shopsmart_users_en/providers/cart_provider.dart';
 import 'package:shopsmart_users_en/screens/cart/bottom_checkout.dart';
 import 'package:shopsmart_users_en/screens/cart/cart_widget.dart';
 import 'package:shopsmart_users_en/services/assets_manager.dart';
-import 'package:shopsmart_users_en/services/currency_formatter.dart';
 import 'package:shopsmart_users_en/widgets/empty_bag.dart';
 import 'package:shopsmart_users_en/widgets/loading_widget.dart';
 import 'package:shopsmart_users_en/widgets/title_text.dart';
@@ -22,7 +21,7 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void didChangeDependencies() {
     if (_isInit) {
-      _refreshCartData();
+      Future.microtask(() => _refreshCartData());
       _isInit = false;
     }
     super.didChangeDependencies();

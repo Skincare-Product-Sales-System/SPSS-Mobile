@@ -4,9 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/providers/skin_analysis_provider.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
-import 'package:shopsmart_users_en/services/api_service.dart';
 import 'package:shopsmart_users_en/widgets/loading_widget.dart';
-import 'package:flutter/rendering.dart';
 
 // Thêm class mới để hiển thị tiến trình phân tích da
 class AnalyzingProgressDialog extends StatefulWidget {
@@ -106,9 +104,9 @@ class SkinAnalysisCameraScreen extends StatefulWidget {
 class _SkinAnalysisCameraScreenState extends State<SkinAnalysisCameraScreen>
     with AutomaticKeepAliveClientMixin {
   File? _selectedImage;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isAnalyzing = false;
-  bool _hasCheckedPayment = false;
+  final bool _hasCheckedPayment = false;
   bool _isProcessingImage = false; // Thêm biến để theo dõi quá trình xử lý ảnh
   bool _isInitialized =
       false; // Thêm biến để theo dõi việc đã khởi tạo màn hình

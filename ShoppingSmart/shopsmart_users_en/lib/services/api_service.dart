@@ -262,18 +262,23 @@ class ApiService {
     );
   }
 
-  // Search products by name
+  // Search products
   static Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
-    required String searchQuery,
+    required String searchText,
+    String? sortBy,
     int pageNumber = 1,
-    int pageSize = 20,
+    int pageSize = 10,
   }) async {
     try {
       Map<String, String> queryParams = {
-        'name': searchQuery,
         'pageNumber': pageNumber.toString(),
         'pageSize': pageSize.toString(),
+        'name': searchText,
       };
+
+      if (sortBy != null) {
+        queryParams['sortBy'] = sortBy;
+      }
 
       final uri = Uri.parse(
         '$baseUrl/products',
@@ -302,7 +307,8 @@ class ApiService {
       } else {
         return ApiResponse<PaginatedResponse<ProductModel>>(
           success: false,
-          message: 'Search failed. Status code: ${response.statusCode}',
+          message:
+              'Failed to search products. Status code: ${response.statusCode}',
           errors: [
             'HTTP Error: ${response.statusCode}',
             'Response: ${response.body}',
@@ -319,22 +325,10 @@ class ApiService {
           'Error: ${e.toString()}',
         ],
       );
-    } on HttpException catch (e) {
-      return ApiResponse<PaginatedResponse<ProductModel>>(
-        success: false,
-        message: 'HTTP error occurred: ${e.message}',
-        errors: ['HTTP request failed', e.toString()],
-      );
-    } on FormatException catch (e) {
-      return ApiResponse<PaginatedResponse<ProductModel>>(
-        success: false,
-        message: 'Invalid response format: ${e.message}',
-        errors: ['Server returned invalid data', e.toString()],
-      );
     } catch (e) {
       return ApiResponse<PaginatedResponse<ProductModel>>(
         success: false,
-        message: 'An unexpected error occurred: ${e.toString()}',
+        message: 'Failed to search products: ${e.toString()}',
         errors: [e.toString()],
       );
     }
@@ -1170,6 +1164,15 @@ class ApiService {
   static Future<ApiResponse<PaginatedResponse<PaymentMethodModel>>>
   getPaymentMethods({required int pageNumber, required int pageSize}) async {
     try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<PaginatedResponse<PaymentMethodModel>>(
+          success: false,
+          message: 'Not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
       final uri = Uri.parse('$baseUrl/payment-methods').replace(
         queryParameters: {
           'pageNumber': pageNumber.toString(),
@@ -1183,37 +1186,42 @@ class ApiService {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
             },
           )
           .timeout(timeout);
 
+      print('getPaymentMethods response.body: ${response.body}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        final data = jsonData['data'];
-        final items =
-            (data['items'] as List)
-                .map((item) => PaymentMethodModel.fromJson(item))
-                .toList();
-
-        return ApiResponse(
-          success: true,
-          data: PaginatedResponse(
-            items: items,
-            totalCount: data['totalCount'],
-            pageNumber: data['pageNumber'],
-            pageSize: data['pageSize'],
-            totalPages: data['totalPages'],
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(
+            data,
+            (item) => PaymentMethodModel.fromJson(item),
           ),
-          message: jsonData['message'],
+        );
+      } else {
+        final Map<String, dynamic> jsonData =
+            response.body.isNotEmpty
+                ? json.decode(response.body)
+                : {'message': 'Status code: ${response.statusCode}'};
+        return ApiResponse<PaginatedResponse<PaymentMethodModel>>(
+          success: false,
+          message: jsonData['message'] ?? 'Failed to load payment methods',
+          errors:
+              jsonData['errors'] != null
+                  ? List<String>.from(jsonData['errors'])
+                  : ['Failed with status code: ${response.statusCode}'],
         );
       }
-      final Map<String, dynamic> jsonData = json.decode(response.body);
-      return ApiResponse(
-        success: false,
-        message: jsonData['message'] ?? 'Failed to load payment methods',
-      );
     } catch (e) {
-      return ApiResponse(success: false, message: e.toString());
+      return ApiResponse<PaginatedResponse<PaymentMethodModel>>(
+        success: false,
+        message: 'Error loading payment methods: ${e.toString()}',
+        errors: [e.toString()],
+      );
     }
   }
 
@@ -1529,7 +1537,7 @@ class ApiService {
         );
       }
 
-      final url = Uri.parse('$baseUrl/skin-analysis/user/paged').replace(
+      final url = Uri.parse('$baseUrl/skin-analysis/user').replace(
         queryParameters: {
           'pageNumber': pageNumber.toString(),
           'pageSize': pageSize.toString(),
@@ -1551,7 +1559,7 @@ class ApiService {
           message: responseData['message'] ?? 'Unknown message',
           data:
               responseData['success'] == true && responseData['data'] != null
-                  ? ((responseData['data']['items'] as List?) ?? [])
+                  ? (responseData['data'] as List)
                       .map((item) => SkinAnalysisResult.fromJson(item))
                       .toList()
                   : [], // Trả về danh sách rỗng thay vì null
@@ -1786,6 +1794,7 @@ class ApiService {
                   ? List<String>.from(errorData!['errors'])
                   : ['Lỗi HTTP: ${response.statusCode}'],
           data: false,
+          statusCode: response.statusCode,
         );
       }
     } catch (e) {
@@ -2047,6 +2056,65 @@ class ApiService {
         message: 'Lỗi khi hủy đơn hàng: ${e.toString()}',
         errors: [e.toString()],
         data: false,
+      );
+    }
+  }
+
+  // Get brands
+  static Future<ApiResponse<PaginatedResponse<dynamic>>> getBrands({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/brands').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(data, (item) => item),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<dynamic>>(
+          success: false,
+          message: 'Failed to load brands. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<dynamic>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<dynamic>>(
+        success: false,
+        message: 'Failed to load brands: ${e.toString()}',
+        errors: [e.toString()],
       );
     }
   }

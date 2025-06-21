@@ -46,4 +46,44 @@ class AddressModel {
       province: json['province']?.toString() ?? '',
     );
   }
-} 
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'isDefault': isDefault,
+      'customerName': customerName,
+      'countryId': countryId,
+      'phoneNumber': phoneNumber,
+      'countryName': countryName,
+      'streetNumber': streetNumber,
+      'addressLine1': addressLine1,
+      'addressLine2': addressLine2,
+      'city': city,
+      'ward': ward,
+      'postCode': postCode,
+      'province': province,
+    };
+  }
+
+  Map<String, dynamic> toMap() => toJson();
+
+  // Getter for backward compatibility
+  String get address {
+    final parts =
+        [
+          streetNumber,
+          addressLine1,
+          addressLine2,
+          ward,
+          city,
+          province,
+          countryName,
+        ].where((part) => part.isNotEmpty).toList();
+
+    return parts.join(', ');
+  }
+
+  // Getter for backward compatibility
+  String? get note =>
+      null; // No note field in the current model, returning null for compatibility
+}

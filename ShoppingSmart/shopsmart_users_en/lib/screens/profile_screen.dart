@@ -15,6 +15,7 @@ import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/screens/profile/edit_profile_screen.dart';
 import 'package:shopsmart_users_en/screens/profile/address_screen.dart';
 
+import '../providers/cart_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
@@ -60,6 +61,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _userInfo = null;
           });
         }
+        // Get cart provider and clear local cart
+        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+        cartProvider.clearLocalCart();
       },
       isError: false,
     );

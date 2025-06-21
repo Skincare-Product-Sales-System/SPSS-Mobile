@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class SkinCondition {
   final double acneScore;
   final double wrinkleScore;
@@ -108,24 +106,42 @@ class RoutineStep {
 }
 
 class SkinAnalysisResult {
+  final String id;
   final String imageUrl;
   final SkinCondition skinCondition;
   final List<SkinIssue> skinIssues;
   final List<RecommendedProduct> recommendedProducts;
   final List<String> skinCareAdvice;
   final List<RoutineStep> routineSteps;
+  final String userId;
+  final String userName;
+  final DateTime? createdTime;
 
   SkinAnalysisResult({
+    this.id = '',
     required this.imageUrl,
     required this.skinCondition,
     required this.skinIssues,
     required this.recommendedProducts,
     required this.skinCareAdvice,
     required this.routineSteps,
+    this.userId = '',
+    this.userName = '',
+    this.createdTime,
   });
 
   factory SkinAnalysisResult.fromJson(Map<String, dynamic> json) {
+    DateTime? createdTime;
+    if (json['createdTime'] != null) {
+      try {
+        createdTime = DateTime.parse(json['createdTime']);
+      } catch (e) {
+        print('Error parsing createdTime: $e');
+      }
+    }
+
     return SkinAnalysisResult(
+      id: json['id'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       skinCondition: SkinCondition.fromJson(json['skinCondition'] ?? {}),
       skinIssues:
@@ -144,6 +160,9 @@ class SkinAnalysisResult {
           (json['routineSteps'] as List<dynamic>? ?? [])
               .map((step) => RoutineStep.fromJson(step))
               .toList(),
+      userId: json['userId'] ?? '',
+      userName: json['userName'] ?? '',
+      createdTime: createdTime,
     );
   }
 }

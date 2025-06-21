@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/enhanced_products_view_model.dart';
 
 class QuizProductCard extends StatelessWidget {
-  final Map<String, dynamic> product;
-  const QuizProductCard({super.key, required this.product});
+  final String? productId;
+  final Map<String, dynamic>? product;
 
-  String get plainDescription {
+  const QuizProductCard({super.key, this.productId, this.product})
+    : assert(
+        productId != null || product != null,
+        'Either productId or product must be provided',
+      );
+
+  String getPlainDescription(Map<String, dynamic>? product) {
+    if (product == null) return '';
     final desc = product['description'] ?? '';
     // Loại bỏ tag HTML nếu có
     return desc.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
@@ -12,6 +21,47 @@ class QuizProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If product is directly provided, use it
+    if (product != null) {
+      return _buildProductCard(context, product!);
+    }
+
+    // Otherwise fetch product by ID
+    final productsViewModel = Provider.of<EnhancedProductsViewModel>(
+      context,
+      listen: false,
+    );
+
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: productsViewModel.getProductById(productId!),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                'Không thể tải sản phẩm',
+                style: TextStyle(color: Theme.of(context).disabledColor),
+              ),
+            ),
+          );
+        }
+
+        final product = snapshot.data!;
+        return _buildProductCard(context, product);
+      },
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, Map<String, dynamic> product) {
     return GestureDetector(
       onTap:
           () => Navigator.pushNamed(
@@ -103,7 +153,7 @@ class QuizProductCard extends StatelessWidget {
             // Phần mô tả sản phẩm
             Flexible(
               child: Text(
-                plainDescription,
+                getPlainDescription(product),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 import 'package:shopsmart_users_en/providers/skin_analysis_provider.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
-import 'package:shopsmart_users_en/services/currency_formatter.dart';
 
 class SkinAnalysisResultScreen extends StatefulWidget {
   static const routeName = '/skin-analysis-result';
@@ -43,18 +42,53 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
 
     return WillPopScope(
       onWillPop: () async {
-        // Reset trạng thái trước khi quay lại
-        final provider = Provider.of<SkinAnalysisProvider>(
-          context,
-          listen: false,
+        // Prevent users from going back to prevent abuse of multiple analyses
+        // Show dialog explaining why they can't go back
+        await showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Không thể quay lại'),
+                content: const Text(
+                  'Bạn không thể quay lại trang trước khi đã có kết quả phân tích. '
+                  'Vui lòng sử dụng nút Home hoặc Back trên thanh điều hướng để trở về trang chủ.',
+                ),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Đã hiểu'),
+                  ),
+                ],
+              ),
         );
-        provider.resetAfterAnalysis();
-        return true;
+
+        // Return false to prevent back navigation
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Kết Quả Phân Tích Da'),
           centerTitle: true,
+          // Disable the back button in the AppBar
+          automaticallyImplyLeading: false,
+        ),
+        // Add a home button to allow navigation to home
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // Reset state and navigate to home
+            final provider = Provider.of<SkinAnalysisProvider>(
+              context,
+              listen: false,
+            );
+            provider.resetAfterAnalysis();
+
+            // Navigate to home screen
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+          tooltip: 'Về trang chủ',
+          child: const Icon(Icons.home),
         ),
         body: SingleChildScrollView(
           child: Padding(
@@ -223,36 +257,6 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
-
-                // Home button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Reset trạng thái trước khi quay về trang chủ
-                      final provider = Provider.of<SkinAnalysisProvider>(
-                        context,
-                        listen: false,
-                      );
-                      provider.resetAfterAnalysis();
-
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text(
-                      'Về Trang Chủ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -264,7 +268,7 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
   // THÊM WIDGET MỚI CHO ROUTINE STEP
   Widget _buildRoutineStepCard(BuildContext context, RoutineStep step) {
     // Hàm để đảm bảo tên bước bắt đầu bằng "Bước x."
-    String _ensureStepPrefix(String title, int order) {
+    String ensureStepPrefix(String title, int order) {
       // Kiểm tra xem tên bước đã có "Bước x." chưa
       RegExp regex = RegExp(r'^Bước\s+\d+\.\s*');
       if (regex.hasMatch(title)) {
@@ -282,7 +286,7 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
         children: [
           // Bỏ phần Row có chứa vòng tròn số thứ tự
           Text(
-            _ensureStepPrefix(step.stepName, step.order),
+            ensureStepPrefix(step.stepName, step.order),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),

@@ -11,7 +11,7 @@ class CurrencyFormatter {
       final double value = double.parse(amount);
       return formatVND(value);
     } catch (e) {
-      return '${amount}₫';
+      return '$amount₫';
     }
   }
 
@@ -35,5 +35,10 @@ class CurrencyFormatter {
     } catch (e) {
       return 0.0;
     }
+  }
+
+  // For backward compatibility
+  static String format(double amount) {
+    return formatNumber(amount);
   }
 }

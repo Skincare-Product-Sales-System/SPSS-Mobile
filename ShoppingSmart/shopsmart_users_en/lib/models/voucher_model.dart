@@ -101,6 +101,9 @@ class VoucherModel {
     return orderValue * (discountRate / 100);
   }
 
+  // For backward compatibility
+  double get discountAmount => discountRate;
+
   @override
   String toString() {
     return 'VoucherModel(id: $id, code: $code, description: $description, discountRate: $discountRate%, status: $status)';

@@ -289,7 +289,7 @@ class ProductsProvider with ChangeNotifier {
 
     try {
       final response = await _productRepository.searchProducts(
-        searchQuery: searchText,
+        searchText: searchText,
         pageNumber: 1,
         pageSize: 20,
       );

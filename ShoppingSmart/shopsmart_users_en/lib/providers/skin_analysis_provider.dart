@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/api_response_model.dart';
 import '../models/skin_analysis_models.dart';
 import '../models/transaction_model.dart';
 import '../services/api_service.dart';

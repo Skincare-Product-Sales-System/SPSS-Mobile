@@ -163,6 +163,18 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
+        // Kiểm tra nếu phản hồi chỉ có message "Registered successfully"
+        if (jsonData.containsKey('message') &&
+            jsonData['message'] == "Registered successfully") {
+          // Trả về ApiResponse thành công với message
+          return ApiResponse<AuthResponse>(
+            success: true,
+            message: jsonData['message'],
+            data: null, // Không có token hoặc user data
+          );
+        }
+
+        // Xử lý phản hồi thông thường
         final authResponse = ApiResponse.fromJson(
           jsonData,
           (data) => AuthResponse.fromJson(data),
@@ -397,14 +409,16 @@ class AuthService {
       await prefs.remove('user_name');
       await prefs.remove('user_avatar');
 
-      // Clear any other app-specific user data
-      await prefs.remove('cart_items');
+      // Clear only local app-specific user data except cart data
+      // Note: We're keeping cart_items intentionally
       await prefs.remove('wishlist_items');
       await prefs.remove('viewed_products');
       await prefs.remove('user_preferences');
       await prefs.remove('delivery_addresses');
 
-      print('User logged out and all data cleared successfully');
+      print(
+        'User logged out and data cleared successfully (cart data preserved)',
+      );
     } catch (e) {
       print('Error during logout: $e');
     }

@@ -6,22 +6,19 @@ import '../../providers/products_provider.dart';
 import '../../services/jwt_service.dart';
 import '../../services/currency_formatter.dart';
 import '../../screens/auth/login.dart';
-import '../../widgets/app_name_text.dart';
 import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../models/address_model.dart';
 import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
 import '../../models/payment_method_model.dart';
-import '../orders/orders_screen.dart';
 import '../../screens/profile_screen.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
 import 'vnpay_success_screen.dart';
 import 'vnpay_failure_screen.dart';
+import './order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
