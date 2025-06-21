@@ -1,12 +1,11 @@
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shopsmart_users_en/providers/viewed_recently_provider.dart';
-import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
+import 'package:shopsmart_users_en/providers/enhanced_viewed_products_provider.dart';
+import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
 
 import '../../models/product_model.dart';
-import '../../models/detailed_product_model.dart';
-import '../../providers/cart_provider.dart';
+import '../../providers/enhanced_cart_view_model.dart';
 import 'heart_btn.dart';
 
 class LatestArrivalProductsWidget extends StatelessWidget {
@@ -15,8 +14,10 @@ class LatestArrivalProductsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productsModel = Provider.of<ProductModel>(context);
-    final cartProvider = Provider.of<CartProvider>(context);
-    final viewedProdProvider = Provider.of<ViewedProdProvider>(context);
+    final cartViewModel = Provider.of<EnhancedCartViewModel>(context);
+    final viewedProductsProvider = Provider.of<EnhancedViewedProductsProvider>(
+      context,
+    );
 
     return Container(
       margin: const EdgeInsets.all(3.0),
@@ -31,12 +32,10 @@ class LatestArrivalProductsWidget extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            viewedProdProvider.addViewedProd(
-              productId: productsModel.productId,
-            );
+            viewedProductsProvider.addViewedProduct(productsModel.productId);
             await Navigator.pushNamed(
               context,
-              ProductDetailsScreen.routName,
+              EnhancedProductDetailsScreen.routeName,
               arguments: productsModel.productId,
             );
           },

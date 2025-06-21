@@ -7,13 +7,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/order_models.dart';
 import '../../providers/order_provider.dart';
 import '../../services/currency_formatter.dart';
-import '../../widgets/title_text.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   static const routeName = '/order-detail';
   final String orderId;
 
-  const OrderDetailScreen({Key? key, required this.orderId}) : super(key: key);
+  const OrderDetailScreen({super.key, required this.orderId});
 
   @override
   State<OrderDetailScreen> createState() => _OrderDetailScreenState();

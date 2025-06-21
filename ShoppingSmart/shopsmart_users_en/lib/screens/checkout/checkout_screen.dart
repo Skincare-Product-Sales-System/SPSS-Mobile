@@ -6,19 +6,16 @@ import '../../providers/products_provider.dart';
 import '../../services/jwt_service.dart';
 import '../../services/currency_formatter.dart';
 import '../../screens/auth/login.dart';
-import '../../widgets/app_name_text.dart';
 import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../models/address_model.dart';
 import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
 import '../../models/payment_method_model.dart';
-import '../orders/orders_screen.dart';
 import '../../screens/profile_screen.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
+import './order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -841,11 +838,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (response.success) {
         if (mounted) {
-          // Chuyển hướng đến trang success
-          Navigator.pushReplacementNamed(context, '/order-success');
-          // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
-          Future.microtask(() {
-            cartProvider.clearLocalCart();
+          // Phải dùng cách tiếp cận khác để không quay về trang cart
+          // Điều hướng về trang chủ trước, rồi mới hiển thị màn hình thành công
+          Navigator.of(context).popUntil((route) => route.isFirst);
+
+          // Đợi một chút để đảm bảo app đã về trang chủ
+          Future.delayed(const Duration(milliseconds: 100), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const OrderSuccessScreen(),
+              ),
+            );
           });
         }
       } else {

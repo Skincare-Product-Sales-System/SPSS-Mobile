@@ -16,4 +16,14 @@ class PaymentMethodModel {
       imageUrl: json['imageUrl']?.toString() ?? '',
     );
   }
-} 
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'paymentType': paymentType, 'imageUrl': imageUrl};
+  }
+
+  Map<String, dynamic> toMap() => toJson();
+
+  // Getters for backward compatibility
+  String get name => paymentType;
+  String get description => 'Payment method: $paymentType';
+}

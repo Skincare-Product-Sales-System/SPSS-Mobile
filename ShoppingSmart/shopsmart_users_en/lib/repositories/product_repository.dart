@@ -22,6 +22,19 @@ class ProductRepository {
     );
   }
 
+  // Get products by category
+  Future<ApiResponse<PaginatedResponse<ProductModel>>> getProductsByCategory({
+    required String categoryId,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    return ApiService.getProductsByCategory(
+      categoryId: categoryId,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+    );
+  }
+
   // Get best sellers products
   Future<ApiResponse<PaginatedResponse<ProductModel>>> getBestSellers({
     int pageNumber = 1,
@@ -88,14 +101,32 @@ class ProductRepository {
 
   // Search products
   Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
-    required String searchQuery,
+    required String searchText,
+    String? sortBy,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
     return ApiService.searchProducts(
-      searchQuery: searchQuery,
+      searchText: searchText,
+      sortBy: sortBy,
       pageNumber: pageNumber,
       pageSize: pageSize,
+    );
+  }
+
+  /// Submit a product review
+  Future<ApiResponse<Map<String, dynamic>>> submitProductReview({
+    required String productId,
+    required int rating,
+    required String comment,
+    String? title,
+    List<String>? imageUrls,
+  }) async {
+    return ApiService.postReview(
+      productItemId: productId,
+      reviewImages: imageUrls ?? [],
+      ratingValue: rating,
+      comment: comment,
     );
   }
 }

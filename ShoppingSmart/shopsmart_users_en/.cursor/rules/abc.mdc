@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+nhớ là khi chuyển đổi sang chuẩn mô hình mvvm thì tuyệt đối không được thay đổi layout hay logic, chỉ chuyển đổi và tuyệt đối ko dùng dummy data, khi prompt xong phải check có file nào bị lỗi không

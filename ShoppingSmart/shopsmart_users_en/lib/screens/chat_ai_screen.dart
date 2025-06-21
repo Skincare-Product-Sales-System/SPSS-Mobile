@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../screens/inner_screen/product_detail.dart';
+
 class ChatAIScreen extends StatefulWidget {
-  static const routeName = '/ChatAIScreen';
+  static const routeName = '/chat-ai';
+
   const ChatAIScreen({super.key});
 
   @override
@@ -39,7 +42,9 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
       });
     } catch (e) {
       setState(() {
-        _messages.add(_Message('Lỗi khi lấy dữ liệu sản phẩm hoặc chào AI: $e', false));
+        _messages.add(
+          _Message('Lỗi khi lấy dữ liệu sản phẩm hoặc chào AI: $e', false),
+        );
         _initialized = true;
       });
     } finally {
@@ -50,7 +55,9 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchProducts() async {
-    final url = Uri.parse('http://10.0.2.2:5041/api/products?pageNumber=1&pageSize=10&sortBy=newest');
+    final url = Uri.parse(
+      'http://10.0.2.2:5041/api/products?pageNumber=1&pageSize=10&sortBy=newest',
+    );
     final res = await http.get(url);
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
@@ -62,8 +69,9 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
   }
 
   String _buildIntroPrompt(List<Map<String, dynamic>> products) {
-    final productList = products.map((p) =>
-      '${p['name']}: ${p['description'] ?? ''}').join('\n');
+    final productList = products
+        .map((p) => '${p['name']}: ${p['description'] ?? ''}')
+        .join('\n');
     return '''
 Bạn là trợ lý ảo của Skincede - một website thương mại điện tử chuyên bán đồ skincare chính hãng. 
 Tên web/app là Skincede. Khi khách hỏi về sản phẩm, chỉ được trả lời dựa trên danh sách sản phẩm dưới đây, không được bịa ra sản phẩm khác, không trả lời về thương hiệu khác, không nói mình là AI của Google.
@@ -97,20 +105,22 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
         {
           "role": "user",
           "parts": [
-            {"text": introPrompt}
-          ]
+            {"text": introPrompt},
+          ],
         },
-        ..._messages.map((msg) => {
-          "role": msg.isUser ? "user" : "model",
-          "parts": [
-            {"text": msg.text}
-          ]
-        }).toList(),
+        ..._messages.map(
+          (msg) => {
+            "role": msg.isUser ? "user" : "model",
+            "parts": [
+              {"text": msg.text},
+            ],
+          },
+        ),
         {
           "role": "user",
           "parts": [
-            {"text": text}
-          ]
+            {"text": text},
+          ],
         },
       ];
 
@@ -131,7 +141,10 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     }
   }
 
-  List<Map<String, dynamic>> extractMentionedProducts(String aiReply, List<Map<String, dynamic>> products) {
+  List<Map<String, dynamic>> extractMentionedProducts(
+    String aiReply,
+    List<Map<String, dynamic>> products,
+  ) {
     final mentioned = <Map<String, dynamic>>[];
     for (final p in products) {
       final name = (p['name'] ?? '').toString().toLowerCase();
@@ -149,8 +162,12 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     );
     final body = jsonEncode({
       "contents": [
-        {"parts": [{"text": prompt}]}
-      ]
+        {
+          "parts": [
+            {"text": prompt},
+          ],
+        },
+      ],
     });
     final res = await http.post(
       url,
@@ -166,14 +183,14 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     }
   }
 
-  Future<String> _callGeminiAPIWithMessages(List<Map<String, dynamic>> messages) async {
+  Future<String> _callGeminiAPIWithMessages(
+    List<Map<String, dynamic>> messages,
+  ) async {
     const apiKey = 'AIzaSyBDX1bPxSJl5U3riYSjS9JCs1pyfb3B4AE';
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
     );
-    final body = jsonEncode({
-      "contents": messages,
-    });
+    final body = jsonEncode({"contents": messages});
     final res = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -205,34 +222,44 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
               itemBuilder: (context, idx) {
                 final msg = _messages[idx];
                 return Column(
-                  crossAxisAlignment: msg.isUser
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      msg.isUser
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
                   children: [
                     Align(
-                      alignment: msg.isUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
+                      alignment:
+                          msg.isUser
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 14),
+                          vertical: 10,
+                          horizontal: 14,
+                        ),
                         decoration: BoxDecoration(
-                          color: msg.isUser
-                              ? Colors.deepPurple.withOpacity(0.1)
-                              : Colors.deepPurple.withOpacity(0.2),
+                          color:
+                              msg.isUser
+                                  ? Colors.deepPurple.withOpacity(0.1)
+                                  : Colors.deepPurple.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(msg.text),
                       ),
                     ),
-                    if (!msg.isUser && msg.mentionedProducts != null && msg.mentionedProducts!.isNotEmpty)
+                    if (!msg.isUser &&
+                        msg.mentionedProducts != null &&
+                        msg.mentionedProducts!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 8),
                         child: Wrap(
                           spacing: 12,
                           runSpacing: 12,
-                          children: msg.mentionedProducts!.map((prod) => _ProductCard(product: prod)).toList(),
+                          children:
+                              msg.mentionedProducts!
+                                  .map((prod) => _ProductCard(product: prod))
+                                  .toList(),
                         ),
                       ),
                   ],
@@ -291,7 +318,11 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/ProductDetailsScreen', arguments: product['id']);
+        Navigator.pushNamed(
+          context,
+          ProductDetailsScreen.routName,
+          arguments: product['id'],
+        );
       },
       child: Container(
         width: 160,
@@ -326,11 +357,15 @@ class _ProductCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               product['price'] != null ? '${product['price']} đ' : '',
-              style: const TextStyle(color: Colors.deepPurple, fontSize: 12, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.deepPurple,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-} 
+}

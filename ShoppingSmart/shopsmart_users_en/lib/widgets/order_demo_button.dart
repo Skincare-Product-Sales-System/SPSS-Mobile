@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/orders/order_detail_screen.dart';
 
 class OrderDemoButton extends StatelessWidget {
-  const OrderDemoButton({Key? key}) : super(key: key);
+  const OrderDemoButton({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -25,9 +25,10 @@ class AuthRepository {
     required String firstName,
     required String lastName,
     String? phone,
+    String? userName,
   }) async {
     final request = RegisterRequest(
-      userName: email,
+      userName: userName ?? email,
       surName: firstName,
       lastName: lastName,
       emailAddress: email,

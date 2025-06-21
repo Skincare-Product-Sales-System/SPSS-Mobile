@@ -375,10 +375,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ? TextInputType.emailAddress
                             : TextInputType.text,
                     validator: (val) {
-                      if (val == null || val.isEmpty)
+                      if (val == null || val.isEmpty) {
                         return 'Trường này là bắt buộc';
-                      if (isEmail && !val.contains('@'))
+                      }
+                      if (isEmail && !val.contains('@')) {
                         return 'Email không hợp lệ';
+                      }
                       return null;
                     },
                   )
