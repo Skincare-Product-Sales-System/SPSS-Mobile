@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
 import 'package:shopsmart_users_en/providers/enhanced_auth_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_cart_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_categories_view_model.dart';
@@ -31,6 +33,8 @@ import 'package:shopsmart_users_en/screens/skin_analysis/payment/enhanced_paymen
 import 'package:shopsmart_users_en/screens/enhanced_chat_ai_screen.dart';
 import 'package:shopsmart_users_en/services/service_locator.dart';
 import 'package:shopsmart_users_en/services/navigation_service.dart';
+import 'package:shopsmart_users_en/services/api_service.dart';
+import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_wishlist.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_reviews_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
@@ -43,6 +47,8 @@ import 'package:shopsmart_users_en/screens/inner_screen/enhanced_offers_screen.d
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_blog_detail.dart';
 import 'package:shopsmart_users_en/screens/checkout/enhanced_order_success_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_success_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
@@ -103,7 +109,7 @@ void main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
   State<MyApp> createState() => _MyAppState();
@@ -134,7 +140,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     try {
       final initialUri = await _appLinks.getInitialAppLink();
       if (!mounted) return;
-      if (initialUri != null && initialUri.scheme == 'spss' && initialUri.host == 'vnpay-return') {
+      if (initialUri != null &&
+          initialUri.scheme == 'spss' &&
+          initialUri.host == 'vnpay-return') {
         handleVnPayDeepLink(initialUri);
       }
     } catch (e) {
@@ -156,7 +164,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       orderStatus = orderDetailResponse.data!.status.toLowerCase();
     }
 
-    final context = navigatorKey.currentContext;
+    final context = sl<NavigationService>().navigatorKey.currentContext;
     if (context != null) {
       if (orderStatus == 'processing' || orderStatus == 'paid') {
         Navigator.of(context).pushAndRemoveUntil(
@@ -168,10 +176,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       } else {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => VNPayFailureScreen(
-              orderId: orderId,
-              errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
-            ),
+            builder:
+                (context) => VNPayFailureScreen(
+                  orderId: orderId,
+                  errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
+                ),
           ),
           (route) => false,
         );
@@ -385,7 +394,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               context: context,
             ),
             home: const RootScreen(),
-            navigatorKey: navigatorKey,
             routes: {
               // Root screen
               RootScreen.routeName: (context) => const RootScreen(),
