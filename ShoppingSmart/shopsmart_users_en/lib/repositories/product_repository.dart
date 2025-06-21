@@ -13,12 +13,16 @@ class ProductRepository {
     int pageSize = 10,
     String? sortBy,
     String? categoryId,
+    String? brandId,
+    String? skinTypeId,
   }) async {
     return ApiService.getProducts(
       pageNumber: pageNumber,
       pageSize: pageSize,
       sortBy: sortBy,
       categoryId: categoryId,
+      brandId: brandId,
+      skinTypeId: skinTypeId,
     );
   }
 
@@ -103,12 +107,16 @@ class ProductRepository {
   Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
     required String searchText,
     String? sortBy,
+    String? brandId,
+    String? skinTypeId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
     return ApiService.searchProducts(
       searchText: searchText,
       sortBy: sortBy,
+      brandId: brandId,
+      skinTypeId: skinTypeId,
       pageNumber: pageNumber,
       pageSize: pageSize,
     );

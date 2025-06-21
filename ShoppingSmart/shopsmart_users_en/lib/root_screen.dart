@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
 // Đã thay thế bằng enhanced_cart_view_model.dart
@@ -25,10 +26,10 @@ class _RootScreenState extends State<RootScreen> {
   late List<Widget> screens;
   int currentScreen = 0;
   late PageController controller;
-
   @override
   void initState() {
     super.initState();
+    debugPrint("RootScreen: initializing");
     screens = const [
       EnhancedHomeScreen(),
       EnhancedQuizScreen(),
@@ -37,9 +38,11 @@ class _RootScreenState extends State<RootScreen> {
       EnhancedProfileScreen(),
     ];
     controller = PageController(initialPage: currentScreen);
+    debugPrint("RootScreen: screens and controller initialized");
 
     // Tải giỏ hàng từ server khi ứng dụng khởi động
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      debugPrint("RootScreen: post frame callback running");
       // Kiểm tra trạng thái đăng nhập
       final authViewModel = Provider.of<EnhancedAuthViewModel>(
         context,

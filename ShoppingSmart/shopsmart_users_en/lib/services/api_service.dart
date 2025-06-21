@@ -31,6 +31,8 @@ class ApiService {
     int pageSize = 10,
     String? sortBy,
     String? categoryId,
+    String? brandId,
+    String? skinTypeId,
   }) async {
     try {
       Map<String, String> queryParams = {
@@ -44,6 +46,14 @@ class ApiService {
 
       if (categoryId != null) {
         queryParams['categoryId'] = categoryId;
+      }
+
+      if (brandId != null) {
+        queryParams['brandId'] = brandId;
+      }
+
+      if (skinTypeId != null) {
+        queryParams['skinTypeId'] = skinTypeId;
       }
 
       final uri = Uri.parse(
@@ -266,6 +276,8 @@ class ApiService {
   static Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
     required String searchText,
     String? sortBy,
+    String? brandId,
+    String? skinTypeId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
@@ -278,6 +290,14 @@ class ApiService {
 
       if (sortBy != null) {
         queryParams['sortBy'] = sortBy;
+      }
+
+      if (brandId != null) {
+        queryParams['brandId'] = brandId;
+      }
+
+      if (skinTypeId != null) {
+        queryParams['skinTypeId'] = skinTypeId;
       }
 
       final uri = Uri.parse(
@@ -2114,6 +2134,66 @@ class ApiService {
       return ApiResponse<PaginatedResponse<dynamic>>(
         success: false,
         message: 'Failed to load brands: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get skin types
+  static Future<ApiResponse<PaginatedResponse<dynamic>>> getSkinTypes({
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/skin-types').replace(
+        queryParameters: {
+          'pageNumber': pageNumber.toString(),
+          'pageSize': pageSize.toString(),
+        },
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => PaginatedResponse.fromJson(data, (item) => item),
+        );
+      } else {
+        return ApiResponse<PaginatedResponse<dynamic>>(
+          success: false,
+          message:
+              'Failed to load skin types. Status code: ${response.statusCode}',
+          errors: [
+            'HTTP Error: ${response.statusCode}',
+            'Response: ${response.body}',
+          ],
+        );
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<PaginatedResponse<dynamic>>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<PaginatedResponse<dynamic>>(
+        success: false,
+        message: 'Failed to load skin types: ${e.toString()}',
         errors: [e.toString()],
       );
     }

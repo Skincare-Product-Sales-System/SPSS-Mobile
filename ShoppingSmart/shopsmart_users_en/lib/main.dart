@@ -12,10 +12,12 @@ import 'package:shopsmart_users_en/providers/enhanced_quiz_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_skin_analysis_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_viewed_products_provider.dart';
 import 'package:shopsmart_users_en/providers/enhanced_wishlist_view_model.dart';
+import 'package:shopsmart_users_en/providers/enhanced_brands_view_model.dart';
+import 'package:shopsmart_users_en/providers/enhanced_skin_types_view_model.dart';
 import 'package:shopsmart_users_en/providers/theme_provider.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/auth/enhanced_login.dart';
-import 'package:shopsmart_users_en/screens/enhanced_search_screen.dart';
+import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_all_products_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_quiz_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_quiz_question_screen.dart';
@@ -54,34 +56,110 @@ import 'consts/theme_data.dart';
 void main() async {
   // Đảm bảo Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint("Main: Flutter binding initialized");
 
-  // Khởi tạo Service Locator
-  await setupServiceLocator();
+  try {
+    // Khởi tạo Service Locator
+    debugPrint("Main: Setting up service locator");
+    await setupServiceLocator();
+    debugPrint("Main: Service locator setup completed");
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+    debugPrint("Main: App started");
+  } catch (e, stackTrace) {
+    debugPrint("Main: Error during initialization: $e");
+    debugPrint(stackTrace.toString());
+    // Create a minimal app that displays the error
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Initialization Error",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    e.toString(),
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
+    debugPrint("MyApp: Building with providers");
     return MultiProvider(
       providers: [
+        // Ensure providers are created in the correct order
         ChangeNotifierProvider(
           create: (_) {
+            debugPrint("MyApp: Creating ThemeProvider");
             return ThemeProvider();
           },
         ),
-        // Đã thay thế bằng EnhancedProductsViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return ProductsProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
-            return sl<EnhancedProductsViewModel>();
+            debugPrint("MyApp: Creating EnhancedBrandsViewModel");
+            try {
+              final provider = sl<EnhancedBrandsViewModel>();
+              debugPrint("MyApp: EnhancedBrandsViewModel created successfully");
+              return provider;
+            } catch (e) {
+              debugPrint("MyApp: Error creating EnhancedBrandsViewModel: $e");
+              rethrow;
+            }
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            debugPrint("MyApp: Creating EnhancedSkinTypesViewModel");
+            try {
+              final provider = sl<EnhancedSkinTypesViewModel>();
+              debugPrint(
+                "MyApp: EnhancedSkinTypesViewModel created successfully",
+              );
+              return provider;
+            } catch (e) {
+              debugPrint(
+                "MyApp: Error creating EnhancedSkinTypesViewModel: $e",
+              );
+              rethrow;
+            }
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            debugPrint("MyApp: Creating EnhancedProductsViewModel");
+            try {
+              final provider = sl<EnhancedProductsViewModel>();
+              debugPrint(
+                "MyApp: EnhancedProductsViewModel created successfully",
+              );
+              return provider;
+            } catch (e) {
+              debugPrint("MyApp: Error creating EnhancedProductsViewModel: $e");
+              rethrow;
+            }
           },
         ),
         // Đã thay thế bằng EnhancedCategoriesViewModel
@@ -213,8 +291,7 @@ class MyApp extends StatelessWidget {
                   (context) => const EnhancedChatScreen(),
 
               // Product screens
-              // ProductDetailsScreen.routName:
-              //     (context) => const ProductDetailsScreen(), // Sử dụng Enhanced thay thế
+              // ProductDetailsScreen.routName:              //     (context) => const ProductDetailsScreen(), // Sử dụng Enhanced thay thế
               EnhancedProductDetailsScreen.routeName:
                   (context) => const EnhancedProductDetailsScreen(),
               // ViewedRecentlyScreen.routName:
@@ -225,9 +302,9 @@ class MyApp extends StatelessWidget {
               //     (context) => const AllProductsScreen(), // Sử dụng Enhanced thay thế
               EnhancedAllProductsScreen.routeName:
                   (context) => const EnhancedAllProductsScreen(),
-              // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng Enhanced thay thế
-              EnhancedSearchScreen.routeName:
-                  (context) => const EnhancedSearchScreen(),
+              // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng SimpleSearchScreen thay thế
+              SimpleSearchScreen.routeName:
+                  (context) => const SimpleSearchScreen(),
 
               // Quiz screens
               // QuizScreen.routeName: (context) => const QuizScreen(), // Sử dụng Enhanced thay thế

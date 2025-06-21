@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/category_model.dart';
 import '../../providers/enhanced_categories_view_model.dart';
 import '../../providers/enhanced_products_view_model.dart';
-import '../../screens/enhanced_search_screen.dart';
+import '../../screens/simple_search_screen.dart';
 
 class CategoryWidget extends StatelessWidget {
   final CategoryModel category;
@@ -55,7 +55,7 @@ class CategoryWidget extends StatelessWidget {
         if (navigateToSearch == true) {
           Navigator.pushNamed(
             context,
-            EnhancedSearchScreen.routeName,
+            SimpleSearchScreen.routeName,
             arguments: isSelected ? "Tất Cả" : category.categoryName,
           );
         }
@@ -195,7 +195,7 @@ class CategorySection extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushNamed(
                           context,
-                          EnhancedSearchScreen.routeName,
+                          SimpleSearchScreen.routeName,
                           arguments: "Tất Cả",
                         );
                       },

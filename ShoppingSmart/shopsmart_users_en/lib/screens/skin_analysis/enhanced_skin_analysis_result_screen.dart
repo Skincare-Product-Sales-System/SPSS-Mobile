@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
-import 'package:shopsmart_users_en/models/skin_analysis_models_extended.dart'
-    as extended;
 import 'package:shopsmart_users_en/models/view_state.dart';
 import 'package:shopsmart_users_en/providers/enhanced_skin_analysis_view_model.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';

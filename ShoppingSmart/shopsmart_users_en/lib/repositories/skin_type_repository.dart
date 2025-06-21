@@ -1,14 +1,13 @@
 import '../models/api_response_model.dart';
-import '../models/brand_model.dart';
+import '../models/skin_type_model.dart';
 import '../services/api_service.dart';
 
-class BrandRepository {
-  // Get all brands with pagination
-  Future<ApiResponse<PaginatedResponse<BrandModel>>> getBrands({
+class SkinTypeRepository {
+  Future<ApiResponse<PaginatedResponse<SkinTypeModel>>> getSkinTypes({
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
-    final response = await ApiService.getBrands(
+    final response = await ApiService.getSkinTypes(
       pageNumber: pageNumber,
       pageSize: pageSize,
     );
@@ -16,13 +15,13 @@ class BrandRepository {
     if (response.success && response.data != null) {
       final items =
           (response.data!.items)
-              .map((item) => BrandModel.fromJson(item))
+              .map((item) => SkinTypeModel.fromJson(item))
               .toList();
 
-      return ApiResponse<PaginatedResponse<BrandModel>>(
+      return ApiResponse<PaginatedResponse<SkinTypeModel>>(
         success: true,
         message: response.message,
-        data: PaginatedResponse<BrandModel>(
+        data: PaginatedResponse<SkinTypeModel>(
           items: items,
           totalCount: response.data!.totalCount,
           pageNumber: response.data!.pageNumber,
@@ -32,7 +31,7 @@ class BrandRepository {
       );
     }
 
-    return ApiResponse<PaginatedResponse<BrandModel>>(
+    return ApiResponse<PaginatedResponse<SkinTypeModel>>(
       success: false,
       message: response.message,
       errors: response.errors,

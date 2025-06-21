@@ -7,6 +7,7 @@ import 'package:shopsmart_users_en/consts/app_constants.dart';
 import 'package:shopsmart_users_en/widgets/products/latest_arrival.dart';
 import 'package:shopsmart_users_en/widgets/products/category_widget.dart';
 import 'package:shopsmart_users_en/widgets/blog_section.dart';
+import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
 
 import '../providers/products_provider.dart';
 import '../providers/categories_provider.dart';
@@ -14,7 +15,6 @@ import '../services/assets_manager.dart';
 import '../services/api_service.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
-import '../screens/enhanced_search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              Navigator.pushNamed(context, EnhancedSearchScreen.routeName);
+              Navigator.pushNamed(context, SimpleSearchScreen.routeName);
             },
           ),
           Consumer<ProductsProvider>(
@@ -269,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () {
                                 Navigator.pushNamed(
                                   context,
-                                  EnhancedSearchScreen.routeName,
+                                  SimpleSearchScreen.routeName,
                                   arguments:
                                       categoriesProvider.selectedCategoryId !=
                                               null
@@ -337,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () {
                             Navigator.pushNamed(
                               context,
-                              EnhancedSearchScreen.routeName,
+                              SimpleSearchScreen.routeName,
                               arguments: "Tất Cả",
                             );
                           },

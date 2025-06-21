@@ -4,16 +4,14 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../consts/app_constants.dart';
-import '../models/category_model.dart';
 import '../providers/enhanced_home_view_model.dart';
 import '../providers/home_state.dart';
 import '../screens/mvvm_screen_template.dart';
-import '../screens/enhanced_search_screen.dart';
+import '../screens/simple_search_screen.dart';
 import '../services/api_service.dart';
 import '../services/assets_manager.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/blog_section.dart';
-import '../widgets/products/category_widget.dart';
 import '../widgets/products/latest_arrival.dart';
 import '../widgets/title_text.dart';
 
@@ -57,7 +55,7 @@ class EnhancedHomeScreen extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {
-            Navigator.pushNamed(context, EnhancedSearchScreen.routeName);
+            Navigator.pushNamed(context, SimpleSearchScreen.routeName);
           },
         ),
         if (viewModel.hasError)
@@ -148,7 +146,7 @@ class EnhancedHomeScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushNamed(
                         context,
-                        EnhancedSearchScreen.routeName,
+                        SimpleSearchScreen.routeName,
                         arguments: "Tất Cả",
                       );
                     },
@@ -181,103 +179,6 @@ class EnhancedHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategorySection(
-    BuildContext context,
-    EnhancedHomeViewModel viewModel,
-  ) {
-    if (viewModel.isLoadingCategories && viewModel.categories.isEmpty) {
-      return SizedBox(
-        height: 45,
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (viewModel.categories.isEmpty && !viewModel.isLoadingCategories) {
-      return SizedBox(
-        height: 45,
-        child: Center(
-          child: Text(
-            'Không thể tải danh mục',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        ),
-      );
-    }
-
-    // Tạo danh sách danh mục bao gồm "Tất Cả"
-    final allCategories = [...viewModel.categories];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Danh Mục",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    EnhancedSearchScreen.routeName,
-                    arguments: "Tất Cả",
-                  );
-                },
-                child: Text(
-                  'Xem Tất Cả',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 40,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            itemCount: allCategories.length + 1, // +1 for "All" option
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                // "All Categories" option
-                return CategoryWidget(
-                  category: CategoryModel(
-                    id: '',
-                    categoryName: 'Tất Cả',
-                    children: [],
-                  ),
-                  isSelected: true,
-                  navigateToSearch: false,
-                );
-              }
-
-              final category = allCategories[index - 1];
-              return CategoryWidget(
-                category: category,
-                isSelected: false,
-                navigateToSearch: false,
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBestSellersSection(
     BuildContext context,
     EnhancedHomeViewModel viewModel,
@@ -292,7 +193,7 @@ class EnhancedHomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pushNamed(
                 context,
-                EnhancedSearchScreen.routeName,
+                SimpleSearchScreen.routeName,
                 arguments: "Tất Cả",
               );
             },
