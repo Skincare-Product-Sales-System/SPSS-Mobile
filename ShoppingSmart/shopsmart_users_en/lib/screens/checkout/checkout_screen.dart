@@ -15,6 +15,9 @@ import '../../models/payment_method_model.dart';
 import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
+import '../../services/vnpay_service.dart';
+import 'vnpay_success_screen.dart';
+import 'vnpay_failure_screen.dart';
 import './order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -836,20 +839,73 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final response = await ApiService.createOrderRaw(orderData);
 
-      if (response.success) {
-        if (mounted) {
-          // Phải dùng cách tiếp cận khác để không quay về trang cart
-          // Điều hướng về trang chủ trước, rồi mới hiển thị màn hình thành công
-          Navigator.of(context).popUntil((route) => route.isFirst);
+      if (response.success && response.data != null) {
+        final orderId = response.data!.orderId;
+        final totalAmount = response.data!.totalAmount;
 
-          // Đợi một chút để đảm bảo app đã về trang chủ
-          Future.delayed(const Duration(milliseconds: 100), () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const OrderSuccessScreen(),
-              ),
-            );
-          });
+        // Check if payment method is VNPay
+        if (VNPayService.isVNPayPayment(_selectedPaymentMethod!.paymentType)) {
+          // Get user ID from token
+          final token = await JwtService.getStoredToken();
+          final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
+          final userId = userInfo?['id'] ?? '';
+
+          if (userId.isEmpty) {
+            if (mounted) {
+              MyAppFunctions.showErrorOrWarningDialog(
+                context: context,
+                subtitle: 'Không thể xác định thông tin người dùng',
+                isError: true,
+                fct: () {},
+              );
+            }
+            return;
+          }
+
+          // Process VNPay payment
+          final vnpayResponse = await VNPayService.processVNPayPayment(
+            orderId: orderId,
+            userId: userId,
+          );
+
+          if (vnpayResponse.success) {
+            if (mounted) {
+              // Show a message that we are redirecting
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đang chuyển hướng đến VNPay...'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+
+              // Clear cart after successful order creation
+              Future.microtask(() {
+                cartProvider.clearLocalCart();
+              });
+
+              // DO NOT navigate here. The deep link handler will do it.
+            }
+          } else {
+            if (mounted) {
+              // Show an error dialog if payment initiation fails
+              MyAppFunctions.showErrorOrWarningDialog(
+                context: context,
+                subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
+                isError: true,
+                fct: () {},
+              );
+            }
+          }
+        } else {
+          // Non-VNPay payment method - proceed with normal flow
+          if (mounted) {
+            // Chuyển hướng đến trang success
+            Navigator.pushReplacementNamed(context, '/order-success');
+            // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+            Future.microtask(() {
+              cartProvider.clearLocalCart();
+            });
+          }
         }
       } else {
         if (mounted) {
@@ -865,7 +921,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'Đã xảy ra lỗi khi tạo đơn hàng',
+          subtitle: 'Đã xảy ra lỗi khi tạo đơn hàng: ${e.toString()}',
           isError: true,
           fct: () {},
         );

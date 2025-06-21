@@ -106,6 +106,118 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri?>? _linkSub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    initDeepLinks();
+  }
+
+  Future<void> initDeepLinks() async {
+    _appLinks = AppLinks();
+    // Listen for incoming deep links
+    _linkSub = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (!mounted) return;
+      if (uri != null && uri.scheme == 'spss' && uri.host == 'vnpay-return') {
+        handleVnPayDeepLink(uri);
+      }
+    });
+
+    // Get the initial deep link if the app was opened with one
+    try {
+      final initialUri = await _appLinks.getInitialAppLink();
+      if (!mounted) return;
+      if (initialUri != null && initialUri.scheme == 'spss' && initialUri.host == 'vnpay-return') {
+        handleVnPayDeepLink(initialUri);
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  void handleVnPayDeepLink(Uri uri) async {
+    final orderId = uri.queryParameters['id'];
+    if (orderId == null) return;
+
+    // Thêm delay để backend có thời gian cập nhật trạng thái đơn hàng
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Gọi API backend để lấy trạng thái đơn hàng thực tế
+    final orderDetailResponse = await ApiService.getOrderDetail(orderId);
+    String? orderStatus;
+    if (orderDetailResponse.success && orderDetailResponse.data != null) {
+      orderStatus = orderDetailResponse.data!.status.toLowerCase();
+    }
+
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      if (orderStatus == 'processing' || orderStatus == 'paid') {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => VNPaySuccessScreen(orderId: orderId),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => VNPayFailureScreen(
+              orderId: orderId,
+              errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.detached:
+        // App is being terminated - clear all user data for security
+        print('App is being terminated, clearing user data...');
+        await JwtService.clearAllUserData();
+        break;
+      case AppLifecycleState.paused:
+        // App is in background - you can optionally clear sensitive data here
+        print('App moved to background');
+        // Uncomment the line below if you want to clear data when app goes to background
+        // await JwtService.clearAllUserData();
+        break;
+      case AppLifecycleState.resumed:
+        // App is back in foreground
+        print('App resumed from background');
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive (e.g., during phone call)
+        print('App is inactive');
+        break;
+      case AppLifecycleState.hidden:
+        // App is hidden
+        print('App is hidden');
+        break;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     debugPrint("MyApp: Building with providers");
     return MultiProvider(
@@ -273,6 +385,7 @@ class MyApp extends StatelessWidget {
               context: context,
             ),
             home: const RootScreen(),
+            navigatorKey: navigatorKey,
             routes: {
               // Root screen
               RootScreen.routeName: (context) => const RootScreen(),
