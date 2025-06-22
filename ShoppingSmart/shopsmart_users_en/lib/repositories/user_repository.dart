@@ -106,9 +106,8 @@ class UserRepository {
       if (token == null) {
         return ApiResponse(success: false, message: 'Không có token xác thực');
       }
-
       final response = await _apiClient.patch(
-        'accounts',
+        '/accounts',
         body: request.toJson(),
         requiresAuth: true,
       );

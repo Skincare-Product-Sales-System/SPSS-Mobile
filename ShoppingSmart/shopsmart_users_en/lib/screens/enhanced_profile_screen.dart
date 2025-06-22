@@ -14,6 +14,7 @@ import '../screens/orders/enhanced_orders_screen.dart';
 import '../screens/profile/enhanced_address_screen.dart';
 import '../screens/profile/enhanced_edit_profile_screen.dart';
 import '../screens/skin_analysis/enhanced_skin_analysis_history_screen.dart';
+import '../screens/user_reviews_screen.dart';
 import '../services/assets_manager.dart';
 import '../services/my_app_function.dart';
 import '../widgets/app_name_text.dart';
@@ -21,11 +22,22 @@ import '../widgets/subtitle_text.dart';
 import '../widgets/title_text.dart';
 
 /// Màn hình Profile cải tiến sử dụng kiến trúc MVVM
-class EnhancedProfileScreen extends StatelessWidget {
+class EnhancedProfileScreen extends StatefulWidget {
   const EnhancedProfileScreen({super.key});
 
   @override
+  State<EnhancedProfileScreen> createState() => _EnhancedProfileScreenState();
+}
+
+class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keep the state alive when switching tabs
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     return MvvmScreenTemplate<EnhancedProfileViewModel, ProfileState>(
       title: 'Hồ sơ',
       onInit: (viewModel) => viewModel.initialize(),
@@ -190,7 +202,8 @@ class EnhancedProfileScreen extends StatelessWidget {
                     children: [
                       CustomListTile(
                         text: "Tất cả đơn hàng",
-                        imagePath: AssetsManager.orderSvg,
+                        imagePath:
+                            AssetsManager.orderBag, // Biểu tượng túi đơn hàng
                         function: () {
                           Navigator.pushNamed(
                             context,
@@ -200,7 +213,9 @@ class EnhancedProfileScreen extends StatelessWidget {
                       ),
                       CustomListTile(
                         text: "Danh sách yêu thích",
-                        imagePath: AssetsManager.wishlistSvg,
+                        imagePath:
+                            AssetsManager
+                                .wishlistSvg, // Biểu tượng trái tim yêu thích
                         function: () {
                           Navigator.pushNamed(
                             context,
@@ -210,7 +225,7 @@ class EnhancedProfileScreen extends StatelessWidget {
                       ),
                       CustomListTile(
                         text: "Đã xem gần đây",
-                        imagePath: AssetsManager.orderSvg,
+                        imagePath: AssetsManager.recent, // Biểu tượng gần đây
                         function: () {
                           Navigator.pushNamed(
                             context,
@@ -220,7 +235,7 @@ class EnhancedProfileScreen extends StatelessWidget {
                       ),
                       CustomListTile(
                         text: "Địa chỉ",
-                        imagePath: AssetsManager.address,
+                        imagePath: AssetsManager.address, // Biểu tượng vị trí
                         function: () {
                           Navigator.pushNamed(
                             context,
@@ -230,7 +245,9 @@ class EnhancedProfileScreen extends StatelessWidget {
                       ),
                       CustomListTile(
                         text: "Lịch sử phân tích da",
-                        imagePath: AssetsManager.orderSvg,
+                        imagePath:
+                            AssetsManager
+                                .cosmetics, // Biểu tượng mỹ phẩm phù hợp với phân tích da
                         function: () {
                           Navigator.pushNamed(
                             context,
@@ -239,8 +256,20 @@ class EnhancedProfileScreen extends StatelessWidget {
                         },
                       ),
                       CustomListTile(
+                        text: "Đánh giá của tôi",
+                        imagePath:
+                            AssetsManager
+                                .bagWish, // Biểu tượng đánh giá/bình luận
+                        function: () {
+                          Navigator.pushNamed(
+                            context,
+                            EnhancedUserReviewsScreen.routeName,
+                          );
+                        },
+                      ),
+                      CustomListTile(
                         text: "Đổi mật khẩu",
-                        imagePath: AssetsManager.orderSvg,
+                        imagePath: AssetsManager.privacy, // Biểu tượng bảo mật
                         function: () {
                           Navigator.pushNamed(
                             context,

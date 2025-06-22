@@ -8,8 +8,7 @@ import 'package:shopsmart_users_en/screens/auth/enhanced_login.dart';
 import 'package:shopsmart_users_en/screens/cart/enhanced_cart_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_home_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_profile_screen.dart';
-import 'package:shopsmart_users_en/screens/enhanced_quiz_screen.dart';
-import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_intro_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_hub_screen.dart';
 import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/widgets/chat/chat_widget.dart';
 
@@ -31,8 +30,7 @@ class _RootScreenState extends State<RootScreen> {
     debugPrint("RootScreen: initializing");
     screens = const [
       EnhancedHomeScreen(),
-      EnhancedQuizScreen(),
-      EnhancedSkinAnalysisIntroScreen(),
+      EnhancedSkinAnalysisHubScreen(),
       EnhancedCartScreen(),
       EnhancedProfileScreen(),
     ];
@@ -87,8 +85,8 @@ class _RootScreenState extends State<RootScreen> {
         children: [
           // Main content
           PageView(
-            physics: const NeverScrollableScrollPhysics(),
             controller: controller,
+            physics: const NeverScrollableScrollPhysics(),
             children: screens,
           ),
 
@@ -102,8 +100,11 @@ class _RootScreenState extends State<RootScreen> {
         elevation: 10,
         height: kBottomNavigationBarHeight,
         onDestinationSelected: (index) {
-          // Kiểm tra nếu người dùng chưa đăng nhập và đang cố gắng truy cập vào Quiz hoặc Phân tích da
-          if (!authViewModel.isLoggedIn && (index == 1 || index == 2)) {
+          // If the index is the same as current, don't do anything
+          if (index == currentScreen) return;
+
+          // Kiểm tra nếu người dùng chưa đăng nhập và đang cố gắng truy cập vào Phân tích da
+          if (!authViewModel.isLoggedIn && (index == 1)) {
             // Hiển thị dialog yêu cầu đăng nhập
             _showLoginRequiredDialog(context);
           } else {
@@ -118,11 +119,6 @@ class _RootScreenState extends State<RootScreen> {
             selectedIcon: Icon(IconlyBold.home),
             icon: Icon(IconlyLight.home),
             label: "Trang Chủ",
-          ),
-          const NavigationDestination(
-            selectedIcon: Icon(Icons.quiz, color: Colors.deepPurple),
-            icon: Icon(Icons.quiz_outlined),
-            label: "Trắc nghiệm",
           ),
           const NavigationDestination(
             selectedIcon: Icon(

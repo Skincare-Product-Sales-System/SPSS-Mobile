@@ -36,6 +36,8 @@ import 'navigation_service.dart';
 import 'transaction_signalr_service.dart';
 import '../repositories/brand_repository.dart';
 import '../repositories/skin_type_repository.dart';
+import '../repositories/review_repository.dart';
+import '../providers/enhanced_user_reviews_view_model.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -74,6 +76,7 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => WishlistRepository());
   sl.registerLazySingleton<BrandRepository>(() => BrandRepository());
   sl.registerLazySingleton<SkinTypeRepository>(() => SkinTypeRepository());
+  sl.registerLazySingleton(() => ReviewRepository());
 
   // ViewModels - Factory (tạo mới mỗi khi yêu cầu)
   sl.registerFactory(
@@ -136,5 +139,10 @@ Future<void> setupServiceLocator() async {
     () => EnhancedSkinTypesViewModel(
       skinTypeRepository: sl<SkinTypeRepository>(),
     ),
+  );
+
+  // Add the UserReviews ViewModel
+  sl.registerFactory(
+    () => EnhancedUserReviewsViewModel(reviewRepository: sl<ReviewRepository>()),
   );
 }

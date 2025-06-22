@@ -9,13 +9,25 @@ import 'enhanced_bottom_checkout.dart';
 import 'enhanced_cart_widget.dart';
 
 /// Màn hình Giỏ hàng cải tiến sử dụng kiến trúc MVVM
-class EnhancedCartScreen extends StatelessWidget {
+class EnhancedCartScreen extends StatefulWidget {
   const EnhancedCartScreen({super.key});
 
   // Route name để điều hướng
   static const routeName = '/enhanced-cart';
+
+  @override
+  State<EnhancedCartScreen> createState() => _EnhancedCartScreenState();
+}
+
+class _EnhancedCartScreenState extends State<EnhancedCartScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keep the state alive when switching tabs
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     // Use listen: false to prevent entire screen rebuilds
     final cartViewModel = Provider.of<EnhancedCartViewModel>(
       context,

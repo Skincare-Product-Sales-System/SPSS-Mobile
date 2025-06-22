@@ -16,11 +16,22 @@ import '../widgets/products/latest_arrival.dart';
 import '../widgets/title_text.dart';
 
 /// Màn hình Home cải tiến sử dụng kiến trúc MVVM
-class EnhancedHomeScreen extends StatelessWidget {
+class EnhancedHomeScreen extends StatefulWidget {
   const EnhancedHomeScreen({super.key});
 
   @override
+  State<EnhancedHomeScreen> createState() => _EnhancedHomeScreenState();
+}
+
+class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keep the state alive when switching tabs
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     return MvvmScreenTemplate<EnhancedHomeViewModel, HomeState>(
       title: 'Trang chủ',
       onInit: (viewModel) => viewModel.initializeHomeData(),

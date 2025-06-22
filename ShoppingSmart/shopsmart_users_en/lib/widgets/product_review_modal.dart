@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -12,12 +13,12 @@ class ProductReviewModal extends StatefulWidget {
   final String? orderId;
 
   const ProductReviewModal({
-    Key? key,
+    super.key,
     required this.productId,
     required this.productName,
     required this.productImage,
     this.orderId,
-  }) : super(key: key);
+  });
 
   // Static method to show the modal
   static Future<void> show(
@@ -53,6 +54,7 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
   late TextEditingController commentController;
   final imagePicker = ImagePicker();
   bool isDisposed = false;
+  bool reviewSubmitted = false; // Track if review was submitted successfully
 
   // Track local image files for UI display
   final List<XFile> imageFiles = [];
@@ -86,6 +88,25 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
   void dispose() {
     if (!isDisposed) {
       commentController.dispose();
+
+      // Check if we need to clean up images when the modal is dismissed
+      // Only do this if the review wasn't successfully submitted
+      if (!reviewSubmitted) {
+        final viewModel = Provider.of<EnhancedOrderViewModel>(
+          context,
+          listen: false,
+        );
+
+        // If there are images to clean up, schedule the cleanup after the dispose
+        if (viewModel.reviewImages.isNotEmpty) {
+          debugPrint('Cleaning up images in dispose');
+          // Use a post-frame callback to avoid calling setState during dispose
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _deleteUploadedImages(viewModel);
+          });
+        }
+      }
+
       isDisposed = true;
     }
     super.dispose();
@@ -186,12 +207,12 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
         comment: commentController.text.trim(),
         orderId: widget.orderId,
       );
-
       if (success && mounted) {
         // Clean up local image tracking state
         setState(() {
           imageFiles.clear();
           imageUrlByPath.clear();
+          reviewSubmitted = true; // Mark review as submitted successfully
         });
 
         // Thêm lần reset state từ ViewModel
@@ -247,6 +268,30 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
           SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  // Helper method to delete all uploaded images when user cancels
+  Future<void> _deleteUploadedImages(EnhancedOrderViewModel viewModel) async {
+    // Create a copy of the images list to avoid modification during iteration
+    final imagesToDelete = List<String>.from(viewModel.reviewImages);
+
+    if (imagesToDelete.isNotEmpty) {
+      debugPrint('Deleting ${imagesToDelete.length} unused review images');
+
+      // Delete each image on the server
+      for (final imageUrl in imagesToDelete) {
+        try {
+          await viewModel.deleteReviewImage(imageUrl);
+          debugPrint('Successfully deleted image: $imageUrl');
+        } catch (e) {
+          debugPrint('Failed to delete image: $imageUrl, error: $e');
+          // Continue with next image even if one fails
+        }
+      }
+
+      // Make sure the images list is cleared from the state
+      viewModel.cleanupReviewImages();
     }
   }
 
@@ -483,7 +528,7 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
                         ),
                       ],
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -495,6 +540,8 @@ class _ProductReviewModalState extends State<ProductReviewModal> {
                     onPressed:
                         !viewModel.isSubmittingReview
                             ? () {
+                              // Delete all uploaded images before closing the modal
+                              _deleteUploadedImages(viewModel);
                               Navigator.of(context).pop();
                             }
                             : null,

@@ -34,6 +34,11 @@ class ReviewModel {
   final String comment;
   final DateTime lastUpdatedTime;
   final ReviewReply? reply;
+  // Add product fields directly in the base class
+  String? productImage;
+  String? productId;
+  String? productName;
+  bool? isEditble;
 
   ReviewModel({
     required this.id,
@@ -45,6 +50,10 @@ class ReviewModel {
     required this.comment,
     required this.lastUpdatedTime,
     this.reply,
+    this.productImage,
+    this.productId,
+    this.productName,
+    this.isEditble,
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
@@ -60,6 +69,10 @@ class ReviewModel {
       comment: json['comment'] ?? '',
       lastUpdatedTime: DateTime.parse(json['lastUpdatedTime']),
       reply: json['reply'] != null ? ReviewReply.fromJson(json['reply']) : null,
+      productImage: json['productImage'],
+      productId: json['productId'],
+      productName: json['productName'],
+      isEditble: json['isEditble'],
     );
   }
 }

@@ -14,6 +14,7 @@ import 'package:shopsmart_users_en/models/auth_models.dart';
 import 'package:shopsmart_users_en/screens/orders/orders_screen.dart';
 import 'package:shopsmart_users_en/screens/profile/edit_profile_screen.dart';
 import 'package:shopsmart_users_en/screens/profile/address_screen.dart';
+import 'package:shopsmart_users_en/screens/user_reviews_screen.dart';
 
 import '../providers/cart_provider.dart';
 import '../providers/theme_provider.dart';
@@ -226,6 +227,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.pushNamed(
                           context,
                           ChangePasswordScreen.routeName,
+                        );
+                      },
+                    ),
+                  if (_isLoggedIn)
+                    CustomListTile(
+                      text: "Đánh giá của tôi",
+                      imagePath: AssetsManager.orderSvg,
+                      function: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EnhancedUserReviewsScreen(),
+                          ),
                         );
                       },
                     ),

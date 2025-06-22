@@ -21,10 +21,9 @@ import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/auth/enhanced_login.dart';
 import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_all_products_screen.dart';
-import 'package:shopsmart_users_en/screens/enhanced_quiz_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_quiz_question_screen.dart';
 import 'package:shopsmart_users_en/screens/orders/enhanced_orders_screen.dart';
-import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_intro_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_hub_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_camera_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_result_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_history_screen.dart';
@@ -38,6 +37,7 @@ import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_wishlist.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_reviews_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
+import 'package:shopsmart_users_en/screens/user_reviews_screen.dart';
 import 'screens/profile/enhanced_edit_profile_screen.dart';
 import 'screens/profile/enhanced_address_screen.dart';
 import 'screens/checkout/enhanced_checkout_screen.dart';
@@ -425,12 +425,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const EnhancedAllProductsScreen(),
               // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng SimpleSearchScreen thay thế
               SimpleSearchScreen.routeName:
-                  (context) => const SimpleSearchScreen(),
-
-              // Quiz screens
+                  (context) => const SimpleSearchScreen(), // Quiz screens
               // QuizScreen.routeName: (context) => const QuizScreen(), // Sử dụng Enhanced thay thế
-              EnhancedQuizScreen.routeName:
-                  (context) => const EnhancedQuizScreen(),
+              EnhancedSkinAnalysisHubScreen.routeName:
+                  (context) => const EnhancedSkinAnalysisHubScreen(),
 
               // Blog screens
               // BlogDetailsScreen.routeName:
@@ -457,11 +455,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               // SkinAnalysisHistoryScreen.routeName:
               //     (context) => const SkinAnalysisHistoryScreen(), // Sử dụng Enhanced thay thế
               // SkinAnalysisPaymentScreen.routeName:
-              //     (context) => const SkinAnalysisPaymentScreen(), // Sử dụng Enhanced thay thế
-
-              // Enhanced skin analysis screens
-              EnhancedSkinAnalysisIntroScreen.routeName:
-                  (context) => const EnhancedSkinAnalysisIntroScreen(),
+              //     (context) => const SkinAnalysisPaymentScreen(), // Sử dụng Enhanced thay thế              // Enhanced skin analysis screens
               EnhancedSkinAnalysisCameraScreen.routeName:
                   (context) => const EnhancedSkinAnalysisCameraScreen(),
               EnhancedSkinAnalysisHistoryScreen.routeName:
@@ -493,6 +487,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (ctx) => const EnhancedAddressScreen(),
               EnhancedCheckoutScreen.routeName:
                   (ctx) => const EnhancedCheckoutScreen(),
+              EnhancedUserReviewsScreen.routeName:
+                  (ctx) => const EnhancedUserReviewsScreen(),
               // EnhancedQuizQuestionScreen is handled in onGenerateRoute because it requires parameters
             },
             // Xử lý các route đặc biệt cần tham số

@@ -6,6 +6,7 @@ import 'package:timeline_tile/timeline_tile.dart';
 import 'package:provider/provider.dart';
 
 import '../../widgets/product_review_modal.dart';
+import '../../screens/inner_screen/enhanced_product_detail.dart';
 
 import '../../models/order_models.dart';
 import '../../providers/enhanced_order_view_model.dart';
@@ -493,72 +494,93 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
   }
 
   Widget _buildOrderItemCard(BuildContext context, OrderDetail item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: item.productImage,
-                fit: BoxFit.cover,
-                placeholder:
-                    (context, url) => Container(
-                      color: Colors.grey[300],
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                errorWidget:
-                    (context, url, error) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
-                    ),
+    return InkWell(
+      onTap: () {
+        // Navigate to product details screen when tapped
+        Navigator.of(context).pushNamed(
+          EnhancedProductDetailsScreen.routeName,
+          arguments: item.productId,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: item.productImage,
+                  fit: BoxFit.cover,
+                  placeholder:
+                      (context, url) => Container(
+                        color: Colors.grey[300],
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                  errorWidget:
+                      (context, url, error) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                    ],
                   ),
-                ),
-                if (item.variationOptionValues.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    item.variationOptionValues.join(", "),
-                    style: TextStyle(color: Colors.grey[600]),
+                  if (item.variationOptionValues.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      item.variationOptionValues.join(", "),
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        CurrencyFormatter.formatVND(item.price),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text('SL: ${item.quantity}'),
+                    ],
                   ),
                 ],
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      CurrencyFormatter.formatVND(item.price),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('SL: ${item.quantity}'),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -745,65 +767,6 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
                           final item = orderDetails[index];
                           return ListTile(
                             enabled: item.isReviewable,
-                            leading: SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: CachedNetworkImage(
-                                  imageUrl: item.productImage,
-                                  fit: BoxFit.cover,
-                                  placeholder:
-                                      (context, url) => Container(
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      ),
-                                  errorWidget:
-                                      (context, url, error) => Container(
-                                        color: Colors.grey[300],
-                                        child: const Icon(Icons.error),
-                                      ),
-                                  color: item.isReviewable ? null : Colors.grey,
-                                  colorBlendMode:
-                                      item.isReviewable
-                                          ? null
-                                          : BlendMode.saturation,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              item.productName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: item.isReviewable ? null : Colors.grey,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (item.variationOptionValues.isNotEmpty)
-                                  Text(
-                                    item.variationOptionValues.join(", "),
-                                    style: TextStyle(
-                                      color:
-                                          item.isReviewable
-                                              ? null
-                                              : Colors.grey,
-                                    ),
-                                  ),
-                                if (!item.isReviewable)
-                                  const Text(
-                                    'Bạn đã đánh giá sản phẩm này',
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                              ],
-                            ),
                             onTap:
                                 item.isReviewable
                                     ? () {
@@ -849,6 +812,90 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
                                       });
                                     }
                                     : null,
+                            leading: Stack(
+                              children: [
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CachedNetworkImage(
+                                      imageUrl: item.productImage,
+                                      fit: BoxFit.cover,
+                                      placeholder:
+                                          (context, url) => Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          ),
+                                      errorWidget:
+                                          (context, url, error) => Container(
+                                            color: Colors.grey[300],
+                                            child: const Icon(Icons.error),
+                                          ),
+                                      color:
+                                          item.isReviewable
+                                              ? null
+                                              : Colors.grey,
+                                      colorBlendMode:
+                                          item.isReviewable
+                                              ? null
+                                              : BlendMode.saturation,
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () {
+                                        // Navigate to product details when image is tapped
+                                        Navigator.of(context).pop();
+                                        Navigator.of(context).pushNamed(
+                                          EnhancedProductDetailsScreen
+                                              .routeName,
+                                          arguments: item.productId,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            title: Text(
+                              item.productName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: item.isReviewable ? null : Colors.grey,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (item.variationOptionValues.isNotEmpty)
+                                  Text(
+                                    item.variationOptionValues.join(", "),
+                                    style: TextStyle(
+                                      color:
+                                          item.isReviewable
+                                              ? null
+                                              : Colors.grey,
+                                    ),
+                                  ),
+                                if (!item.isReviewable)
+                                  const Text(
+                                    'Bạn đã đánh giá sản phẩm này',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           );
                         },
                       ),
