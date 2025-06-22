@@ -62,9 +62,7 @@ class EnhancedCartViewModel extends BaseViewModel<CartState> {
         if (response.data is PaginatedResponse) {
           final paginatedData = response.data as PaginatedResponse;
           final itemsList = paginatedData.items;
-          debugPrint(
-            'Số sản phẩm trong giỏ hàng từ API: ${itemsList.length ?? 0}',
-          );
+          debugPrint('Số sản phẩm trong giỏ hàng từ API: ${itemsList.length}');
 
           if (itemsList.isNotEmpty) {
             for (var item in itemsList) {
@@ -227,17 +225,9 @@ class EnhancedCartViewModel extends BaseViewModel<CartState> {
         inStock: true,
         totalPrice: price * newQuantity,
         variationOptionValues: existingItem?.variationOptionValues ?? [],
-      );
-
-      // Cập nhật state với sản phẩm mới trước khi gửi lên server
+      ); // Cập nhật state với sản phẩm mới trước khi gửi lên server
       final Map<String, CartModel> updatedCartItems = Map.from(cartItems);
       updatedCartItems[productItemId] = newCartItem;
-
-      // Tính toán tổng giá tiền mới
-      double newTotalPrice = 0;
-      for (var item in updatedCartItems.values) {
-        newTotalPrice += item.totalPrice;
-      }
 
       // Chỉ cập nhật cartItems, totalPrice sẽ được tính lại tự động từ getter trong CartState
       updateState(
@@ -256,11 +246,45 @@ class EnhancedCartViewModel extends BaseViewModel<CartState> {
         productItemId: productItemId,
         quantity: 1,
       );
-
       if (response.success) {
-        // Nếu thành công, cập nhật giỏ hàng cục bộ từ server
-        debugPrint('Thêm vào giỏ hàng thành công, đang cập nhật từ server');
-        await fetchCartFromServer();
+        // Cập nhật trực tiếp state thay vì fetch từ server
+        if (response.data != null && response.data is Map<String, dynamic>) {
+          final responseData = response.data as Map<String, dynamic>;
+          final cartId = responseData['id']?.toString() ?? '';
+
+          // Cập nhật Map giỏ hàng hiện tại
+          final updatedCartItems = Map<String, CartModel>.from(cartItems);
+
+          // Tạo CartModel mới hoặc cập nhật CartModel hiện có
+          final newCartModel = CartModel(
+            cartId: cartId,
+            productId: productId,
+            productItemId: productItemId,
+            id: productId,
+            title: title,
+            price: price,
+            marketPrice: marketPrice,
+            quantity: 1, // Mặc định là 1 khi thêm mới
+            stockQuantity: 100, // Giá trị mặc định, sẽ được cập nhật sau
+            productImageUrl: productImageUrl,
+            inStock: true,
+          );
+
+          updatedCartItems[productItemId] = newCartModel;
+
+          // Cập nhật state với ViewState.loaded thay vì fetchCartFromServer
+          updateState(
+            state.copyWith(
+              cartItems: ViewState<Map<String, CartModel>>.loaded(
+                updatedCartItems,
+              ),
+              isProcessing: false,
+            ),
+          );
+        } else {
+          // Nếu không có data từ response, fetch từ server
+          await fetchCartFromServer();
+        }
       } else {
         // Nếu thất bại với mã 404, không hiển thị lỗi
         if (response.statusCode == 404) {
@@ -334,10 +358,40 @@ class EnhancedCartViewModel extends BaseViewModel<CartState> {
         cartItemId: cartItem.cartId,
         quantity: quantity,
       );
-
       if (response.success) {
-        // Sau khi cập nhật thành công, lấy lại dữ liệu từ server để đồng bộ
-        await fetchCartFromServer();
+        // Cập nhật trực tiếp state mà không gọi fetchCartFromServer()
+        final updatedCartItems = Map<String, CartModel>.from(cartItems);
+        final oldItem = updatedCartItems[productItemId];
+        if (oldItem != null) {
+          // Tạo một CartModel mới với số lượng đã cập nhật
+          updatedCartItems[productItemId] = CartModel(
+            cartId: oldItem.cartId,
+            productId: oldItem.productId,
+            productItemId: oldItem.productItemId,
+            id: oldItem.id,
+            title: oldItem.title,
+            price: oldItem.price,
+            marketPrice: oldItem.marketPrice,
+            quantity: quantity,
+            stockQuantity: oldItem.stockQuantity,
+            productImageUrl: oldItem.productImageUrl,
+            inStock: oldItem.inStock,
+            variationOptionValues: oldItem.variationOptionValues,
+          );
+
+          // Cập nhật state với ViewState.loaded thay vì fetchCartFromServer
+          updateState(
+            state.copyWith(
+              cartItems: ViewState<Map<String, CartModel>>.loaded(
+                updatedCartItems,
+              ),
+              isProcessing: false,
+            ),
+          );
+        } else {
+          // Nếu không tìm thấy item, fetch lại từ server (ít khi xảy ra)
+          await fetchCartFromServer();
+        }
       } else {
         updateState(
           state.copyWith(isProcessing: false, errorMessage: response.message),
@@ -374,10 +428,21 @@ class EnhancedCartViewModel extends BaseViewModel<CartState> {
 
       // Xóa khỏi giỏ hàng trên server
       final response = await _cartRepository.removeFromCart(cartItem.cartId);
-
       if (response.success) {
-        // Sau khi xóa thành công, lấy lại dữ liệu từ server để đồng bộ
-        await fetchCartFromServer();
+        // Cập nhật trực tiếp state mà không gọi fetchCartFromServer()
+        final updatedCartItems = Map<String, CartModel>.from(cartItems);
+        // Xóa item khỏi map
+        updatedCartItems.remove(productItemId);
+
+        // Cập nhật state với ViewState.loaded thay vì fetchCartFromServer
+        updateState(
+          state.copyWith(
+            cartItems: ViewState<Map<String, CartModel>>.loaded(
+              updatedCartItems,
+            ),
+            isProcessing: false,
+          ),
+        );
       } else {
         updateState(
           state.copyWith(isProcessing: false, errorMessage: response.message),

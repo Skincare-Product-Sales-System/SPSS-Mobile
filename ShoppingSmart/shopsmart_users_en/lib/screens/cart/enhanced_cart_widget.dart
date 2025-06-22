@@ -54,10 +54,15 @@ class _EnhancedCartWidgetState extends State<EnhancedCartWidget> {
       return;
     }
 
-    await widget.viewModel.updateQuantity(
-      productItemId: widget.cartModel.productItemId,
-      quantity: quantity,
-    );
+    // Use post-frame callback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await widget.viewModel.updateQuantity(
+        productItemId: widget.cartModel.productItemId,
+        quantity: quantity,
+      );
+    });
   }
 
   @override
@@ -83,30 +88,7 @@ class _EnhancedCartWidgetState extends State<EnhancedCartWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Hình ảnh sản phẩm
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12.0),
-                child:
-                    productImage.isNotEmpty
-                        ? FancyShimmerImage(
-                          imageUrl: productImage,
-                          height: size.height * 0.15,
-                          width: size.height * 0.15,
-                          boxFit: BoxFit.contain,
-                        )
-                        : Container(
-                          height: size.height * 0.15,
-                          width: size.height * 0.15,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
-                        ),
-              ),
+              _buildProductImage(context, size, productImage),
               const SizedBox(width: 10),
               // Thông tin sản phẩm
               Expanded(
@@ -114,53 +96,10 @@ class _EnhancedCartWidgetState extends State<EnhancedCartWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tiêu đề và nút xóa
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TitlesTextWidget(
-                            label: productTitle,
-                            maxLines: 2,
-                            fontSize: 16,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed:
-                              widget.viewModel.isProcessing
-                                  ? null
-                                  : () {
-                                    widget.viewModel.removeFromCart(
-                                      cartModel.productItemId,
-                                    );
-                                  },
-                          icon: const Icon(
-                            Icons.clear,
-                            color: Colors.red,
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildTitleRow(context, productTitle),
                     // Phiên bản sản phẩm (nếu có)
                     if (variations.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Phiên bản: ${variations.join(", ")}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
+                      _buildVariationTag(context, variations),
                     const SizedBox(height: 8),
                     // Giá
                     SubtitleTextWidget(
@@ -171,132 +110,192 @@ class _EnhancedCartWidgetState extends State<EnhancedCartWidget> {
                     ),
                     const SizedBox(height: 8),
                     // Số lượng
-                    Row(
-                      children: [
-                        // Nút giảm
-                        InkWell(
-                          onTap:
-                              widget.viewModel.isProcessing
-                                  ? null
-                                  : () {
-                                    final newQty = cartModel.quantity - 1;
-                                    if (newQty >= 1) {
-                                      _quantityController.text =
-                                          newQty.toString();
-                                      _updateQuantity(newQty);
-                                    }
-                                  },
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withOpacity(0.5),
-                              ),
-                            ),
-                            child: const Icon(Icons.remove, size: 16),
-                          ),
-                        ),
-                        // Hiển thị số lượng
-                        GestureDetector(
-                          onTap:
-                              widget.viewModel.isProcessing
-                                  ? null
-                                  : () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      builder: (context) {
-                                        return EnhancedQuantityBottomSheetWidget(
-                                          cartModel: cartModel,
-                                          viewModel: widget.viewModel,
-                                        );
-                                      },
-                                    );
-                                  },
-                          child: Container(
-                            width: 48,
-                            height: 32,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withOpacity(0.5),
-                              ),
-                            ),
-                            child: Text(
-                              cartModel.quantity.toString(),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Nút tăng
-                        InkWell(
-                          onTap:
-                              widget.viewModel.isProcessing
-                                  ? null
-                                  : () {
-                                    final newQty = cartModel.quantity + 1;
-                                    if (newQty <= cartModel.stockQuantity) {
-                                      _quantityController.text =
-                                          newQty.toString();
-                                      _updateQuantity(newQty);
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Đã đạt số lượng tối đa trong kho',
-                                          ),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-                                  },
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withOpacity(0.5),
-                              ),
-                            ),
-                            child: const Icon(Icons.add, size: 16),
-                          ),
-                        ),
-                        const Spacer(),
-                        // Thành tiền
-                        Text(
-                          CurrencyFormatter.formatVND(
-                            cartModel.price * cartModel.quantity,
-                          ),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildQuantityRow(context, cartModel),
                   ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProductImage(
+    BuildContext context,
+    Size size,
+    String productImage,
+  ) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.0),
+      child:
+          productImage.isNotEmpty
+              ? FancyShimmerImage(
+                imageUrl: productImage,
+                height: size.height * 0.15,
+                width: size.height * 0.15,
+                boxFit: BoxFit.contain,
+              )
+              : Container(
+                height: size.height * 0.15,
+                width: size.height * 0.15,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: const Icon(
+                  Icons.image_not_supported,
+                  size: 40,
+                  color: Colors.grey,
+                ),
+              ),
+    );
+  }
+
+  Widget _buildTitleRow(BuildContext context, String productTitle) {
+    return Row(
+      children: [
+        Expanded(
+          child: TitlesTextWidget(
+            label: productTitle,
+            maxLines: 2,
+            fontSize: 16,
+          ),
+        ),
+        IconButton(
+          onPressed:
+              widget.viewModel.isProcessing
+                  ? null
+                  : () {
+                    // Use post-frame callback to avoid setState during build
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        widget.viewModel.removeFromCart(
+                          widget.cartModel.productItemId,
+                        );
+                      }
+                    });
+                  },
+          icon: const Icon(Icons.clear, color: Colors.red, size: 22),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVariationTag(BuildContext context, List<String> variations) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        'Phiên bản: ${variations.join(", ")}',
+        style: TextStyle(fontSize: 12, color: Theme.of(context).primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildQuantityRow(BuildContext context, CartModel cartModel) {
+    return Row(
+      children: [
+        // Nút giảm
+        _buildQuantityButton(context, Icons.remove, () {
+          // Use post-frame callback to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              final newQty = cartModel.quantity - 1;
+              if (newQty >= 1) {
+                _quantityController.text = newQty.toString();
+                _updateQuantity(newQty);
+              }
+            }
+          });
+        }),
+        // Hiển thị số lượng
+        GestureDetector(
+          onTap:
+              widget.viewModel.isProcessing
+                  ? null
+                  : () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (context) {
+                        return EnhancedQuantityBottomSheetWidget(
+                          cartModel: cartModel,
+                          viewModel: widget.viewModel,
+                        );
+                      },
+                    );
+                  },
+          child: Container(
+            width: 48,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withOpacity(0.5),
+              ),
+            ),
+            child: Text(
+              cartModel.quantity.toString(),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        // Nút tăng
+        _buildQuantityButton(context, Icons.add, () {
+          // Use post-frame callback to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              final newQty = cartModel.quantity + 1;
+              if (newQty <= cartModel.stockQuantity) {
+                _quantityController.text = newQty.toString();
+                _updateQuantity(newQty);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã đạt số lượng tối đa trong kho'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          });
+        }),
+        const Spacer(),
+        // Thành tiền
+        Text(
+          CurrencyFormatter.formatVND(cartModel.price * cartModel.quantity),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuantityButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: widget.viewModel.isProcessing ? null : onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.5),
+          ),
+        ),
+        child: Icon(icon, size: 16),
       ),
     );
   }

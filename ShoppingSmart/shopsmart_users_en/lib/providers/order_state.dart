@@ -14,6 +14,14 @@ class OrderState {
   final bool isCreatingOrder;
   final String? creatingOrderError;
 
+  // Review-related state
+  final List<String> reviewImages;
+  final bool isSubmittingReview;
+  final bool isUploadingImage;
+  final bool isDeletingImage;
+  final String? reviewError;
+  final bool reviewSubmitted;
+
   const OrderState({
     this.orders = const ViewState<List<OrderModel>>(),
     this.selectedOrder = const ViewState<OrderDetailModel>(),
@@ -25,6 +33,14 @@ class OrderState {
     this.selectedOrderStatus,
     this.isCreatingOrder = false,
     this.creatingOrderError,
+
+    // Initialize review-related state
+    this.reviewImages = const [],
+    this.isSubmittingReview = false,
+    this.isUploadingImage = false,
+    this.isDeletingImage = false,
+    this.reviewError,
+    this.reviewSubmitted = false,
   });
 
   OrderState copyWith({
@@ -38,6 +54,14 @@ class OrderState {
     String? selectedOrderStatus,
     bool? isCreatingOrder,
     String? creatingOrderError,
+
+    // Review-related state
+    List<String>? reviewImages,
+    bool? isSubmittingReview,
+    bool? isUploadingImage,
+    bool? isDeletingImage,
+    String? reviewError,
+    bool? reviewSubmitted,
   }) {
     return OrderState(
       orders: orders ?? this.orders,
@@ -50,6 +74,14 @@ class OrderState {
       selectedOrderStatus: selectedOrderStatus ?? this.selectedOrderStatus,
       isCreatingOrder: isCreatingOrder ?? this.isCreatingOrder,
       creatingOrderError: creatingOrderError ?? this.creatingOrderError,
+
+      // Review-related state
+      reviewImages: reviewImages ?? this.reviewImages,
+      isSubmittingReview: isSubmittingReview ?? this.isSubmittingReview,
+      isUploadingImage: isUploadingImage ?? this.isUploadingImage,
+      isDeletingImage: isDeletingImage ?? this.isDeletingImage,
+      reviewError: reviewError ?? this.reviewError,
+      reviewSubmitted: reviewSubmitted ?? this.reviewSubmitted,
     );
   }
 
@@ -66,5 +98,29 @@ class OrderState {
   // Phương thức tiện ích để đặt lại trạng thái phân trang
   OrderState resetPagination() {
     return copyWith(currentPage: 1, hasMoreData: true);
+  }
+
+  // Phương thức tiện ích để đặt lại trạng thái đánh giá
+  OrderState resetReviewState() {
+    return copyWith(
+      reviewImages: [],
+      isSubmittingReview: false,
+      isUploadingImage: false,
+      isDeletingImage: false,
+      reviewError: null,
+      reviewSubmitted: false,
+    );
+  }
+
+  // Phương thức tiện ích để thêm URL hình ảnh đánh giá
+  OrderState addReviewImage(String url) {
+    final updatedImages = List<String>.from(reviewImages)..add(url);
+    return copyWith(reviewImages: updatedImages);
+  }
+
+  // Phương thức tiện ích để xóa URL hình ảnh đánh giá
+  OrderState removeReviewImage(String url) {
+    final updatedImages = List<String>.from(reviewImages)..remove(url);
+    return copyWith(reviewImages: updatedImages);
   }
 }

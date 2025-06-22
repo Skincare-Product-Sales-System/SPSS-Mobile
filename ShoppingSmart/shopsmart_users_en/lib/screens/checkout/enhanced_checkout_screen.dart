@@ -43,6 +43,9 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
       listen: false,
     );
 
+    // Cập nhật trạng thái đăng nhập và tải dữ liệu người dùng
+    await profileViewModel.initialize();
+
     if (!profileViewModel.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacementNamed(
@@ -633,20 +636,20 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         };
 
         // Gọi API tạo đơn hàng thông qua EnhancedOrderViewModel
-        final orderResponse = await orderViewModel.createOrder(orderData);
-
-        // Đóng dialog loading
+        final orderResponse = await orderViewModel.createOrder(
+          orderData,
+        ); // Đóng dialog loading
         Navigator.of(context).pop();
 
         if (orderResponse != null) {
-          // Xóa giỏ hàng sau khi đặt hàng thành công
-          await cartViewModel.clearCart();
-
-          // Chuyển đến màn hình đặt hàng thành công
+          // Chuyển đến màn hình đặt hàng thành công trước
           Navigator.of(context).pushReplacementNamed(
             EnhancedOrderSuccessScreen.routeName,
             arguments: orderResponse.orderId,
           );
+
+          // Xóa giỏ hàng sau khi đã chuyển màn hình (không đợi hoàn thành)
+          cartViewModel.clearCart();
         } else {
           // Hiển thị thông báo lỗi
           ScaffoldMessenger.of(context).showSnackBar(

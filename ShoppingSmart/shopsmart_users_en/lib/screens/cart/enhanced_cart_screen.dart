@@ -14,26 +14,36 @@ class EnhancedCartScreen extends StatelessWidget {
 
   // Route name để điều hướng
   static const routeName = '/enhanced-cart';
-
   @override
   Widget build(BuildContext context) {
-    final cartViewModel = Provider.of<EnhancedCartViewModel>(context);
+    // Use listen: false to prevent entire screen rebuilds
+    final cartViewModel = Provider.of<EnhancedCartViewModel>(
+      context,
+      listen: false,
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: const TitlesTextWidget(label: "Giỏ hàng"),
-        actions: [
-          IconButton(
-            onPressed: () {
-              _showClearCartDialog(context, cartViewModel);
-            },
-            icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context, cartViewModel),
       body: _buildBody(context, cartViewModel),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    EnhancedCartViewModel cartViewModel,
+  ) {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      title: const TitlesTextWidget(label: "Giỏ hàng"),
+      actions: [
+        IconButton(
+          onPressed: () {
+            _showClearCartDialog(context, cartViewModel);
+          },
+          icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+        ),
+      ],
     );
   }
 
@@ -54,8 +64,11 @@ class EnhancedCartScreen extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  viewModel.clearCart();
-                  Navigator.of(context).pop();
+                  // Use post-frame callback to avoid setState during build
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    viewModel.clearCart();
+                    Navigator.of(context).pop();
+                  });
                 },
                 child: const Text('Xóa', style: TextStyle(color: Colors.red)),
               ),
@@ -65,85 +78,90 @@ class EnhancedCartScreen extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, EnhancedCartViewModel cartViewModel) {
-    if (cartViewModel.isLoading) {
-      return const Center(child: LoadingWidget());
-    } else if (cartViewModel.hasError) {
-      // Kiểm tra xem lỗi có phải là "No cart items found" không
-      final errorMsg = cartViewModel.errorMessage?.toLowerCase() ?? '';
-      if (errorMsg.contains('no cart items found') ||
-          errorMsg.contains('404')) {
-        // Hiển thị giỏ hàng rỗng thay vì báo lỗi
-        return EmptyBagWidget(
-          imagePath: AssetsManager.shoppingBasket,
-          title: 'Giỏ hàng trống',
-          subtitle: 'Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.',
-          buttonText: 'Mua sắm ngay',
-        );
-      }
+    // Use Consumer to only rebuild this part when cart state changes
+    return Consumer<EnhancedCartViewModel>(
+      builder: (context, viewModel, _) {
+        if (viewModel.isLoading) {
+          return const Center(child: LoadingWidget());
+        } else if (viewModel.hasError) {
+          // Kiểm tra xem lỗi có phải là "No cart items found" không
+          final errorMsg = viewModel.errorMessage?.toLowerCase() ?? '';
+          if (errorMsg.contains('no cart items found') ||
+              errorMsg.contains('404')) {
+            // Hiển thị giỏ hàng rỗng thay vì báo lỗi
+            return EmptyBagWidget(
+              imagePath: AssetsManager.shoppingBasket,
+              title: 'Giỏ hàng trống',
+              subtitle: 'Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.',
+              buttonText: 'Mua sắm ngay',
+            );
+          }
 
-      // Hiển thị lỗi khác
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 60, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              cartViewModel.errorMessage ?? 'Đã xảy ra lỗi',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => cartViewModel.fetchCartFromServer(),
-              child: const Text('Thử lại'),
-            ),
-          ],
-        ),
-      );
-    } else if (cartViewModel.isEmpty) {
-      return EmptyBagWidget(
-        imagePath: AssetsManager.shoppingBasket,
-        title: 'Giỏ hàng trống',
-        subtitle: 'Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.',
-        buttonText: 'Mua sắm ngay',
-      );
-    } else {
-      // Màn hình có dữ liệu
-      return Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => cartViewModel.fetchCartFromServer(),
-                  child: ListView.builder(
-                    itemCount: cartViewModel.cartItems.length,
-                    itemBuilder: (context, index) {
-                      final cartModel =
-                          cartViewModel.cartItems.values.toList()[index];
-                      return EnhancedCartWidget(
-                        cartModel: cartModel,
-                        viewModel: cartViewModel,
-                      );
-                    },
-                  ),
+          // Hiển thị lỗi khác
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  viewModel.errorMessage ?? 'Đã xảy ra lỗi',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: Colors.red),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: kBottomNavigationBarHeight + 10),
-            ],
-          ),
-          if (cartViewModel.totalPrice > 0)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: EnhancedCartBottomSheetWidget(viewModel: cartViewModel),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => viewModel.fetchCartFromServer(),
+                  child: const Text('Thử lại'),
+                ),
+              ],
             ),
-        ],
-      );
-    }
+          );
+        } else if (viewModel.isEmpty) {
+          return EmptyBagWidget(
+            imagePath: AssetsManager.shoppingBasket,
+            title: 'Giỏ hàng trống',
+            subtitle: 'Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.',
+            buttonText: 'Mua sắm ngay',
+          );
+        } else {
+          // Màn hình có dữ liệu
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () => viewModel.fetchCartFromServer(),
+                      child: ListView.builder(
+                        itemCount: viewModel.cartItems.length,
+                        itemBuilder: (context, index) {
+                          final cartModel =
+                              viewModel.cartItems.values.toList()[index];
+                          return EnhancedCartWidget(
+                            cartModel: cartModel,
+                            viewModel: viewModel,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: kBottomNavigationBarHeight + 10),
+                ],
+              ),
+              if (viewModel.totalPrice > 0)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: EnhancedCartBottomSheetWidget(viewModel: viewModel),
+                ),
+            ],
+          );
+        }
+      },
+    );
   }
 }

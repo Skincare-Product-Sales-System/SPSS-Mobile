@@ -2,14 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../models/api_response_model.dart';
-import 'api_service.dart';
 import 'jwt_service.dart';
 
 class VNPayService {
   static const String baseUrl = 'http://10.0.2.2:5041';
   static const String apiUrl = 'http://localhost:5041';
   static const String nGrokUrl = 'https://2796-118-69-182-144.ngrok-free.app';
-  
+
   static const Duration timeout = Duration(seconds: 30);
 
   /// Get VNPay transaction status and payment URL
@@ -29,11 +28,11 @@ class VNPayService {
       }
 
       // Encode the return URL
-      final encodedUrlReturn = urlReturn ?? '$nGrokUrl';
+      final encodedUrlReturn = urlReturn ?? nGrokUrl;
       final encodedUrl = Uri.encodeComponent(encodedUrlReturn);
 
       final uri = Uri.parse(
-        '$baseUrl/api/VNPAY/get-transaction-status-vnpay?orderId=$orderId&userId=$userId&urlReturn=$encodedUrl'
+        '$baseUrl/api/VNPAY/get-transaction-status-vnpay?orderId=$orderId&userId=$userId&urlReturn=$encodedUrl',
       );
 
       final response = await http
@@ -49,23 +48,27 @@ class VNPayService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        
+
         if (jsonData['success'] == true && jsonData['data'] != null) {
           return ApiResponse<String>(
             success: true,
             data: jsonData['data'],
-            message: jsonData['message'] ?? 'VNPay payment URL generated successfully',
+            message:
+                jsonData['message'] ??
+                'VNPay payment URL generated successfully',
           );
         } else {
           return ApiResponse<String>(
             success: false,
-            message: jsonData['message'] ?? 'Failed to generate VNPay payment URL',
+            message:
+                jsonData['message'] ?? 'Failed to generate VNPay payment URL',
           );
         }
       } else {
         return ApiResponse<String>(
           success: false,
-          message: 'Failed to generate VNPay payment URL. Status: ${response.statusCode}',
+          message:
+              'Failed to generate VNPay payment URL. Status: ${response.statusCode}',
         );
       }
     } catch (e) {
@@ -81,12 +84,9 @@ class VNPayService {
   static Future<bool> launchVNPayPayment(String paymentUrl) async {
     try {
       final uri = Uri.parse(paymentUrl);
-      
+
       if (await canLaunchUrl(uri)) {
-        return await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         throw Exception('Could not launch VNPay payment URL');
       }
@@ -111,7 +111,7 @@ class VNPayService {
       if (response.success && response.data != null) {
         // Launch VNPay payment
         final launched = await launchVNPayPayment(response.data!);
-        
+
         if (launched) {
           return ApiResponse<String>(
             success: true,
@@ -163,14 +163,12 @@ class VNPayService {
       }
 
       // Process VNPay payment
-      return await processVNPayPayment(
-        orderId: orderId,
-        userId: userId,
-      );
+      return await processVNPayPayment(orderId: orderId, userId: userId);
     } catch (e) {
       return ApiResponse<String>(
         success: false,
-        message: 'Error processing VNPay payment for existing order: ${e.toString()}',
+        message:
+            'Error processing VNPay payment for existing order: ${e.toString()}',
         errors: [e.toString()],
       );
     }
@@ -180,4 +178,4 @@ class VNPayService {
   static bool isVNPayPayment(String paymentType) {
     return paymentType.toUpperCase() == 'VNPAY';
   }
-} 
+}

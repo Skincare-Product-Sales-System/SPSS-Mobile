@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../models/order_models.dart';
 import '../models/view_state.dart';
@@ -25,6 +27,14 @@ class EnhancedOrderViewModel extends BaseViewModel<OrderState> {
   bool get isCreatingOrder => state.isCreatingOrder;
   String? get creatingOrderError => state.creatingOrderError;
   VoucherModel? get selectedVoucher => state.selectedVoucher;
+
+  // Review-related getters
+  List<String> get reviewImages => state.reviewImages;
+  bool get isSubmittingReview => state.isSubmittingReview;
+  bool get isUploadingImage => state.isUploadingImage;
+  bool get isDeletingImage => state.isDeletingImage;
+  String? get reviewError => state.reviewError;
+  bool get reviewSubmitted => state.reviewSubmitted;
 
   // Tải danh sách đơn hàng
   Future<void> loadOrders({bool refresh = false, String? status}) async {
@@ -332,6 +342,165 @@ class EnhancedOrderViewModel extends BaseViewModel<OrderState> {
     // This is a placeholder method to satisfy the EnhancedCheckoutScreen
     // In a real implementation, this would load shipping details, payment methods, etc.
     await loadVouchers(refresh: true);
+  }
+
+  // Upload image for product review
+  Future<String?> uploadReviewImage(XFile image) async {
+    updateState(state.copyWith(isUploadingImage: true, reviewError: null));
+
+    try {
+      final file = File(image.path);
+      final response = await _orderRepository.uploadReviewImage(file);
+
+      if (response.success && response.data != null) {
+        final imageUrl = response.data!;
+        // Thêm ảnh vào state
+        final updatedState = state.addReviewImage(imageUrl);
+        updateState(updatedState.copyWith(isUploadingImage: false));
+        return imageUrl;
+      } else {
+        updateState(
+          state.copyWith(
+            isUploadingImage: false,
+            reviewError: response.message ?? 'Failed to upload image',
+          ),
+        );
+        return null;
+      }
+    } catch (e) {
+      handleError(e, source: 'uploadReviewImage');
+      updateState(
+        state.copyWith(
+          isUploadingImage: false,
+          reviewError: 'Failed to upload image: ${e.toString()}',
+        ),
+      );
+      return null;
+    }
+  }
+
+  // Delete review image
+  Future<bool> deleteReviewImage(String imageUrl) async {
+    updateState(state.copyWith(isDeletingImage: true, reviewError: null));
+
+    try {
+      final response = await _orderRepository.deleteReviewImage(imageUrl);
+
+      if (response.success && response.data != null && response.data!) {
+        // Xóa ảnh khỏi state
+        final updatedState = state.removeReviewImage(imageUrl);
+        updateState(updatedState.copyWith(isDeletingImage: false));
+        return true;
+      } else {
+        updateState(
+          state.copyWith(
+            isDeletingImage: false,
+            reviewError: response.message ?? 'Failed to delete image',
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      handleError(e, source: 'deleteReviewImage');
+      updateState(
+        state.copyWith(
+          isDeletingImage: false,
+          reviewError: 'Failed to delete image: ${e.toString()}',
+        ),
+      );
+      return false;
+    }
+  } // Create product review
+
+  Future<bool> createProductReview({
+    required String productItemId,
+    required int rating,
+    required String comment,
+    String? orderId,
+  }) async {
+    // Đảm bảo trạng thái ban đầu đúng
+    updateState(state.copyWith(isSubmittingReview: true, reviewError: null));
+
+    try {
+      // Lấy danh sách reviewImages hiện tại để gửi request (copy ra để tránh tham chiếu)
+      final reviewImages = List<String>.from(state.reviewImages);
+
+      debugPrint('SUBMITTING REVIEW WITH ${reviewImages.length} IMAGES');
+
+      // Gửi request với ảnh hiện tại
+      final response = await _orderRepository.createProductReview(
+        productItemId: productItemId,
+        rating: rating,
+        comment: comment,
+        reviewImages: reviewImages,
+      );
+
+      // Reset toàn bộ state liên quan đến review ngay lập tức, bất kể kết quả
+      cleanupReviewImages();
+
+      if (response.success && response.data != null && response.data!) {
+        // If we have orderId, update the OrderDetail model locally before reloading from server
+        if (orderId != null && state.selectedOrder.data != null) {
+          final orderDetails = List<OrderDetail>.from(
+            state.selectedOrder.data!.orderDetails,
+          );
+
+          // Find the item and update its reviewable status
+          final index = orderDetails.indexWhere(
+            (item) => item.productItemId == productItemId,
+          );
+          if (index >= 0) {
+            orderDetails[index] = orderDetails[index].copyWith(
+              isReviewable: false,
+            );
+
+            // Update the selectedOrder in state
+            final updatedOrder = state.selectedOrder.data!.copyWith(
+              orderDetails: orderDetails,
+            );
+            updateState(
+              state.copyWith(selectedOrder: ViewState.loaded(updatedOrder)),
+            );
+          }
+
+          // Still reload from server in background to ensure data consistency
+          loadOrderDetail(orderId);
+        }
+
+        return true;
+      } else {
+        updateState(
+          state.copyWith(
+            reviewError: response.message ?? 'Failed to submit review',
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      handleError(e, source: 'createProductReview');
+      updateState(
+        state.copyWith(reviewError: 'Failed to submit review: ${e.toString()}'),
+      );
+      return false;
+    }
+  }
+
+  // Clean up review images if review was not submitted
+  void cleanupReviewImages() {
+    // Reset review state và lưu state mới
+    final newState = state.resetReviewState();
+    updateState(newState);
+
+    // Debug log để xác nhận đã xóa
+    debugPrint(
+      'REVIEW IMAGES CLEANED UP: ${state.reviewImages.length} images (should be 0)',
+    );
+  }
+
+  // Check if order can be reviewed
+  bool canReviewOrder(String status) {
+    final lowerStatus = status.toLowerCase();
+    return lowerStatus == 'delivered';
   }
 
   @override

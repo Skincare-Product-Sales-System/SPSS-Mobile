@@ -2198,4 +2198,204 @@ class ApiService {
       );
     }
   }
+
+  // Upload image with customizable URL and form field name
+  static Future<ApiResponse<String>> uploadImageWithUrl(
+    File imageFile,
+    String url,
+    String formFieldName,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<String>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      print('DEBUG UPLOAD IMAGE - Request URL: $url');
+
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath(formFieldName, imageFile.path),
+      );
+
+      print(
+        'DEBUG UPLOAD IMAGE - File path: ${imageFile.path}, formField: $formFieldName',
+      );
+      print('DEBUG UPLOAD IMAGE - Sending request...');
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('DEBUG UPLOAD IMAGE - Response status: ${response.statusCode}');
+      print('DEBUG UPLOAD IMAGE - Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        String? imageUrl;
+        if (jsonData['data'] is List) {
+          final urls = jsonData['data'] as List;
+          if (urls.isNotEmpty) {
+            imageUrl = urls.first as String;
+          }
+        } else {
+          imageUrl =
+              jsonData['data'] ?? jsonData['imageUrl'] ?? jsonData['url'];
+        }
+
+        if (imageUrl != null) {
+          print('DEBUG UPLOAD IMAGE - Uploaded successfully: $imageUrl');
+          return ApiResponse<String>(
+            success: true,
+            message: 'Image uploaded successfully',
+            data: imageUrl,
+          );
+        } else {
+          return ApiResponse<String>(
+            success: false,
+            message: 'Failed to extract image URL from response',
+            errors: ['No image URL in response'],
+          );
+        }
+      } else {
+        return ApiResponse<String>(
+          success: false,
+          message:
+              'Failed to upload image. Status code: ${response.statusCode}',
+          errors: ['HTTP Error: ${response.statusCode}'],
+        );
+      }
+    } catch (e) {
+      return ApiResponse<String>(
+        success: false,
+        message: 'Failed to upload image: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Delete image with query parameter
+  static Future<ApiResponse<bool>> deleteImageWithQuery(
+    String imageUrl,
+    String url,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<bool>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse(
+        url,
+      ).replace(queryParameters: {'imageUrl': imageUrl});
+      print('DEBUG DELETE IMAGE - Request URL: $uri');
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+      print('DEBUG DELETE IMAGE - Headers: $headers');
+      print('DEBUG DELETE IMAGE - Deleting image: $imageUrl');
+
+      final response = await http
+          .delete(uri, headers: headers)
+          .timeout(timeout);
+
+      print('DEBUG DELETE IMAGE - Response status: ${response.statusCode}');
+      print('DEBUG DELETE IMAGE - Response body: ${response.body}');
+
+      final success = response.statusCode == 200;
+      print('DEBUG DELETE IMAGE - Delete ${success ? 'successful' : 'failed'}');
+
+      return ApiResponse<bool>(
+        success: success,
+        message:
+            success ? 'Image deleted successfully' : 'Failed to delete image',
+        data: success,
+      );
+    } catch (e) {
+      return ApiResponse<bool>(
+        success: false,
+        message: 'Failed to delete image: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Create product review
+  static Future<ApiResponse<bool>> createReview({
+    required String productItemId,
+    required int rating,
+    required String comment,
+    required List<String> reviewImages,
+    required String url,
+  }) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<bool>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      print('DEBUG CREATE REVIEW - Request URL: $url');
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+      print('DEBUG CREATE REVIEW - Headers: $headers');
+
+      final requestBody = {
+        'productItemId': productItemId,
+        'ratingValue': rating,
+        'comment': comment,
+        'reviewImages': reviewImages,
+      };
+      final encodedBody = json.encode(requestBody);
+      print('DEBUG CREATE REVIEW - Request body: $encodedBody');
+
+      print('DEBUG CREATE REVIEW - Sending request...');
+      final response = await http
+          .post(Uri.parse(url), headers: headers, body: encodedBody)
+          .timeout(timeout);
+
+      print('DEBUG CREATE REVIEW - Response status: ${response.statusCode}');
+      print('DEBUG CREATE REVIEW - Response body: ${response.body}');
+
+      final success = response.statusCode == 200 || response.statusCode == 201;
+      print(
+        'DEBUG CREATE REVIEW - Review creation ${success ? 'successful' : 'failed'}',
+      );
+
+      return ApiResponse<bool>(
+        success: success,
+        message:
+            success ? 'Review created successfully' : 'Failed to create review',
+        data: success,
+      );
+    } catch (e) {
+      return ApiResponse<bool>(
+        success: false,
+        message: 'Failed to create review: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
 }

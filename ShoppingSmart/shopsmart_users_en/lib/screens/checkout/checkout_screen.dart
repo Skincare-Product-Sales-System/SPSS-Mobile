@@ -16,9 +16,6 @@ import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
-import 'vnpay_success_screen.dart';
-import 'vnpay_failure_screen.dart';
-import './order_success_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -847,7 +844,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (VNPayService.isVNPayPayment(_selectedPaymentMethod!.paymentType)) {
           // Get user ID from token
           final token = await JwtService.getStoredToken();
-          final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
+          final userInfo =
+              token != null ? JwtService.getUserFromToken(token) : null;
           final userId = userInfo?['id'] ?? '';
 
           if (userId.isEmpty) {
@@ -890,7 +888,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               // Show an error dialog if payment initiation fails
               MyAppFunctions.showErrorOrWarningDialog(
                 context: context,
-                subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
+                subtitle:
+                    vnpayResponse.message ??
+                    'Không thể khởi tạo thanh toán VNPay.',
                 isError: true,
                 fct: () {},
               );

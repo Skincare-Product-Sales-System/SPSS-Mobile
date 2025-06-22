@@ -5,10 +5,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 
 import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
-import '../../models/cart_model.dart';
-import '../../models/view_state.dart';
-import '../../providers/cart_state.dart';
-// Đã thay thế bằng EnhancedCartViewModel
 import '../../providers/enhanced_products_view_model.dart';
 import '../../widgets/products/heart_btn.dart';
 import '../inner_screen/enhanced_reviews_screen.dart';
@@ -30,7 +26,8 @@ class EnhancedProductDetailsScreen extends StatefulWidget {
 class _EnhancedProductDetailsScreenState
     extends State<EnhancedProductDetailsScreen>
     with TickerProviderStateMixin {
-  int _currentImageIndex = 0;
+  // Using ValueNotifier to avoid setState during build
+  final ValueNotifier<int> _currentImageIndex = ValueNotifier<int>(0);
   int _selectedQuantity = 1;
   String? _selectedProductItemId;
   late TabController _tabController;
@@ -67,6 +64,7 @@ class _EnhancedProductDetailsScreenState
   @override
   void dispose() {
     _tabController.dispose();
+    _currentImageIndex.dispose();
     super.dispose();
   }
 
@@ -146,7 +144,10 @@ class _EnhancedProductDetailsScreenState
   @override
   Widget build(BuildContext context) {
     // Sử dụng các ViewModel cần thiết
-    final enhancedCartViewModel = Provider.of<EnhancedCartViewModel>(context);
+    final enhancedCartViewModel = Provider.of<EnhancedCartViewModel>(
+      context,
+      listen: false,
+    );
     // Không cần khai báo biến enhancedWishlistViewModel ở đây vì đã sử dụng trong _buildBottomNavigationBar
 
     return Consumer<EnhancedProductsViewModel>(
@@ -244,9 +245,8 @@ class _EnhancedProductDetailsScreenState
                     viewportFraction: 1.0,
                     autoPlay: false,
                     onPageChanged: (index, reason) {
-                      setState(() {
-                        _currentImageIndex = index;
-                      });
+                      // Simply update the ValueNotifier value - no setState required
+                      _currentImageIndex.value = index;
                     },
                   ),
                 ),
@@ -254,23 +254,30 @@ class _EnhancedProductDetailsScreenState
                   bottom: 10,
                   left: 0,
                   right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children:
-                        productImages.asMap().entries.map((entry) {
-                          return Container(
-                            width: 8,
-                            height: 8,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  _currentImageIndex == entry.key
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.grey.withOpacity(0.5),
-                            ),
-                          );
-                        }).toList(),
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _currentImageIndex,
+                    builder: (context, currentIndex, _) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children:
+                            productImages.asMap().entries.map((entry) {
+                              return Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      currentIndex == entry.key
+                                          ? Theme.of(context).primaryColor
+                                          : Colors.grey.withOpacity(0.5),
+                                ),
+                              );
+                            }).toList(),
+                      );
+                    },
                   ),
                 ),
                 Positioned(
@@ -817,10 +824,6 @@ class _EnhancedProductDetailsScreenState
             ? selectedProductItem.quantityInStock <= 0
             : false;
 
-    // Lấy wishlist view model
-    final wishlistViewModel = Provider.of<EnhancedWishlistViewModel>(context);
-    final isInWishlist = wishlistViewModel.isInWishlist(product.id);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -842,30 +845,41 @@ class _EnhancedProductDetailsScreenState
               border: Border.all(color: Colors.grey.withOpacity(0.3)),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: IconButton(
-              onPressed: () {
-                wishlistViewModel.addOrRemoveFromWishlist(
-                  productId: product.id,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isInWishlist
-                          ? 'Đã xóa khỏi danh sách yêu thích'
-                          : 'Đã thêm vào danh sách yêu thích',
-                    ),
-                    duration: const Duration(seconds: 2),
+            // Use Consumer to rebuild only this part when wishlist changes
+            child: Consumer<EnhancedWishlistViewModel>(
+              builder: (ctx, wishlistModel, _) {
+                final isItemInWishlist = wishlistModel.isInWishlist(product.id);
+                return IconButton(
+                  onPressed: () {
+                    // Using addPostFrameCallback to ensure we're not in build phase
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        wishlistModel.addOrRemoveFromWishlist(
+                          productId: product.id,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isItemInWishlist
+                                  ? 'Đã xóa khỏi danh sách yêu thích'
+                                  : 'Đã thêm vào danh sách yêu thích',
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    isItemInWishlist ? Icons.favorite : Icons.favorite_border,
+                    color: isItemInWishlist ? Colors.red : Colors.grey,
                   ),
+                  tooltip:
+                      isItemInWishlist
+                          ? 'Xóa khỏi danh sách yêu thích'
+                          : 'Thêm vào danh sách yêu thích',
                 );
               },
-              icon: Icon(
-                isInWishlist ? Icons.favorite : Icons.favorite_border,
-                color: isInWishlist ? Colors.red : Colors.grey,
-              ),
-              tooltip:
-                  isInWishlist
-                      ? 'Xóa khỏi danh sách yêu thích'
-                      : 'Thêm vào danh sách yêu thích',
             ),
           ),
           // Nút thêm vào giỏ hàng
@@ -875,14 +889,12 @@ class _EnhancedProductDetailsScreenState
                   isOutOfStock || _selectedProductItemId == null
                       ? null
                       : () {
-                        // Thêm vào giỏ hàng (sử dụng EnhancedCartViewModel)
-                        _addToCart(product, cartViewModel);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Đã thêm vào giỏ hàng'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
+                        // Thực hiện sau khi build hoàn tất
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            _addToCart(product, cartViewModel);
+                          }
+                        });
                       },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
@@ -901,20 +913,24 @@ class _EnhancedProductDetailsScreenState
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Nút mua ngay
+          const SizedBox(width: 12), // Nút mua ngay
           Expanded(
             child: ElevatedButton(
               onPressed:
                   isOutOfStock || _selectedProductItemId == null
                       ? null
                       : () {
-                        // Thêm vào giỏ hàng (sử dụng EnhancedCartViewModel) và chuyển đến trang giỏ hàng
-                        _addToCart(product, cartViewModel);
-                        Navigator.pushNamed(
-                          context,
-                          EnhancedCartScreen.routeName,
-                        );
+                        // Using addPostFrameCallback to ensure we're not in build phase
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            // First add to cart
+                            _addToCart(
+                              product,
+                              cartViewModel,
+                              navigateToCart: true,
+                            );
+                          }
+                        });
                       },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
@@ -936,13 +952,14 @@ class _EnhancedProductDetailsScreenState
         ],
       ),
     );
-  }
+  } // Thêm sản phẩm vào giỏ hàng mà không reload màn hình
 
-  // Sửa phương thức để sử dụng EnhancedCartViewModel
-  void _addToCart(
+  Future<void> _addToCart(
     DetailedProductModel product,
-    EnhancedCartViewModel cartViewModel,
-  ) {
+    EnhancedCartViewModel cartViewModel, {
+    bool showSnackbar = true,
+    bool navigateToCart = false,
+  }) async {
     if (_selectedProductItemId == null) return;
 
     // Tìm kiếm thông tin sản phẩm đã chọn
@@ -957,67 +974,52 @@ class _EnhancedProductDetailsScreenState
       productImageUrl = product.thumbnail;
     }
 
-    // Lấy thông tin từ giỏ hàng hiện tại để cập nhật UI ngay lập tức
-    final existingItem = cartViewModel.cartItems[_selectedProductItemId!];
-    final int newQuantity =
-        existingItem != null
-            ? existingItem.quantity + _selectedQuantity
-            : _selectedQuantity;
+    // Capture all necessary information first
+    final productId = product.id;
+    final productItemId = _selectedProductItemId!;
+    final title = product.name;
+    final price = selectedItem.price.toDouble();
+    final marketPrice = selectedItem.marketPrice.toDouble();
 
-    // Tạo CartModel mới
-    final cartItem = CartModel(
-      cartId:
-          existingItem?.cartId ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
-      productId: product.id,
-      productItemId: _selectedProductItemId!,
-      id: product.id,
-      title: product.name,
-      price: selectedItem.price.toDouble(),
-      marketPrice: selectedItem.marketPrice.toDouble(),
-      quantity: newQuantity,
-      stockQuantity: selectedItem.quantityInStock,
-      productImageUrl: productImageUrl,
-      inStock: selectedItem.quantityInStock > 0,
-      totalPrice: selectedItem.price.toDouble() * newQuantity,
-      variationOptionValues: existingItem?.variationOptionValues ?? [],
-    );
+    try {
+      // Gọi API để đồng bộ với server
+      await cartViewModel.addToCart(
+        productId: productId,
+        productItemId: productItemId,
+        title: title,
+        price: price,
+        marketPrice: marketPrice,
+        productImageUrl: productImageUrl,
+      );
 
-    // Cập nhật state thủ công để UI cập nhật ngay lập tức
-    final newCartItems = Map<String, CartModel>.from(cartViewModel.cartItems);
-    newCartItems[_selectedProductItemId!] = cartItem;
+      // Kiểm tra lại mounted trước khi làm bất kỳ việc liên quan đến UI
+      if (!mounted) return;
 
-    // Tính tổng số lượng sản phẩm và tổng giá tiền mới
-    int totalQuantity = 0;
-    double totalPrice = 0;
-    for (var item in newCartItems.values) {
-      totalQuantity += item.quantity;
-      totalPrice += item.price * item.quantity;
+      // Hiển thị snackbar nếu cần
+      if (showSnackbar) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã thêm vào giỏ hàng'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Chuyển đến giỏ hàng nếu cần
+      if (navigateToCart) {
+        Navigator.of(context).pushNamed(EnhancedCartScreen.routeName);
+      }
+    } catch (e) {
+      // Kiểm tra mounted trước khi hiển thị lỗi
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi thêm vào giỏ hàng: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
-
-    // HACK: Bắt buộc UI cập nhật bằng cách tạo object state mới hoàn toàn
-    final newState = CartState(
-      cartItems: ViewState.loaded(newCartItems),
-      isProcessing: false,
-      errorMessage: null,
-    );
-
-    // Cập nhật state của CartViewModel với state mới hoàn toàn
-    cartViewModel.updateState(newState);
-
-    // HACK: Buộc UI cập nhật bằng cách gọi notifyListeners thêm lần nữa sau một khoảng thời gian ngắn
-    Future.delayed(const Duration(milliseconds: 50), () {
-      cartViewModel.notifyListeners();
-    });
-
-    // Gọi API để đồng bộ với server
-    cartViewModel.addToCart(
-      productId: product.id,
-      productItemId: _selectedProductItemId!,
-      title: product.name,
-      price: selectedItem.price.toDouble(),
-      marketPrice: selectedItem.marketPrice.toDouble(),
-      productImageUrl: productImageUrl,
-    );
   }
 }

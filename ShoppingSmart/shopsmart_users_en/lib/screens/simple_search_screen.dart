@@ -211,8 +211,8 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
 
     // Debug existing filters
     debugPrint(
-      "SimpleSearchScreen: Searching with filters - Category: $_selectedCategoryId, " +
-          "Brand: $_selectedBrandId, SkinType: $_selectedSkinTypeId, SortBy: $_selectedSortBy",
+      "SimpleSearchScreen: Searching with filters - Category: $_selectedCategoryId, "
+      "Brand: $_selectedBrandId, SkinType: $_selectedSkinTypeId, SortBy: $_selectedSortBy",
     );
 
     // Perform search WITH all selected filters - ensure integration between search and filters    // Make a copy of search text to avoid any timing issues
@@ -235,30 +235,30 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
         "SimpleSearchScreen: Search initiated for '$finalSearchText' with filters applied",
       );
     }); // Show notification
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                'Đang tìm kiếm: "$searchText"${_getFiltersDescription()}',
-              ),
-            ),
-          ],
-        ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Row(
+    //       children: [
+    //         const SizedBox(
+    //           width: 20,
+    //           height: 20,
+    //           child: CircularProgressIndicator(
+    //             strokeWidth: 2,
+    //             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+    //           ),
+    //         ),
+    //         const SizedBox(width: 16),
+    //         Expanded(
+    //           child: Text(
+    //             'Đang tìm kiếm: "$searchText"${_getFiltersDescription()}',
+    //           ),
+    //         ),
+    //       ],
+    //     ),
+    //     duration: const Duration(seconds: 1),
+    //     behavior: SnackBarBehavior.floating,
+    //   ),
+    // );
   }
 
   // Helper method to get a brief description of active filters for notifications
@@ -353,13 +353,13 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
           refresh: true, // Force refresh to clear any cached results
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã áp dụng bộ lọc cho "$currentSearchQuery"'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('Đã áp dụng bộ lọc cho "$currentSearchQuery"'),
+        //     duration: const Duration(seconds: 2),
+        //     behavior: SnackBarBehavior.floating,
+        //   ),
+        // );
       } else {
         // No search query - just apply filters to product list
         debugPrint(
@@ -386,13 +386,13 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
             refresh: true,
           );
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã áp dụng bộ lọc'),
-            duration: Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //     content: Text('Đã áp dụng bộ lọc'),
+        //     duration: Duration(seconds: 1),
+        //     behavior: SnackBarBehavior.floating,
+        //   ),
+        // );
       }
     });
 
@@ -450,13 +450,13 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
               true, // Critical - force a refresh to clear any cached results
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xóa bộ lọc, giữ từ khóa tìm kiếm'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //     content: Text('Đã xóa bộ lọc, giữ từ khóa tìm kiếm'),
+        //     duration: Duration(seconds: 2),
+        //     behavior: SnackBarBehavior.floating,
+        //   ),
+        // );
       } else {
         // If no search query, reload all products without filters
         debugPrint(
@@ -464,13 +464,13 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
         );
         productsViewModel.loadProducts(refresh: true);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xóa bộ lọc'),
-            duration: Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //     content: Text('Đã xóa bộ lọc'),
+        //     duration: Duration(seconds: 1),
+        //     behavior: SnackBarBehavior.floating,
+        //   ),
+        // );
       }
     });
 
@@ -665,27 +665,27 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
 
                                     // Show appropriate notification based on filter state
                                     if (hasFilters) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Đã xóa tìm kiếm, giữ các bộ lọc',
-                                          ),
-                                          duration: Duration(seconds: 1),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
+                                      // ScaffoldMessenger.of(
+                                      //   context,
+                                      // ).showSnackBar(
+                                      //   const SnackBar(
+                                      //     content: Text(
+                                      //       'Đã xóa tìm kiếm, giữ các bộ lọc',
+                                      //     ),
+                                      //     duration: Duration(seconds: 1),
+                                      //     behavior: SnackBarBehavior.floating,
+                                      //   ),
+                                      // );
                                     } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Đã xóa tìm kiếm'),
-                                          duration: Duration(seconds: 1),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
+                                      // ScaffoldMessenger.of(
+                                      //   context,
+                                      // ).showSnackBar(
+                                      //   const SnackBar(
+                                      //     content: Text('Đã xóa tìm kiếm'),
+                                      //     duration: Duration(seconds: 1),
+                                      //     behavior: SnackBarBehavior.floating,
+                                      //   ),
+                                      // );
                                     }
                                   });
                                 },

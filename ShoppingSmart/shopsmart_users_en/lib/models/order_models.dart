@@ -36,6 +36,30 @@ class OrderDetail {
     );
   }
 
+  // Add copyWith method for easy updating
+  OrderDetail copyWith({
+    String? productItemId,
+    String? productId,
+    String? productName,
+    String? productImage,
+    int? quantity,
+    double? price,
+    List<String>? variationOptionValues,
+    bool? isReviewable,
+  }) {
+    return OrderDetail(
+      productItemId: productItemId ?? this.productItemId,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      productImage: productImage ?? this.productImage,
+      quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
+      variationOptionValues:
+          variationOptionValues ?? this.variationOptionValues,
+      isReviewable: isReviewable ?? this.isReviewable,
+    );
+  }
+
   @override
   String toString() {
     return 'OrderDetail(productItemId: $productItemId, productId: $productId, productName: $productName, quantity: $quantity, price: $price)';
