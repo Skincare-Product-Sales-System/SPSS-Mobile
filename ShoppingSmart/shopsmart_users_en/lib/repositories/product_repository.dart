@@ -13,12 +13,29 @@ class ProductRepository {
     int pageSize = 10,
     String? sortBy,
     String? categoryId,
+    String? brandId,
+    String? skinTypeId,
   }) async {
     return ApiService.getProducts(
       pageNumber: pageNumber,
       pageSize: pageSize,
       sortBy: sortBy,
       categoryId: categoryId,
+      brandId: brandId,
+      skinTypeId: skinTypeId,
+    );
+  }
+
+  // Get products by category
+  Future<ApiResponse<PaginatedResponse<ProductModel>>> getProductsByCategory({
+    required String categoryId,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    return ApiService.getProductsByCategory(
+      categoryId: categoryId,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
     );
   }
 
@@ -88,14 +105,36 @@ class ProductRepository {
 
   // Search products
   Future<ApiResponse<PaginatedResponse<ProductModel>>> searchProducts({
-    required String searchQuery,
+    required String searchText,
+    String? sortBy,
+    String? brandId,
+    String? skinTypeId,
     int pageNumber = 1,
     int pageSize = 10,
   }) async {
     return ApiService.searchProducts(
-      searchQuery: searchQuery,
+      searchText: searchText,
+      sortBy: sortBy,
+      brandId: brandId,
+      skinTypeId: skinTypeId,
       pageNumber: pageNumber,
       pageSize: pageSize,
+    );
+  }
+
+  /// Submit a product review
+  Future<ApiResponse<Map<String, dynamic>>> submitProductReview({
+    required String productId,
+    required int rating,
+    required String comment,
+    String? title,
+    List<String>? imageUrls,
+  }) async {
+    return ApiService.postReview(
+      productItemId: productId,
+      reviewImages: imageUrls ?? [],
+      ratingValue: rating,
+      comment: comment,
     );
   }
 }

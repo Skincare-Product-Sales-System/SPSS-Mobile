@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/chat_provider.dart';
+import '../../providers/enhanced_chat_view_model.dart';
 import '../../consts/app_colors.dart';
-import '../../screens/chat_screen.dart';
+import '../../screens/enhanced_chat_screen.dart';
+import '../../screens/enhanced_chat_ai_screen.dart';
 
 class ChatWidget extends StatelessWidget {
   const ChatWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
+    final chatProvider = Provider.of<EnhancedChatViewModel>(context);
 
     return Stack(
       children: [
@@ -23,7 +24,7 @@ class ChatWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(28.0),
             child: InkWell(
               onTap: () {
-                Navigator.of(context).pushNamed('/ChatAIScreen');
+                Navigator.of(context).pushNamed(EnhancedChatAIScreen.routeName);
               },
               borderRadius: BorderRadius.circular(28.0),
               child: Container(
@@ -34,11 +35,7 @@ class ChatWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(28.0),
                 ),
                 child: const Center(
-                  child: Icon(
-                    Icons.smart_toy,
-                    color: Colors.white,
-                    size: 28.0,
-                  ),
+                  child: Icon(Icons.smart_toy, color: Colors.white, size: 28.0),
                 ),
               ),
             ),
@@ -53,7 +50,7 @@ class ChatWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(28.0),
             child: InkWell(
               onTap: () {
-                Navigator.of(context).pushNamed(ChatScreen.routeName);
+                Navigator.of(context).pushNamed(EnhancedChatScreen.routeName);
               },
               borderRadius: BorderRadius.circular(28.0),
               child: Container(

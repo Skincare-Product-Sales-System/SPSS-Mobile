@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/category_model.dart';
-import '../services/api_service.dart';
+import '../repositories/category_repository.dart';
 
 class CategoriesProvider with ChangeNotifier {
+  final CategoryRepository _categoryRepository = CategoryRepository();
+
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -53,7 +55,7 @@ class CategoriesProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getCategories(
+      final response = await _categoryRepository.getCategories(
         pageNumber: 1,
         pageSize: 50, // Get all categories
       );

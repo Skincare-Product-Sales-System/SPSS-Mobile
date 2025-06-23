@@ -9,11 +9,11 @@ class VoucherCardWidget extends StatelessWidget {
   final Function(VoucherModel?) onVoucherChanged;
 
   const VoucherCardWidget({
-    Key? key,
+    super.key,
     required this.orderTotal,
     this.selectedVoucher,
     required this.onVoucherChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:iconly/iconly.dart';
 import '../models/blog_model.dart';
 import '../services/api_service.dart';
-import '../screens/inner_screen/blog_detail.dart';
+import '../screens/inner_screen/enhanced_blog_detail.dart';
 
 class BlogSection extends StatefulWidget {
   const BlogSection({super.key});
@@ -550,7 +550,7 @@ class BlogCard extends StatelessWidget {
             onTap: () {
               Navigator.pushNamed(
                 context,
-                BlogDetailScreen.routeName,
+                EnhancedBlogDetailScreen.routeName,
                 arguments: blog.id,
               );
             },

@@ -7,6 +7,7 @@ import 'package:shopsmart_users_en/consts/app_constants.dart';
 import 'package:shopsmart_users_en/widgets/products/latest_arrival.dart';
 import 'package:shopsmart_users_en/widgets/products/category_widget.dart';
 import 'package:shopsmart_users_en/widgets/blog_section.dart';
+import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
 
 import '../providers/products_provider.dart';
 import '../providers/categories_provider.dart';
@@ -14,9 +15,6 @@ import '../services/assets_manager.dart';
 import '../services/api_service.dart';
 import '../widgets/app_name_text.dart';
 import '../widgets/title_text.dart';
-import '../screens/search_screen.dart';
-// import '../widgets/order_demo_button.dart'; // Removed as requested
-import '../widgets/voucher_demo_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -67,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              Navigator.pushNamed(context, SearchScreen.routeName);
+              Navigator.pushNamed(context, SimpleSearchScreen.routeName);
             },
           ),
           Consumer<ProductsProvider>(
@@ -160,10 +158,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         final testResult = await ApiService.testConnection();
 
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(testResult.message),
+                              content: Text(
+                                testResult.message ??
+                                    'Kết nối API không thành công',
+                              ),
                               backgroundColor:
                                   testResult.success
                                       ? Colors.green
@@ -268,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () {
                                 Navigator.pushNamed(
                                   context,
-                                  SearchScreen.routeName,
+                                  SimpleSearchScreen.routeName,
                                   arguments:
                                       categoriesProvider.selectedCategoryId !=
                                               null
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () {
                             Navigator.pushNamed(
                               context,
-                              SearchScreen.routeName,
+                              SimpleSearchScreen.routeName,
                               arguments: "Tất Cả",
                             );
                           },
@@ -389,12 +390,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Blog Section
                   const BlogSection(),
-
-                  // Demo button for order detail screen
-                  // OrderDemoButton removed as requested
-
-                  // Voucher Demo
-                  const VoucherDemoWidget(),
 
                   const SizedBox(height: 20.0),
                 ],

@@ -6,19 +6,16 @@ import '../../providers/products_provider.dart';
 import '../../services/jwt_service.dart';
 import '../../services/currency_formatter.dart';
 import '../../screens/auth/login.dart';
-import '../../widgets/app_name_text.dart';
 import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../models/address_model.dart';
 import '../../services/api_service.dart';
 import '../../services/my_app_function.dart';
 import '../../models/payment_method_model.dart';
-import '../orders/orders_screen.dart';
 import '../../screens/profile_screen.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
+import '../../services/vnpay_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -839,14 +836,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final response = await ApiService.createOrderRaw(orderData);
 
-      if (response.success) {
-        if (mounted) {
-          // Chuyển hướng đến trang success
-          Navigator.pushReplacementNamed(context, '/order-success');
-          // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
-          Future.microtask(() {
-            cartProvider.clearLocalCart();
-          });
+      if (response.success && response.data != null) {
+        final orderId = response.data!.orderId;
+        final totalAmount = response.data!.totalAmount;
+
+        // Check if payment method is VNPay
+        if (VNPayService.isVNPayPayment(_selectedPaymentMethod!.paymentType)) {
+          // Get user ID from token
+          final token = await JwtService.getStoredToken();
+          final userInfo =
+              token != null ? JwtService.getUserFromToken(token) : null;
+          final userId = userInfo?['id'] ?? '';
+
+          if (userId.isEmpty) {
+            if (mounted) {
+              MyAppFunctions.showErrorOrWarningDialog(
+                context: context,
+                subtitle: 'Không thể xác định thông tin người dùng',
+                isError: true,
+                fct: () {},
+              );
+            }
+            return;
+          }
+
+          // Process VNPay payment
+          final vnpayResponse = await VNPayService.processVNPayPayment(
+            orderId: orderId,
+            userId: userId,
+          );
+
+          if (vnpayResponse.success) {
+            if (mounted) {
+              // Show a message that we are redirecting
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đang chuyển hướng đến VNPay...'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+
+              // Clear cart after successful order creation
+              Future.microtask(() {
+                cartProvider.clearLocalCart();
+              });
+
+              // DO NOT navigate here. The deep link handler will do it.
+            }
+          } else {
+            if (mounted) {
+              // Show an error dialog if payment initiation fails
+              MyAppFunctions.showErrorOrWarningDialog(
+                context: context,
+                subtitle:
+                    vnpayResponse.message ??
+                    'Không thể khởi tạo thanh toán VNPay.',
+                isError: true,
+                fct: () {},
+              );
+            }
+          }
+        } else {
+          // Non-VNPay payment method - proceed with normal flow
+          if (mounted) {
+            // Chuyển hướng đến trang success
+            Navigator.pushReplacementNamed(context, '/order-success');
+            // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+            Future.microtask(() {
+              cartProvider.clearLocalCart();
+            });
+          }
         }
       } else {
         if (mounted) {
@@ -862,7 +921,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'Đã xảy ra lỗi khi tạo đơn hàng',
+          subtitle: 'Đã xảy ra lỗi khi tạo đơn hàng: ${e.toString()}',
           isError: true,
           fct: () {},
         );

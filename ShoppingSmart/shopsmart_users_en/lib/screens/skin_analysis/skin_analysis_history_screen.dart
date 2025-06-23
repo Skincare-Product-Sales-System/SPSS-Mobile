@@ -4,8 +4,6 @@ import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/skin_analysis_result_screen.dart';
 import 'package:shopsmart_users_en/services/api_service.dart';
 import 'package:shopsmart_users_en/widgets/loading_widget.dart';
-import 'package:shopsmart_users_en/widgets/subtitle_text.dart';
-import 'package:shopsmart_users_en/widgets/title_text.dart';
 
 class SkinAnalysisHistoryScreen extends StatefulWidget {
   static const routeName = '/skin-analysis-history';
@@ -43,7 +41,8 @@ class _SkinAnalysisHistoryScreenState extends State<SkinAnalysisHistoryScreen> {
           if (response.success && response.data != null) {
             _histories = response.data!;
           } else {
-            _errorMessage = response.message;
+            _errorMessage =
+                response.message ?? 'Không thể tải lịch sử phân tích da';
           }
         });
       }
@@ -157,7 +156,8 @@ class _SkinAnalysisHistoryScreenState extends State<SkinAnalysisHistoryScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
+          // Use pushReplacement to prevent going back
+          Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => SkinAnalysisResultScreen(result: history),
             ),
@@ -245,7 +245,8 @@ class _SkinAnalysisHistoryScreenState extends State<SkinAnalysisHistoryScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: () {
-                    Navigator.of(context).push(
+                    // Use pushReplacement to prevent going back
+                    Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder:
                             (context) =>

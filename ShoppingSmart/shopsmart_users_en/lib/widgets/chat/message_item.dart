@@ -5,22 +5,22 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 
 import '../../services/chat_service.dart';
-import '../../models/chat_message_content.dart';
 import '../../screens/inner_screen/product_detail.dart';
+import '../../consts/app_colors.dart';
 
 class MessageItem extends StatelessWidget {
   final ChatMessage message;
-  final Color primaryColor;
-  final Color secondaryColor;
-  final Function(String) onImageTap;
+  final Color? primaryColor;
+  final Color? secondaryColor;
+  final Function(String)? onImageTap;
 
   const MessageItem({
-    Key? key,
+    super.key,
     required this.message,
-    required this.primaryColor,
-    required this.secondaryColor,
-    required this.onImageTap,
-  }) : super(key: key);
+    this.primaryColor,
+    this.secondaryColor,
+    this.onImageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,12 +120,14 @@ class MessageItem extends StatelessWidget {
   }
 
   Widget _buildTextMessage(BuildContext context, String content, bool isUser) {
+    final actualSecondaryColor = secondaryColor ?? AppColors.lightAccent;
+
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.7,
       ),
       decoration: BoxDecoration(
-        color: isUser ? secondaryColor : Colors.white,
+        color: isUser ? actualSecondaryColor : Colors.white,
         borderRadius:
             isUser
                 ? const BorderRadius.only(
@@ -176,13 +178,14 @@ class MessageItem extends StatelessWidget {
     bool isUser,
   ) {
     final imageUrl = contentJson['url'] as String;
+    final actualPrimaryColor = primaryColor ?? AppColors.lightPrimary;
 
     return Column(
       crossAxisAlignment:
           isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () => onImageTap(imageUrl),
+          onTap: onImageTap != null ? () => onImageTap!(imageUrl) : null,
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.6,
@@ -245,162 +248,111 @@ class MessageItem extends StatelessWidget {
   ) {
     final formatter = NumberFormat('#,###', 'vi_VN');
     final price = contentJson['price'] ?? 0.0;
-    final formattedPrice = formatter.format(price) + '₫';
+    final formattedPrice = '${formatter.format(price)}₫';
     final productId = contentJson['id'] ?? contentJson['productId'] ?? '';
+    final actualPrimaryColor = primaryColor ?? AppColors.lightPrimary;
 
-    return Column(
-      crossAxisAlignment:
-          isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (productId.isNotEmpty) {
-              Navigator.of(
-                context,
-              ).pushNamed(ProductDetailsScreen.routName, arguments: productId);
-            } else {
-              // Hiển thị thông báo nếu không có ID
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Không thể mở sản phẩm này'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            }
-          },
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.7,
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.7,
+      ),
+      margin: const EdgeInsets.only(bottom: 4.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(
+            context,
+          ).pushNamed(ProductDetailsScreen.routName, arguments: productId);
+        },
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            side: BorderSide(
+              color: actualPrimaryColor.withOpacity(0.3),
+              width: 1.0,
             ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: primaryColor.withOpacity(0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4.0,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  // Product image
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6.0),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6.0),
-                      child: CachedNetworkImage(
-                        imageUrl: contentJson['image'] ?? '',
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                        errorWidget:
-                            (context, url, error) => const Icon(Icons.error),
-                      ),
-                    ),
+          ),
+          elevation: 2.0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (contentJson['image'] != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8.0),
+                    topRight: Radius.circular(8.0),
                   ),
-                  const SizedBox(width: 12.0),
-                  // Product details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  child: CachedNetworkImage(
+                    imageUrl: contentJson['image'],
+                    height: 120.0,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder:
+                        (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                    errorWidget:
+                        (context, url, error) => const Icon(Icons.error),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      contentJson['name'] ?? 'Sản phẩm',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.0,
+                        color: actualPrimaryColor,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          contentJson['name'] ?? 'Sản phẩm',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          formattedPrice,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14.0,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
                           ),
                         ),
-                        const SizedBox(height: 4.0),
-                        Row(
-                          children: [
-                            Text(
-                              '${contentJson['rating'] ?? 4.5}/5',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: List.generate(5, (index) {
-                                final rating =
-                                    (contentJson['rating'] ?? 4.5).toDouble();
-                                return Icon(
-                                  index < rating.floor()
-                                      ? Icons.star
-                                      : (index < rating && rating % 1 >= 0.5)
-                                      ? Icons.star_half
-                                      : Icons.star_border,
-                                  color: Colors.amber,
-                                  size: 12.0,
-                                );
-                              }),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              '|',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              'Đã bán: ${contentJson['soldCount'] ?? 0}',
-                              style: TextStyle(
-                                fontSize: 12.0,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4.0),
                         Text(
-                          formattedPrice,
+                          'Đã bán: ${contentJson['soldCount'] ?? 0}',
                           style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14.0,
-                            color: primaryColor,
+                            color: Colors.grey.shade600,
+                            fontSize: 12.0,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
-          child: Text(
-            _formatTime(message.timestamp),
-            style: TextStyle(fontSize: 10.0, color: Colors.black54),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  String _formatTime(DateTime time) {
-    final hours = time.hour.toString().padLeft(2, '0');
-    final minutes = time.minute.toString().padLeft(2, '0');
-    return '$hours:$minutes';
+  String _formatTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
+    );
+
+    if (messageDate == today) {
+      return DateFormat.Hm().format(timestamp);
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Hôm qua, ${DateFormat.Hm().format(timestamp)}';
+    } else {
+      return DateFormat('dd/MM/yyyy HH:mm').format(timestamp);
+    }
   }
 }

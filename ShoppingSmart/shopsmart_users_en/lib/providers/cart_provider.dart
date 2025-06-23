@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shopsmart_users_en/models/cart_model.dart';
 import 'package:shopsmart_users_en/providers/products_provider.dart';
-import 'package:shopsmart_users_en/services/api_service.dart';
-import 'package:uuid/uuid.dart';
+import 'package:shopsmart_users_en/repositories/cart_repository.dart';
 
 class CartProvider with ChangeNotifier {
+  final CartRepository _cartRepository = CartRepository();
+
   final Map<String, CartModel> _cartItems = {};
   Map<String, CartModel> get getCartitems {
     return _cartItems;
@@ -22,7 +23,7 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.getCartItems();
+      final response = await _cartRepository.getCartItems();
       if (response.success && response.data != null) {
         // Xóa giỏ hàng cục bộ
         _cartItems.clear();
@@ -100,7 +101,7 @@ class CartProvider with ChangeNotifier {
 
     try {
       // Thêm vào giỏ hàng trên server
-      final response = await ApiService.addToCart(
+      final response = await _cartRepository.addToCart(
         productItemId: productItemId,
         quantity: 1,
       );
@@ -147,7 +148,7 @@ class CartProvider with ChangeNotifier {
       final cartId = cartItem.cartId;
 
       // Cập nhật số lượng trên server
-      final response = await ApiService.updateCartItemQuantity(
+      final response = await _cartRepository.updateCartItemQuantity(
         cartItemId: cartId,
         quantity: qty,
       );
@@ -212,7 +213,7 @@ class CartProvider with ChangeNotifier {
       final cartId = cartItem.cartId;
 
       // Xóa sản phẩm khỏi giỏ hàng trên server
-      final response = await ApiService.removeFromCart(cartId);
+      final response = await _cartRepository.removeFromCart(cartId);
 
       if (response.success) {
         // Nếu thành công, xóa khỏi giỏ hàng cục bộ

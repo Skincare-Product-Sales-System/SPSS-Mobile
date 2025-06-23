@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/voucher_model.dart';
 import '../services/api_service.dart';
@@ -11,11 +10,11 @@ class VoucherSelectionWidget extends StatefulWidget {
   final Function(VoucherModel?) onVoucherSelected;
 
   const VoucherSelectionWidget({
-    Key? key,
+    super.key,
     required this.orderTotal,
     this.selectedVoucher,
     required this.onVoucherSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<VoucherSelectionWidget> createState() => _VoucherSelectionWidgetState();

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category_model.dart';
-import '../../providers/categories_provider.dart';
-import '../../providers/products_provider.dart';
-import '../../screens/search_screen.dart';
+import '../../providers/enhanced_categories_view_model.dart';
+import '../../providers/enhanced_products_view_model.dart';
+import '../../screens/simple_search_screen.dart';
 
 class CategoryWidget extends StatelessWidget {
   final CategoryModel category;
@@ -21,33 +21,33 @@ class CategoryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        final categoriesProvider = Provider.of<CategoriesProvider>(
+        final categoriesViewModel = Provider.of<EnhancedCategoriesViewModel>(
           context,
           listen: false,
         );
-        final productsProvider = Provider.of<ProductsProvider>(
+        final productsViewModel = Provider.of<EnhancedProductsViewModel>(
           context,
           listen: false,
         );
 
         // Toggle selection
         if (isSelected) {
-          categoriesProvider.clearSelection();
+          categoriesViewModel.clearSelection();
           // Load all products when no category is selected
-          productsProvider.loadProducts(refresh: true);
+          productsViewModel.loadProducts(refresh: true);
         } else {
-          categoriesProvider.selectCategory(category.id);
+          categoriesViewModel.selectCategory(category.id);
 
           // Only load products if category has an ID
           if (category.id.isNotEmpty) {
             // Load products for this category
-            productsProvider.loadProductsByCategory(
+            productsViewModel.loadProductsByCategory(
               categoryId: category.id,
               refresh: true,
             );
           } else {
             // This is the "All" category
-            productsProvider.loadProducts(refresh: true);
+            productsViewModel.loadProducts(refresh: true);
           }
         }
 
@@ -55,7 +55,7 @@ class CategoryWidget extends StatelessWidget {
         if (navigateToSearch == true) {
           Navigator.pushNamed(
             context,
-            SearchScreen.routeName,
+            SimpleSearchScreen.routeName,
             arguments: isSelected ? "Tất Cả" : category.categoryName,
           );
         }
@@ -148,16 +148,16 @@ class CategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CategoriesProvider>(
-      builder: (context, categoriesProvider, child) {
-        if (categoriesProvider.isLoading) {
+    return Consumer<EnhancedCategoriesViewModel>(
+      builder: (context, categoriesViewModel, child) {
+        if (categoriesViewModel.isLoading) {
           return SizedBox(
             height: 45,
             child: const Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (categoriesProvider.errorMessage != null) {
+        if (categoriesViewModel.errorMessage != null) {
           return SizedBox(
             height: 45,
             child: Center(
@@ -169,7 +169,7 @@ class CategorySection extends StatelessWidget {
           );
         }
 
-        if (categoriesProvider.getMainCategories.isEmpty) {
+        if (categoriesViewModel.mainCategories.isEmpty) {
           return const SizedBox.shrink();
         }
 
@@ -195,7 +195,7 @@ class CategorySection extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushNamed(
                           context,
-                          SearchScreen.routeName,
+                          SimpleSearchScreen.routeName,
                           arguments: "Tất Cả",
                         );
                       },
@@ -218,7 +218,7 @@ class CategorySection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 itemCount:
-                    categoriesProvider.getMainCategories.length +
+                    categoriesViewModel.mainCategories.length +
                     1, // +1 for "All" option
                 itemBuilder: (context, index) {
                   if (index == 0) {
@@ -229,17 +229,18 @@ class CategorySection extends StatelessWidget {
                         categoryName: 'Tất Cả',
                         children: [],
                       ),
-                      isSelected: categoriesProvider.selectedCategoryId == null,
+                      isSelected:
+                          categoriesViewModel.selectedCategoryId == null,
                       navigateToSearch: navigateToSearch,
                     );
                   }
 
                   final category =
-                      categoriesProvider.getMainCategories[index - 1];
+                      categoriesViewModel.mainCategories[index - 1];
                   return CategoryWidget(
                     category: category,
                     isSelected:
-                        categoriesProvider.selectedCategoryId == category.id,
+                        categoriesViewModel.selectedCategoryId == category.id,
                     navigateToSearch: navigateToSearch,
                   );
                 },

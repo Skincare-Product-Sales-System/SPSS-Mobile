@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
-import 'package:shopsmart_users_en/providers/wishlist_provider.dart';
+import 'package:shopsmart_users_en/providers/enhanced_wishlist_view_model.dart';
 
 class HeartButtonWidget extends StatefulWidget {
   const HeartButtonWidget({
@@ -22,24 +22,24 @@ class HeartButtonWidget extends StatefulWidget {
 class _HeartButtonWidgetState extends State<HeartButtonWidget> {
   @override
   Widget build(BuildContext context) {
-    final wishlistsProvider = Provider.of<WishlistProvider>(context);
+    final wishlistViewModel = Provider.of<EnhancedWishlistViewModel>(context);
 
     return Container(
       decoration: BoxDecoration(color: widget.bkgColor, shape: BoxShape.circle),
       child: IconButton(
         style: IconButton.styleFrom(elevation: 10),
         onPressed: () {
-          wishlistsProvider.addOrRemoveFromWishlist(
+          wishlistViewModel.addOrRemoveFromWishlist(
             productId: widget.productId,
           );
         },
         icon: Icon(
-          wishlistsProvider.isProdinWishlist(productId: widget.productId)
+          wishlistViewModel.isInWishlist(widget.productId)
               ? IconlyBold.heart
               : IconlyLight.heart,
           size: widget.size,
           color:
-              wishlistsProvider.isProdinWishlist(productId: widget.productId)
+              wishlistViewModel.isInWishlist(widget.productId)
                   ? Colors.red
                   : Colors.grey,
         ),
