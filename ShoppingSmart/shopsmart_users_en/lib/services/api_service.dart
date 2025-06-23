@@ -359,38 +359,51 @@ class ApiService {
     String productId,
   ) async {
     try {
-      final uri = Uri.parse('$baseUrl/products/$productId');
-
+      final token = await JwtService.getStoredToken();
       final response = await http
           .get(
-            uri,
+            Uri.parse('$baseUrl/products/$productId'),
             headers: {
               'Content-Type': 'application/json',
-              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
             },
           )
           .timeout(timeout);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = json.decode(response.body);
+      final Map<String, dynamic> responseData = json.decode(response.body);
 
-        return ApiResponse.fromJson(
-          jsonData,
-          (data) => DetailedProductModel.fromJson(data),
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        return ApiResponse<DetailedProductModel>(
+          success: true,
+          data: DetailedProductModel.fromJson(responseData['data']),
+          message: responseData['message'],
         );
       } else {
         return ApiResponse<DetailedProductModel>(
           success: false,
-          message:
-              'Failed to load product. Status code: ${response.statusCode}',
-          errors: ['HTTP Error: ${response.statusCode}'],
+          data: null,
+          message: responseData['message'] ?? 'Failed to get product details',
+          errors: responseData['errors'],
         );
       }
-    } catch (e) {
+    } on SocketException {
       return ApiResponse<DetailedProductModel>(
         success: false,
-        message: 'Failed to load product: ${e.toString()}',
-        errors: [e.toString()],
+        data: null,
+        message: 'No internet connection',
+      );
+    } on TimeoutException {
+      return ApiResponse<DetailedProductModel>(
+        success: false,
+        data: null,
+        message: 'Request timed out',
+      );
+    } catch (e) {
+      debugPrint('Error getting product details: ${e.toString()}');
+      return ApiResponse<DetailedProductModel>(
+        success: false,
+        data: null,
+        message: 'An error occurred: ${e.toString()}',
       );
     }
   }

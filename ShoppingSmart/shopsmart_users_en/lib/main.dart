@@ -16,6 +16,7 @@ import 'package:shopsmart_users_en/providers/enhanced_viewed_products_provider.d
 import 'package:shopsmart_users_en/providers/enhanced_wishlist_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_brands_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_skin_types_view_model.dart';
+import 'package:shopsmart_users_en/providers/temp_cart_provider.dart';
 import 'package:shopsmart_users_en/providers/theme_provider.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/auth/enhanced_login.dart';
@@ -381,6 +382,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           create: (_) {
             return sl<EnhancedQuizViewModel>();
           },
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TempCartProvider(),
         ),
       ],
       child: Consumer<ThemeProvider>(

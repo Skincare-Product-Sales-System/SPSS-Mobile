@@ -317,7 +317,7 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
         onTap: () {
           Navigator.pushNamed(
             context,
-            ProductDetailsScreen.routName,
+            ProductDetailsScreen.routeName,
             arguments: product.productId,
           );
         },
@@ -548,7 +548,7 @@ class _SkinAnalysisResultScreenState extends State<SkinAnalysisResultScreen> {
       onTap: () {
         Navigator.pushNamed(
           context,
-          ProductDetailsScreen.routName,
+          ProductDetailsScreen.routeName,
           arguments: product.productId,
         );
       },

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shopsmart_users_en/models/skin_analysis_models.dart';
 import 'package:shopsmart_users_en/models/view_state.dart';
 import 'package:shopsmart_users_en/providers/enhanced_skin_analysis_view_model.dart';
-import 'package:shopsmart_users_en/screens/inner_screen/product_detail.dart';
+import 'package:shopsmart_users_en/providers/temp_cart_provider.dart';
+import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
+import 'package:shopsmart_users_en/widgets/temp_cart_bottom_sheet.dart';
 import 'package:intl/intl.dart';
 
 class EnhancedSkinAnalysisResultScreen extends StatefulWidget {
@@ -34,6 +37,17 @@ class _EnhancedSkinAnalysisResultScreenState
 
       // Đảm bảo xóa ảnh trong viewModel để tránh hiển thị lại khi quay lại màn hình camera
       viewModel.setSelectedImage(null, notify: false);
+
+      // Khởi tạo giỏ hàng tạm thời từ các sản phẩm được đề xuất
+      final result = viewModel.state.analysisResult.data;
+      if (result != null) {
+        final tempCartProvider = Provider.of<TempCartProvider>(
+          context,
+          listen: false,
+        );
+        tempCartProvider.clearTempCart(); // Xóa giỏ hàng tạm thời hiện tại
+        tempCartProvider.addAllRoutineProducts(result.routineSteps);
+      }
     });
   }
 
@@ -45,30 +59,49 @@ class _EnhancedSkinAnalysisResultScreenState
         final viewModel = Provider.of<EnhancedSkinAnalysisViewModel>(
           context,
           listen: false,
-        );
-
-        // Show dialog explaining why they can't go back
-        await showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Không thể quay lại'),
-                content: const Text(
-                  'Bạn không thể quay lại trang trước khi đã có kết quả phân tích. '
-                  'Vui lòng sử dụng nút Home hoặc Back trên thanh điều hướng để trở về trang chủ.',
-                ),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Đã hiểu'),
+        ); // Hiển thị dialog xác nhận việc quay về trang chủ
+        bool navigateToHome =
+            await showDialog(
+              context: context,
+              builder:
+                  (context) => AlertDialog(
+                    title: const Text('Xác nhận'),
+                    content: const Text(
+                      'Bạn có muốn quay về trang chủ không? Kết quả phân tích da sẽ vẫn được lưu trong lịch sử.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(false); // Không điều hướng
+                        },
+                        child: const Text('Ở lại trang này'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(
+                            context,
+                          ).pop(true); // Điều hướng về trang chủ
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                        ),
+                        child: const Text('Về trang chủ'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-        );
+            ) ??
+            false;
 
-        // Return false to prevent back navigation
+        // Nếu người dùng chọn điều hướng về trang chủ
+        if (navigateToHome) {
+          // Reset state and navigate to home (giống nút Home)
+          viewModel.resetAfterAnalysis();
+
+          // Navigate to home screen
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+
+        // Trả về false để ngăn chặn hành vi back mặc định
         return false;
       },
       child: Scaffold(
@@ -76,9 +109,71 @@ class _EnhancedSkinAnalysisResultScreenState
           title: const Text('Kết Quả Phân Tích Da'),
           centerTitle: true,
           // Disable the back button in the AppBar
-          automaticallyImplyLeading: false,
-          // Add a button to go back to history if needed
+          automaticallyImplyLeading:
+              false, // Add a button to go back to history if needed
           actions: [
+            // Consumer<TempCartProvider>(
+            //   builder: (context, tempCartProvider, _) {
+            //     final itemCount = tempCartProvider.tempCartItems.length;
+
+            //     return Container(
+            //       margin: const EdgeInsets.only(right: 8),
+            //       child: Stack(
+            //         alignment: Alignment.center,
+            //         children: [
+            //           Container(
+            //             decoration: BoxDecoration(
+            //               color: Theme.of(
+            //                 context,
+            //               ).primaryColor.withOpacity(0.1),
+            //               shape: BoxShape.circle,
+            //             ),
+            //             padding: const EdgeInsets.all(4),
+            //             child: IconButton(
+            //               icon: const Icon(
+            //                 Icons.shopping_cart,
+            //                 size: 26,
+            //                 color: Colors.orange,
+            //               ),
+            //               onPressed: () {
+            //                 // Hiển thị giỏ hàng tạm thời
+            //                 _showTempCart(context);
+            //               },
+            //               tooltip: 'Xem giỏ hàng gợi ý',
+            //             ),
+            //           ),
+            //           if (itemCount > 0)
+            //             Positioned(
+            //               top: 0,
+            //               right: 0,
+            //               child: Container(
+            //                 padding: const EdgeInsets.all(5),
+            //                 decoration: BoxDecoration(
+            //                   color: Colors.red,
+            //                   shape: BoxShape.circle,
+            //                   boxShadow: [
+            //                     BoxShadow(
+            //                       color: Colors.black.withOpacity(0.2),
+            //                       blurRadius: 3,
+            //                       offset: const Offset(0, 1),
+            //                     ),
+            //                   ],
+            //                 ),
+            //                 child: Text(
+            //                   itemCount.toString(),
+            //                   style: const TextStyle(
+            //                     color: Colors.white,
+            //                     fontWeight: FontWeight.bold,
+            //                     fontSize: 12,
+            //                   ),
+            //                 ),
+            //               ),
+            //             ),
+            //         ],
+            //       ),
+            //     );
+            //   },
+            // ),
             IconButton(
               icon: const Icon(Icons.history),
               onPressed: () {
@@ -115,24 +210,71 @@ class _EnhancedSkinAnalysisResultScreenState
               return _buildResultView(context, result);
             }
           },
-        ),
-        // Add a home button to allow navigation to home
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // Reset state and navigate to home
-            final viewModel = Provider.of<EnhancedSkinAnalysisViewModel>(
-              context,
-              listen: false,
-            );
+        ), // Add floating buttons for home and cart
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Cart button
+            Consumer<TempCartProvider>(
+              builder: (context, tempCartProvider, _) {
+                return FloatingActionButton(
+                  heroTag: 'cart_btn',
+                  backgroundColor: Colors.orange,
+                  onPressed: () {
+                    _showTempCart(context);
+                  },
+                  tooltip: 'Giỏ hàng gợi ý',
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(Icons.shopping_cart, color: Colors.white),
+                      if (tempCartProvider.tempCartItems.isNotEmpty)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              tempCartProvider.tempCartItems.length.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
 
-            // Now we can fully reset the state since we're going back to home
-            viewModel.resetAfterAnalysis();
+            // Home button
+            FloatingActionButton(
+              heroTag: 'home_btn',
+              onPressed: () {
+                // Reset state and navigate to home
+                final viewModel = Provider.of<EnhancedSkinAnalysisViewModel>(
+                  context,
+                  listen: false,
+                );
 
-            // Navigate to home screen
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
-          tooltip: 'Về trang chủ',
-          child: const Icon(Icons.home),
+                // Now we can fully reset the state since we're going back to home
+                viewModel.resetAfterAnalysis();
+
+                // Navigate to home screen
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              tooltip: 'Về trang chủ',
+              child: const Icon(Icons.home),
+            ),
+          ],
         ),
       ),
     );
@@ -182,9 +324,7 @@ class _EnhancedSkinAnalysisResultScreenState
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Analysis date
+            const SizedBox(height: 24), // Analysis date
             _buildInfoCard(
               context,
               child: Row(
@@ -207,6 +347,99 @@ class _EnhancedSkinAnalysisResultScreenState
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Prominently display cart button
+            Consumer<TempCartProvider>(
+              builder: (context, tempCartProvider, _) {
+                final itemCount = tempCartProvider.tempCartItems.length;
+                if (itemCount > 0) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Card(
+                      elevation: 3,
+                      color: Colors.orange.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Colors.orange.shade200,
+                          width: 1,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () => _showTempCart(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade100,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.shopping_cart,
+                                  color: Colors.orange,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Giỏ hàng gợi ý',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.orange.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Có $itemCount sản phẩm được đề xuất dựa trên kết quả phân tích',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Xem ngay',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+
             const SizedBox(height: 24),
 
             // Skin type
@@ -302,11 +535,22 @@ class _EnhancedSkinAnalysisResultScreenState
                 (step) => _buildRoutineStepCard(context, step),
               ),
               const SizedBox(height: 24),
-            ],
-
-            // Recommended products
+            ], // Recommended products
             if (result.recommendedProducts.isNotEmpty) ...[
               _buildSectionTitle(context, 'Sản Phẩm Đề Xuất'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    icon: const Icon(Icons.shopping_cart, size: 18),
+                    label: const Text('Xem giỏ hàng gợi ý'),
+                    onPressed: () => _showTempCart(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ],
+              ),
               ...result.recommendedProducts.map(
                 (product) => _buildProductCard(context, product),
               ),
@@ -398,7 +642,7 @@ class _EnhancedSkinAnalysisResultScreenState
         onTap: () {
           Navigator.pushNamed(
             context,
-            ProductDetailsScreen.routName,
+            EnhancedProductDetailsScreen.routeName,
             arguments: product.productId,
           );
         },
@@ -629,7 +873,7 @@ class _EnhancedSkinAnalysisResultScreenState
       onTap: () {
         Navigator.pushNamed(
           context,
-          ProductDetailsScreen.routName,
+          EnhancedProductDetailsScreen.routeName,
           arguments: product.productId,
         );
       },
@@ -692,6 +936,24 @@ class _EnhancedSkinAnalysisResultScreenState
           ],
         ),
       ),
+    );
+  }
+
+  // Hiển thị bottom sheet giỏ hàng tạm thời với hiệu ứng
+  void _showTempCart(BuildContext context) {
+    // Tạo hiệu ứng phản hồi xúc giác
+    HapticFeedback.mediumImpact();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: true,
+      builder:
+          (ctx) => SizedBox(
+            height: MediaQuery.of(context).size.height * 0.85,
+            child: const TempCartBottomSheet(),
+          ),
     );
   }
 
