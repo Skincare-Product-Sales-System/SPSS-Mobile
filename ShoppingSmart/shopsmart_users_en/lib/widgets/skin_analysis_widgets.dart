@@ -13,13 +13,13 @@ class SkinAnalysisFeatureCard extends StatelessWidget {
   final double elevation;
 
   const SkinAnalysisFeatureCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
     required this.onTap,
     this.elevation = 4,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -90,11 +90,11 @@ class SkinAnalysisFeatureItem extends StatelessWidget {
   final String description;
 
   const SkinAnalysisFeatureItem({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     required this.description,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,14 +150,14 @@ class SkinAnalysisHeroSection extends StatelessWidget {
   final bool showIcon;
 
   const SkinAnalysisHeroSection({
-    Key? key,
+    super.key,
     required this.iconData,
     required this.title,
     required this.description,
     required this.buttonText,
     required this.onButtonPressed,
     this.showIcon = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
