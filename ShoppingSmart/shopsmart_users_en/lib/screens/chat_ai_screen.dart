@@ -320,7 +320,7 @@ class _ProductCard extends StatelessWidget {
       onTap: () {
         Navigator.pushNamed(
           context,
-          ProductDetailsScreen.routName,
+          ProductDetailsScreen.routeName,
           arguments: product['id'],
         );
       },

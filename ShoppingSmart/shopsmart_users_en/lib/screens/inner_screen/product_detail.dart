@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'enhanced_product_detail.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
-  static const routName = '/ProductDetailsScreen';
+  static const routeName = '/ProductDetailsScreen';
   const ProductDetailsScreen({super.key});
 
   @override
