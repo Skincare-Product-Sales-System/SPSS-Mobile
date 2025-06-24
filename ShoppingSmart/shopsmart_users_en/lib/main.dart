@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
+import 'dart:async';
 import 'package:shopsmart_users_en/providers/enhanced_auth_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_cart_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_categories_view_model.dart';
@@ -53,6 +54,8 @@ import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
+import 'screens/checkout/vnpay_success_screen.dart';
+import 'screens/checkout/vnpay_failure_screen.dart';
 
 import 'consts/theme_data.dart';
 // Các providers đã được thay thế bằng MVVM providers mới
