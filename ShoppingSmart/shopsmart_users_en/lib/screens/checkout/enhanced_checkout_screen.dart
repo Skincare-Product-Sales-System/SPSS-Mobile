@@ -651,14 +651,12 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         Navigator.of(context).pop();
 
         if (orderResponse != null) {
-          // Kiểm tra xem phương thức thanh toán có phải VNPay không
+          // Lấy phương thức thanh toán đã chọn
           final selectedPaymentMethod = profileViewModel.paymentMethods
               .firstWhere((method) => method.id == _selectedPaymentMethodId);
-          // Kiểm tra loại phương thức thanh toán
-          final selectedPaymentMethod = profileViewModel.paymentMethods
-              .firstWhere((method) => method.id == _selectedPaymentMethodId);
-          
-          if (selectedPaymentMethod.paymentType.toUpperCase() == 'BANK') {
+          final paymentType = selectedPaymentMethod.paymentType.toUpperCase();
+
+          if (paymentType == 'BANK') {
             // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -667,29 +665,16 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                 ),
               ),
             );
-          } else {
-            // Nếu không phải BANK, chuyển đến màn hình đặt hàng thành công
-            Navigator.of(context).pushReplacementNamed(
-              EnhancedOrderSuccessScreen.routeName,
-              arguments: orderResponse.orderId,
-            );
-          }
-
-          // Debug log để kiểm tra payment type
-          print('DEBUG: Selected payment method: ${selectedPaymentMethod.paymentType}');
-          print('DEBUG: Is VNPay payment: ${VNPayService.isVNPayPayment(selectedPaymentMethod.paymentType)}');
-
-          if (VNPayService.isVNPayPayment(selectedPaymentMethod.paymentType)) {
-            print('DEBUG: Processing VNPay payment...');
+            // Xóa giỏ hàng sau khi đặt hàng thành công
+            await cartViewModel.clearCart();
+            return;
+          } else if (VNPayService.isVNPayPayment(paymentType)) {
             // Xử lý thanh toán VNPay
             final token = await JwtService.getStoredToken();
             final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
             final userId = userInfo?['id'] ?? '';
 
-            print('DEBUG: User ID: $userId');
-
             if (userId.isEmpty) {
-              print('DEBUG: User ID is empty');
               if (mounted) {
                 MyAppFunctions.showErrorOrWarningDialog(
                   context: context,
@@ -701,36 +686,24 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               return;
             }
 
-            // Process VNPay payment
-            print('DEBUG: Calling VNPayService.processVNPayPayment...');
             final vnpayResponse = await VNPayService.processVNPayPayment(
               orderId: orderResponse.orderId,
               userId: userId,
             );
 
-            print('DEBUG: VNPay response success: ${vnpayResponse.success}');
-            print('DEBUG: VNPay response message: ${vnpayResponse.message}');
-
             if (vnpayResponse.success) {
-              print('DEBUG: VNPay payment launched successfully');
               if (mounted) {
-                // Show a message that we are redirecting
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đang chuyển hướng đến VNPay...'),
                     backgroundColor: Colors.blue,
                   ),
                 );
-
-                // Clear cart after successful order creation
                 await cartViewModel.clearCart();
-
-                // DO NOT navigate here. The deep link handler will do it.
+                // Deep link handler sẽ xử lý chuyển hướng
               }
             } else {
-              print('DEBUG: VNPay payment failed');
               if (mounted) {
-                // Show an error dialog if payment initiation fails
                 MyAppFunctions.showErrorOrWarningDialog(
                   context: context,
                   subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
@@ -739,17 +712,23 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                 );
               }
             }
-          } else {
-            print('DEBUG: Non-VNPay payment method, proceeding with normal flow');
-            // Non-VNPay payment method - proceed with normal flow
-            // Xóa giỏ hàng sau khi đặt hàng thành công
+            return;
+          } else if (paymentType == 'COD') {
+            // Thanh toán khi nhận hàng (COD)
             await cartViewModel.clearCart();
-
-            // Chuyển đến màn hình đặt hàng thành công
             Navigator.of(context).pushReplacementNamed(
               EnhancedOrderSuccessScreen.routeName,
               arguments: orderResponse.orderId,
             );
+            return;
+          } else {
+            // Các phương thức khác: chuyển luôn sang màn hình thành công
+            await cartViewModel.clearCart();
+            Navigator.of(context).pushReplacementNamed(
+              EnhancedOrderSuccessScreen.routeName,
+              arguments: orderResponse.orderId,
+            );
+            return;
           }
         } else {
           // Hiển thị thông báo lỗi

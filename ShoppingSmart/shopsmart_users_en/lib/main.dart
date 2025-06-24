@@ -74,7 +74,7 @@ void main() async {
     await setupServiceLocator();
     debugPrint("Main: Service locator setup completed");
 
-  runApp(const MyApp());
+    runApp(const MyApp());
     debugPrint("Main: App started");
   } catch (e, stackTrace) {
     debugPrint("Main: Error during initialization: $e");

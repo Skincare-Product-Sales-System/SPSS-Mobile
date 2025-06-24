@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/enhanced_products_view_model.dart';
+import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
 
 class QuizProductCard extends StatelessWidget {
   final String? productId;
@@ -63,15 +64,14 @@ class QuizProductCard extends StatelessWidget {
 
   Widget _buildProductCard(BuildContext context, Map<String, dynamic> product) {
     return GestureDetector(
-      onTap:
-          () => Navigator.pushNamed(
-            context,
-            '/ProductDetailsScreen',
-            arguments: product['id'],
-          ),
+      onTap: () => Navigator.pushNamed(
+        context,
+        EnhancedProductDetailsScreen.routeName,
+        arguments: product['id'],
+      ),
       child: Container(
         width: 180,
-        height: 400, // Tăng chiều cao card để tránh tràn
+        height: 260, // Tăng chiều cao card để tránh tràn
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -84,7 +84,7 @@ class QuizProductCard extends StatelessWidget {
           children: [
             // Phần hình ảnh
             Container(
-              height: 130,
+              height: 100,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
@@ -98,12 +98,11 @@ class QuizProductCard extends StatelessWidget {
                       child: Image.network(
                         product['thumbnail'] ?? '',
                         fit: BoxFit.contain,
-                        errorBuilder:
-                            (_, __, ___) => Icon(
-                              Icons.image_not_supported,
-                              size: 40,
-                              color: Theme.of(context).disabledColor,
-                            ),
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: Theme.of(context).disabledColor,
+                        ),
                       ),
                     ),
                   ),
@@ -133,10 +132,10 @@ class QuizProductCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 10), // Tăng từ 8px lên 10px
+            const SizedBox(height: 8),
             // Phần tiêu đề sản phẩm
             SizedBox(
-              height: 42, // Tăng từ 40px lên 42px
+              height: 36,
               child: Text(
                 product['name'] ?? '',
                 maxLines: 2,
@@ -148,13 +147,12 @@ class QuizProductCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 6), // Tăng từ 4px lên 6px
+            const SizedBox(height: 4),
             // Phần mô tả sản phẩm
             Flexible(
               child: Text(
                 getPlainDescription(product),
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
@@ -162,8 +160,7 @@ class QuizProductCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            const Spacer(), // Đảm bảo nút luôn ở dưới cùng
+            const Spacer(),
             // Phần giá và nút
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -192,12 +189,11 @@ class QuizProductCard extends StatelessWidget {
                     side: BorderSide(color: Theme.of(context).primaryColor),
                     foregroundColor: Theme.of(context).primaryColor,
                   ),
-                  onPressed:
-                      () => Navigator.pushNamed(
-                        context,
-                        '/ProductDetailsScreen',
-                        arguments: product['id'],
-                      ),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    EnhancedProductDetailsScreen.routeName,
+                    arguments: product['id'],
+                  ),
                   child: const Text('Xem chi tiết'),
                 ),
               ],
