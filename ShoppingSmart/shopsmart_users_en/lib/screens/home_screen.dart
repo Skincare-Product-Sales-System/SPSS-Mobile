@@ -129,10 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: 4),
                           Text('• Đảm bảo máy chủ API đang chạy'),
                           Text(
-                            '• Kiểm tra xem http://localhost:5041/api/products hoạt động trong trình duyệt',
+                            '• Kiểm tra xem https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/products hoạt động trong trình duyệt',
                           ),
                           Text(
-                            '• Đối với máy ảo Android: API nên được truy cập tại 10.0.2.2:5041',
+                            '• Đối với máy ảo Android: API nên được truy cập tại https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net',
                           ),
                           Text(
                             '• Kiểm tra bảng điều khiển để biết nhật ký lỗi chi tiết',

@@ -919,13 +919,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             }
           } else {
             // Non-VNPay và non-BANK payment method - proceed with normal flow
-            if (mounted) {
-              // Chuyển hướng đến trang success
-              Navigator.pushReplacementNamed(context, '/order-success');
-              // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
-              Future.microtask(() {
-                cartProvider.clearLocalCart();
-              });
+        if (mounted) {
+          // Chuyển hướng đến trang success
+          Navigator.pushReplacementNamed(context, '/order-success');
+          // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+          Future.microtask(() {
+            cartProvider.clearLocalCart();
+          });
             }
           }
         }

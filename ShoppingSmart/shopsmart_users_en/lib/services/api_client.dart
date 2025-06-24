@@ -29,7 +29,7 @@ class ApiClient {
   /// Constructor với dependency injection
   ApiClient({
     this.baseUrl =
-        'https://api.example.com', // Default base URL, should be replaced with actual API URL
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api', // Default base URL, production
     http.Client? httpClient,
     Duration? timeout,
     Future<bool> Function()? isTokenValid,

@@ -6,7 +6,7 @@ import 'dart:developer' as developer;
 
 /// Repository xử lý các tác vụ liên quan đến quiz
 class QuizRepository {
-  final String _baseUrl = 'http://10.0.2.2:5041/api';
+  final String _baseUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
 
   /// Lấy danh sách bộ câu hỏi quiz
   Future<ApiResponse<List<Map<String, dynamic>>>> getQuizSets({

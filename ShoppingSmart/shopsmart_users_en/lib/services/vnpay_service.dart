@@ -5,9 +5,9 @@ import '../models/api_response_model.dart';
 import 'jwt_service.dart';
 
 class VNPayService {
-  static const String baseUrl = 'http://10.0.2.2:5041';
-  static const String apiUrl = 'http://localhost:5041';
-  static const String nGrokUrl = 'https://2796-118-69-182-144.ngrok-free.app';
+  static const String baseUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
+  static const String apiUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
+  static const String nGrokUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
 
   static const Duration timeout = Duration(seconds: 30);
 
