@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
-import 'dart:async';
 import 'package:shopsmart_users_en/providers/enhanced_auth_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_cart_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_categories_view_model.dart';
@@ -54,8 +53,6 @@ import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
-import 'screens/checkout/vnpay_success_screen.dart';
-import 'screens/checkout/vnpay_failure_screen.dart';
 
 import 'consts/theme_data.dart';
 // Các providers đã được thay thế bằng MVVM providers mới
@@ -386,9 +383,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return sl<EnhancedQuizViewModel>();
           },
         ),
-        ChangeNotifierProvider(
-          create: (_) => TempCartProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => TempCartProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -453,6 +448,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const EnhancedOrdersScreen(),
               EnhancedOrderSuccessScreen.routeName:
                   (context) => const EnhancedOrderSuccessScreen(),
+              // Removed EnhancedOrderDetailScreen route since we're using direct navigation
 
               // Skin analysis screens
               // SkinAnalysisIntroScreen.routeName:
@@ -519,13 +515,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               //     builder: (context) => OrderDetailScreen(orderId: orderId),
               //   );
               // } // Sử dụng Enhanced thay thế
-              if (settings.name == EnhancedOrderDetailScreen.routeName) {
-                final orderId = settings.arguments as String;
-                return MaterialPageRoute(
-                  builder:
-                      (context) => EnhancedOrderDetailScreen(orderId: orderId),
-                );
-              }
               if (settings.name == EnhancedReviewsScreen.routeName) {
                 final args = settings.arguments as Map<String, dynamic>;
                 return MaterialPageRoute(

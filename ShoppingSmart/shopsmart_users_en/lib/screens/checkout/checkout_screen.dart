@@ -16,7 +16,7 @@ import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
-import '../../models/order_models.dart';
+import '../../models/order_models.dart' as order_models;
 import '../../widgets/app_name_text.dart';
 import '../payment/bank_payment_screen.dart';
 
@@ -907,9 +907,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BankPaymentScreen(
-                    order: response.data!,
-                  ),
+                  builder:
+                      (context) => BankPaymentScreen(order: response.data!),
                 ),
               );
               // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
@@ -919,13 +918,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             }
           } else {
             // Non-VNPay và non-BANK payment method - proceed with normal flow
-        if (mounted) {
-          // Chuyển hướng đến trang success
-          Navigator.pushReplacementNamed(context, '/order-success');
-          // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
-          Future.microtask(() {
-            cartProvider.clearLocalCart();
-          });
+            if (mounted) {
+              // Chuyển hướng đến trang success
+              Navigator.pushReplacementNamed(context, '/order-success');
+              // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+              Future.microtask(() {
+                cartProvider.clearLocalCart();
+              });
             }
           }
         }

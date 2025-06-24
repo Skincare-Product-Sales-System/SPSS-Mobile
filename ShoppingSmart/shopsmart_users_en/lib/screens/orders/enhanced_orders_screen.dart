@@ -325,9 +325,12 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          Navigator.of(
-            context,
-          ).pushNamed(EnhancedOrderDetailScreen.routeName, arguments: order.id);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder:
+                  (context) => EnhancedOrderDetailScreen(orderId: order.id),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -464,9 +467,12 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        EnhancedOrderDetailScreen.routeName,
-                        arguments: order.id,
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  EnhancedOrderDetailScreen(orderId: order.id),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
