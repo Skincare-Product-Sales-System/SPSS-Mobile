@@ -23,7 +23,7 @@ class TransactionSignalRService {
   String? userId;
 
   // Url đến SignalR hub
-  final String hubUrl = 'http://10.0.2.2:5041/transactionhub';
+  final String hubUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/transactionhub';
 
   // Kết nối đến hub
   Future<bool> connect() async {

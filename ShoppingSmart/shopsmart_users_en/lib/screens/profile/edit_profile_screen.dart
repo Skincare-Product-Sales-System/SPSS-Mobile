@@ -36,7 +36,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:5041/api/accounts'),
+      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/accounts'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -90,7 +90,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'phoneNumber': _controllers['phoneNumber']!.text,
     };
     final res = await http.patch(
-      Uri.parse('http://10.0.2.2:5041/api/accounts'),
+      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/accounts'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

@@ -5,6 +5,7 @@ import '../providers/quiz_state.dart';
 import '../services/service_locator.dart';
 import '../widgets/products/quiz_product_card.dart';
 import '../screens/mvvm_screen_template.dart';
+import '../models/view_state.dart';
 
 class EnhancedQuizQuestionScreen extends StatefulWidget {
   static const routeName = '/enhanced-quiz-question';
@@ -246,7 +247,15 @@ class _EnhancedQuizQuestionScreenState
     BuildContext context,
     EnhancedQuizViewModel viewModel,
   ) {
-    if (viewModel.quizResult == null) {
+    // Nếu đang loading thì show loading
+    if (viewModel.state.quizResult.status == ViewStateStatus.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Nếu có lỗi hoặc không có data thì mới báo lỗi
+    if (viewModel.state.quizResult.hasError ||
+        viewModel.quizResult == null ||
+        viewModel.quizResult!.isEmpty) {
       return const Center(child: Text('Không lấy được kết quả.'));
     }
 

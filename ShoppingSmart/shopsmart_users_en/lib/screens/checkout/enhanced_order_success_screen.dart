@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../providers/enhanced_order_view_model.dart';
 import '../../providers/order_state.dart';
-import '../orders/enhanced_orders_screen.dart';
+import '../orders/orders_screen.dart';
 import '../mvvm_screen_template.dart';
 
 class EnhancedOrderSuccessScreen extends StatefulWidget {
@@ -97,9 +97,8 @@ class _EnhancedOrderSuccessScreenState
             // View orders button
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(
-                  context,
-                  EnhancedOrdersScreen.routeName,
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => OrdersScreen.withProvider()),
                 );
               },
               style: ElevatedButton.styleFrom(

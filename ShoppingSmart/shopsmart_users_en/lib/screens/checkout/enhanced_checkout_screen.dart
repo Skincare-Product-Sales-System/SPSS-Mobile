@@ -10,6 +10,9 @@ import '../../models/voucher_model.dart';
 import '../../models/payment_method_model.dart';
 import '../../widgets/title_text.dart';
 import '../../services/currency_formatter.dart';
+import '../../services/vnpay_service.dart';
+import '../../services/jwt_service.dart';
+import '../../services/my_app_function.dart';
 import '../../screens/auth/enhanced_login.dart';
 import '../profile/enhanced_address_screen.dart';
 import '../payment/bank_payment_screen.dart';
@@ -648,11 +651,12 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         Navigator.of(context).pop();
 
         if (orderResponse != null) {
-          // Kiểm tra loại phương thức thanh toán
+          // Lấy phương thức thanh toán đã chọn
           final selectedPaymentMethod = profileViewModel.paymentMethods
               .firstWhere((method) => method.id == _selectedPaymentMethodId);
-          
-          if (selectedPaymentMethod.paymentType.toUpperCase() == 'BANK') {
+          final paymentType = selectedPaymentMethod.paymentType.toUpperCase();
+
+          if (paymentType == 'BANK') {
             // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -661,16 +665,71 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                 ),
               ),
             );
-          } else {
-            // Nếu không phải BANK, chuyển đến màn hình đặt hàng thành công
+            // Xóa giỏ hàng sau khi đặt hàng thành công
+            await cartViewModel.clearCart();
+            return;
+          } else if (VNPayService.isVNPayPayment(paymentType)) {
+            // Xử lý thanh toán VNPay
+            final token = await JwtService.getStoredToken();
+            final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
+            final userId = userInfo?['id'] ?? '';
+
+            if (userId.isEmpty) {
+              if (mounted) {
+                MyAppFunctions.showErrorOrWarningDialog(
+                  context: context,
+                  subtitle: 'Không thể xác định thông tin người dùng',
+                  isError: true,
+                  fct: () {},
+                );
+              }
+              return;
+            }
+
+            final vnpayResponse = await VNPayService.processVNPayPayment(
+              orderId: orderResponse.orderId,
+              userId: userId,
+            );
+
+            if (vnpayResponse.success) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đang chuyển hướng đến VNPay...'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+                await cartViewModel.clearCart();
+                // Deep link handler sẽ xử lý chuyển hướng
+              }
+            } else {
+              if (mounted) {
+                MyAppFunctions.showErrorOrWarningDialog(
+                  context: context,
+                  subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
+                  isError: true,
+                  fct: () {},
+                );
+              }
+            }
+            return;
+          } else if (paymentType == 'COD') {
+            // Thanh toán khi nhận hàng (COD)
+            await cartViewModel.clearCart();
             Navigator.of(context).pushReplacementNamed(
               EnhancedOrderSuccessScreen.routeName,
               arguments: orderResponse.orderId,
             );
+            return;
+          } else {
+            // Các phương thức khác: chuyển luôn sang màn hình thành công
+            await cartViewModel.clearCart();
+            Navigator.of(context).pushReplacementNamed(
+              EnhancedOrderSuccessScreen.routeName,
+              arguments: orderResponse.orderId,
+            );
+            return;
           }
-
-          // Xóa giỏ hàng sau khi đã chuyển màn hình (không đợi hoàn thành)
-          cartViewModel.clearCart();
         } else {
           // Hiển thị thông báo lỗi
           ScaffoldMessenger.of(context).showSnackBar(

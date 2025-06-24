@@ -17,6 +17,13 @@ class OrdersScreen extends StatefulWidget {
 
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
+
+  static Widget withProvider() {
+    return ChangeNotifierProvider(
+      create: (_) => OrderProvider(),
+      child: const OrdersScreen(),
+    );
+  }
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {

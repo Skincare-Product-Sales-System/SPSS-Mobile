@@ -21,7 +21,7 @@ import 'package:flutter/foundation.dart';
 class ApiService {
   // Use different base URLs for different platforms
   static String get baseUrl {
-    return 'http://10.0.2.2:5041/api';
+    return 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
   }
 
   static const Duration timeout = Duration(seconds: 30);

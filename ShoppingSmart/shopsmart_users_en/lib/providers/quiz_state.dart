@@ -26,6 +26,9 @@ class QuizState {
   /// Trạng thái hoàn thành quiz
   final bool isDone;
 
+  /// ID của bộ câu hỏi hiện tại
+  final String quizSetId;
+
   /// Constructor với giá trị mặc định
   const QuizState({
     this.quizSets = const ViewState<List<Map<String, dynamic>>>(),
@@ -36,6 +39,7 @@ class QuizState {
     this.selectedOptionIds = const [],
     this.totalScore = 0,
     this.isDone = false,
+    this.quizSetId = '',
   });
 
   /// Tạo một bản sao của state với một số thuộc tính được thay đổi
@@ -48,6 +52,7 @@ class QuizState {
     List<String?>? selectedOptionIds,
     int? totalScore,
     bool? isDone,
+    String? quizSetId,
   }) {
     return QuizState(
       quizSets: quizSets ?? this.quizSets,
@@ -58,6 +63,7 @@ class QuizState {
       selectedOptionIds: selectedOptionIds ?? this.selectedOptionIds,
       totalScore: totalScore ?? this.totalScore,
       isDone: isDone ?? this.isDone,
+      quizSetId: quizSetId ?? this.quizSetId,
     );
   }
 }

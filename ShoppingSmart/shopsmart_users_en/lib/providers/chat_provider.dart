@@ -230,7 +230,7 @@ class ChatProvider with ChangeNotifier {
       // Create multipart request
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://10.0.2.2:5041/api/images'),
+        Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/images'),
       );
 
       // Add file to request
