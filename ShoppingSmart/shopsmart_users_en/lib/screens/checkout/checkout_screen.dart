@@ -16,6 +16,9 @@ import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
+import '../../models/order_models.dart';
+import '../../widgets/app_name_text.dart';
+import '../payment/bank_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -897,14 +900,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             }
           }
         } else {
-          // Non-VNPay payment method - proceed with normal flow
-          if (mounted) {
-            // Chuyển hướng đến trang success
-            Navigator.pushReplacementNamed(context, '/order-success');
-            // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
-            Future.microtask(() {
-              cartProvider.clearLocalCart();
-            });
+          // Non-VNPay payment method - check if it's BANK payment
+          if (_selectedPaymentMethod!.paymentType.toUpperCase() == 'BANK') {
+            // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BankPaymentScreen(
+                    order: response.data!,
+                  ),
+                ),
+              );
+              // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+              Future.microtask(() {
+                cartProvider.clearLocalCart();
+              });
+            }
+          } else {
+            // Non-VNPay và non-BANK payment method - proceed with normal flow
+            if (mounted) {
+              // Chuyển hướng đến trang success
+              Navigator.pushReplacementNamed(context, '/order-success');
+              // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild
+              Future.microtask(() {
+                cartProvider.clearLocalCart();
+              });
+            }
           }
         }
       } else {
