@@ -7,6 +7,7 @@ import '../../providers/enhanced_products_view_model.dart';
 import '../../providers/enhanced_profile_view_model.dart';
 import '../../providers/enhanced_order_view_model.dart';
 import '../../models/voucher_model.dart';
+import '../../models/payment_method_model.dart';
 import '../../widgets/title_text.dart';
 import '../../services/currency_formatter.dart';
 import '../../services/vnpay_service.dart';
@@ -14,6 +15,7 @@ import '../../services/jwt_service.dart';
 import '../../services/my_app_function.dart';
 import '../../screens/auth/enhanced_login.dart';
 import '../profile/enhanced_address_screen.dart';
+import '../payment/bank_payment_screen.dart';
 import 'enhanced_order_success_screen.dart';
 
 class EnhancedCheckoutScreen extends StatefulWidget {
@@ -652,6 +654,26 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
           // Kiểm tra xem phương thức thanh toán có phải VNPay không
           final selectedPaymentMethod = profileViewModel.paymentMethods
               .firstWhere((method) => method.id == _selectedPaymentMethodId);
+          // Kiểm tra loại phương thức thanh toán
+          final selectedPaymentMethod = profileViewModel.paymentMethods
+              .firstWhere((method) => method.id == _selectedPaymentMethodId);
+          
+          if (selectedPaymentMethod.paymentType.toUpperCase() == 'BANK') {
+            // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => BankPaymentScreen(
+                  order: orderResponse,
+                ),
+              ),
+            );
+          } else {
+            // Nếu không phải BANK, chuyển đến màn hình đặt hàng thành công
+            Navigator.of(context).pushReplacementNamed(
+              EnhancedOrderSuccessScreen.routeName,
+              arguments: orderResponse.orderId,
+            );
+          }
 
           // Debug log để kiểm tra payment type
           print('DEBUG: Selected payment method: ${selectedPaymentMethod.paymentType}');
