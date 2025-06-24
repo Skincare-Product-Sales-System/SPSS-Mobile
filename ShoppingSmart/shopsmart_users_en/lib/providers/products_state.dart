@@ -10,6 +10,8 @@ class ProductsState {
   final ViewState<DetailedProductModel?> detailedProduct;
   final ViewState<List<ReviewModel>> productReviews;
   final String? selectedCategoryId;
+  final String? selectedBrandId;
+  final String? selectedSkinTypeId;
   final String? sortOption;
   final String? searchQuery;
   final bool isSearching;
@@ -26,6 +28,8 @@ class ProductsState {
     this.detailedProduct = const ViewState<DetailedProductModel?>(),
     this.productReviews = const ViewState<List<ReviewModel>>(),
     this.selectedCategoryId,
+    this.selectedBrandId,
+    this.selectedSkinTypeId,
     this.sortOption,
     this.searchQuery,
     this.isSearching = false,
@@ -44,6 +48,8 @@ class ProductsState {
     ViewState<DetailedProductModel?>? detailedProduct,
     ViewState<List<ReviewModel>>? productReviews,
     String? selectedCategoryId,
+    String? selectedBrandId,
+    String? selectedSkinTypeId,
     String? sortOption,
     String? searchQuery,
     bool? isSearching,
@@ -60,6 +66,8 @@ class ProductsState {
       detailedProduct: detailedProduct ?? this.detailedProduct,
       productReviews: productReviews ?? this.productReviews,
       selectedCategoryId: selectedCategoryId ?? this.selectedCategoryId,
+      selectedBrandId: selectedBrandId ?? this.selectedBrandId,
+      selectedSkinTypeId: selectedSkinTypeId ?? this.selectedSkinTypeId,
       sortOption: sortOption ?? this.sortOption,
       searchQuery: searchQuery ?? this.searchQuery,
       isSearching: isSearching ?? this.isSearching,

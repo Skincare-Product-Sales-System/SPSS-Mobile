@@ -46,6 +46,9 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
       listen: false,
     );
 
+    // Cập nhật trạng thái đăng nhập và tải dữ liệu người dùng
+    await profileViewModel.initialize();
+
     if (!profileViewModel.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacementNamed(
@@ -640,9 +643,9 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         };
 
         // Gọi API tạo đơn hàng thông qua EnhancedOrderViewModel
-        final orderResponse = await orderViewModel.createOrder(orderData);
-
-        // Đóng dialog loading
+        final orderResponse = await orderViewModel.createOrder(
+          orderData,
+        ); // Đóng dialog loading
         Navigator.of(context).pop();
 
         if (orderResponse != null) {

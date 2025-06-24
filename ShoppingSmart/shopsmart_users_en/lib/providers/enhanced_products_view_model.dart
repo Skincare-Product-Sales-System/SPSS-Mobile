@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/detailed_product_model.dart';
 import '../models/product_model.dart';
 import '../models/review_models.dart';
@@ -39,6 +40,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
   bool get hasMoreData => state.hasMoreData;
   String? get currentSearchQuery => state.searchQuery;
   int? get selectedRatingFilter => state.selectedRatingFilter;
+  String? get selectedBrandId => state.selectedBrandId;
+  String? get selectedSkinTypeId => state.selectedSkinTypeId;
 
   /// Get product by ID for QuizProductCard
   Future<Map<String, dynamic>?> getProductById(String productId) async {
@@ -71,13 +74,20 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
   }
 
   /// Load initial products
-  Future<void> loadProducts({bool refresh = false, String? sortBy}) async {
+  Future<void> loadProducts({
+    bool refresh = false,
+    String? sortBy,
+    String? brandId,
+    String? skinTypeId,
+  }) async {
     if (refresh) {
       updateState(
         state.copyWith(
           products: ViewState.loading(),
           currentPage: 1,
           hasMoreData: true,
+          selectedBrandId: brandId,
+          selectedSkinTypeId: skinTypeId,
         ),
       );
     } else {
@@ -93,6 +103,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
         pageNumber: refresh ? 1 : state.currentPage,
         pageSize: state.pageSize,
         sortBy: sortBy,
+        brandId: brandId ?? state.selectedBrandId,
+        skinTypeId: skinTypeId ?? state.selectedSkinTypeId,
       );
 
       if (response.success && response.data != null) {
@@ -143,6 +155,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
     required String categoryId,
     bool refresh = false,
     String? sortBy,
+    String? brandId,
+    String? skinTypeId,
   }) async {
     if (refresh) {
       updateState(
@@ -151,6 +165,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
           currentPage: 1,
           hasMoreData: true,
           selectedCategoryId: categoryId,
+          selectedBrandId: brandId,
+          selectedSkinTypeId: skinTypeId,
         ),
       );
     } else {
@@ -167,6 +183,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
         pageNumber: refresh ? 1 : state.currentPage,
         pageSize: state.pageSize,
         sortBy: sortBy,
+        brandId: brandId ?? state.selectedBrandId,
+        skinTypeId: skinTypeId ?? state.selectedSkinTypeId,
       );
 
       if (response.success && response.data != null) {
@@ -301,6 +319,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
   Future<void> searchProducts({
     required String searchText,
     String? sortBy,
+    String? brandId,
+    String? skinTypeId,
     int pageNumber = 1,
     int pageSize = 10,
     bool refresh = false,
@@ -311,7 +331,12 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
     // Nếu searchText rỗng, load lại danh sách sản phẩm
     if (searchText.trim().isEmpty) {
       updateState(state.copyWith(searchQuery: null));
-      return loadProducts(sortBy: sortBy, refresh: true);
+      return loadProducts(
+        sortBy: sortBy,
+        brandId: brandId,
+        skinTypeId: skinTypeId,
+        refresh: true,
+      );
     }
 
     // Cập nhật trạng thái tìm kiếm
@@ -319,6 +344,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
       state.copyWith(
         isSearching: true,
         searchQuery: searchText,
+        selectedBrandId: brandId,
+        selectedSkinTypeId: skinTypeId,
         searchResults: refresh ? ViewState.loading() : state.searchResults,
       ),
     );
@@ -328,6 +355,8 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
       final response = await _productRepository.searchProducts(
         searchText: searchText,
         sortBy: sortBy,
+        brandId: brandId,
+        skinTypeId: skinTypeId,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );
@@ -532,5 +561,51 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
       );
       return false;
     }
+  }
+
+  /// Reset trạng thái tìm kiếm về mặc định
+  void resetSearch() {
+    // Đảm bảo xóa triệt để searchQuery và kết quả tìm kiếm
+    updateState(
+      state.copyWith(
+        isSearching: false,
+        searchQuery: null,
+        searchResults: ViewState.loaded([]),
+        // Ensure search results are fully reset but keep other filters
+        // selected in the UI
+      ),
+    );
+
+    // Double check if the searchQuery is actually null
+    if (state.searchQuery != null) {
+      // Force another update to ensure searchQuery is null
+      updateState(
+        ProductsState(
+          // Preserve other state properties
+          products: state.products,
+          detailedProduct: state.detailedProduct,
+          productReviews: state.productReviews,
+          selectedCategoryId: state.selectedCategoryId,
+          selectedBrandId: state.selectedBrandId,
+          selectedSkinTypeId: state.selectedSkinTypeId,
+          sortOption: state.sortOption,
+          currentPage: state.currentPage,
+          pageSize: state.pageSize,
+          totalPages: state.totalPages,
+          totalCount: state.totalCount,
+          hasMoreData: state.hasMoreData,
+          selectedRatingFilter: state.selectedRatingFilter,
+          // Explicitly set search properties to initial values
+          searchQuery: null,
+          searchResults: ViewState.loaded([]),
+          isSearching: false,
+        ),
+      );
+    }
+
+    // Log để debug
+    debugPrint(
+      "EnhancedProductsViewModel: Search state has been reset completely. currentSearchQuery=${state.searchQuery}",
+    );
   }
 }

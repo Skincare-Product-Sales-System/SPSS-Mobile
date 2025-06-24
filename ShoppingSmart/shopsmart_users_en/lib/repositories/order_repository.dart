@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:shopsmart_users_en/models/api_response_model.dart';
 import 'package:shopsmart_users_en/models/order_models.dart';
 import 'package:shopsmart_users_en/services/api_service.dart';
@@ -53,8 +54,57 @@ class OrderRepository {
     );
   }
 
-  // Validate a voucher by code
+  // Upload image for product review
+  Future<ApiResponse<String>> uploadReviewImage(File imageFile) async {
+    final requestUrl = '${ApiService.baseUrl}/images';
+    return ApiService.uploadImageWithUrl(imageFile, requestUrl, 'files');
+  }
+
+  // Delete review image
+  Future<ApiResponse<bool>> deleteReviewImage(String imageUrl) async {
+    final requestUrl = '${ApiService.baseUrl}/images';
+    return ApiService.deleteImageWithQuery(imageUrl, requestUrl);
+  }
+
+  // Create product review
+  Future<ApiResponse<bool>> createProductReview({
+    required String productItemId,
+    required int rating,
+    required String comment,
+    required List<String> reviewImages,
+  }) async {
+    final requestUrl = '${ApiService.baseUrl}/reviews';
+    return ApiService.createReview(
+      productItemId: productItemId,
+      rating: rating,
+      comment: comment,
+      reviewImages: reviewImages,
+      url: requestUrl,
+    );
+  }
+
+  // Validate a voucher code
   Future<ApiResponse<VoucherModel>> validateVoucher(String voucherCode) async {
-    return ApiService.validateVoucher(voucherCode);
+    // Implement this method to validate a voucher with the API
+    // For now, we'll return a mock response
+    final now = DateTime.now();
+    return ApiResponse<VoucherModel>(
+      success: true,
+      message: 'Voucher validated successfully',
+      data: VoucherModel(
+        id: 'mock-id',
+        code: voucherCode,
+        description: 'Mock voucher for testing',
+        status: 'active',
+        discountRate: 0.1, // 10% discount
+        usageLimit: 1,
+        minimumOrderValue: 0,
+        startDate: now,
+        endDate: now.add(const Duration(days: 7)),
+        createdBy: 'system',
+        createdTime: now,
+        isDeleted: false,
+      ),
+    );
   }
 }

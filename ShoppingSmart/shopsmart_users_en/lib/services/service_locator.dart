@@ -23,6 +23,8 @@ import '../providers/enhanced_chat_view_model.dart';
 import '../providers/enhanced_home_view_model.dart';
 import '../providers/enhanced_profile_view_model.dart';
 import '../providers/enhanced_auth_view_model.dart';
+import '../providers/enhanced_brands_view_model.dart';
+import '../providers/enhanced_skin_types_view_model.dart';
 import 'api_client.dart';
 import 'api_service.dart';
 import 'app_logger.dart';
@@ -32,6 +34,10 @@ import 'error_handling_service.dart';
 import 'jwt_service.dart';
 import 'navigation_service.dart';
 import 'transaction_signalr_service.dart';
+import '../repositories/brand_repository.dart';
+import '../repositories/skin_type_repository.dart';
+import '../repositories/review_repository.dart';
+import '../providers/enhanced_user_reviews_view_model.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -45,9 +51,9 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => AuthService());
   sl.registerLazySingleton(() => ChatService());
   sl.registerLazySingleton(() => JwtService());
+  sl.registerLazySingleton(() => AppLogger());
   sl.registerLazySingleton(() => TransactionSignalRService());
   sl.registerLazySingleton(() => NavigationService());
-  sl.registerLazySingleton(() => AppLogger());
   sl.registerLazySingleton<ErrorHandlingService>(
     () => ErrorHandlingService(navigationService: sl<NavigationService>()),
   );
@@ -68,6 +74,9 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => UserRepository());
   sl.registerLazySingleton(() => ViewedProductsRepository());
   sl.registerLazySingleton(() => WishlistRepository());
+  sl.registerLazySingleton<BrandRepository>(() => BrandRepository());
+  sl.registerLazySingleton<SkinTypeRepository>(() => SkinTypeRepository());
+  sl.registerLazySingleton(() => ReviewRepository());
 
   // ViewModels - Factory (tạo mới mỗi khi yêu cầu)
   sl.registerFactory(
@@ -120,5 +129,20 @@ Future<void> setupServiceLocator() async {
 
   sl.registerFactory(
     () => EnhancedAuthViewModel(authRepository: sl<AuthRepository>()),
+  );
+
+  sl.registerFactory<EnhancedBrandsViewModel>(
+    () => EnhancedBrandsViewModel(brandRepository: sl<BrandRepository>()),
+  );
+
+  sl.registerFactory<EnhancedSkinTypesViewModel>(
+    () => EnhancedSkinTypesViewModel(
+      skinTypeRepository: sl<SkinTypeRepository>(),
+    ),
+  );
+
+  // Add the UserReviews ViewModel
+  sl.registerFactory(
+    () => EnhancedUserReviewsViewModel(reviewRepository: sl<ReviewRepository>()),
   );
 }

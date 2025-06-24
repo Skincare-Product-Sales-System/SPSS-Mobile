@@ -7,11 +7,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/order_models.dart';
 import '../../providers/order_provider.dart';
 import '../../services/currency_formatter.dart';
-import '../../widgets/title_text.dart';
 import '../../services/vnpay_service.dart';
 import '../../services/my_app_function.dart';
-import '../checkout/vnpay_success_screen.dart';
-import '../checkout/vnpay_failure_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   static const routeName = '/order-detail';
@@ -841,7 +838,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               orderDetail.status.toLowerCase() == 'confirmed';
 
           // Kiểm tra xem đơn hàng có thể thanh toán lại với VNPay không
-          final bool canRetryPayment = 
+          final bool canRetryPayment =
               orderDetail.status.toLowerCase() == 'awaiting payment' &&
               VNPayService.isVNPayPayment(orderDetail.paymentMethodId);
 
@@ -857,7 +854,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   _buildProductsCard(),
                   _buildShippingAddressCard(),
                   _buildOrderTimelineCard(),
-                  if (canRetryPayment) _buildRetryPaymentButton(orderDetail.id, orderDetail.discountedOrderTotal),
+                  if (canRetryPayment)
+                    _buildRetryPaymentButton(
+                      orderDetail.id,
+                      orderDetail.discountedOrderTotal,
+                    ),
                   if (canCancel) _buildCancelOrderButton(orderDetail.id),
                   const SizedBox(height: 24),
                 ],
@@ -1007,29 +1008,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Dialog(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Đang khởi tạo thanh toán VNPay...'),
-            ],
+      builder:
+          (context) => const Dialog(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Đang khởi tạo thanh toán VNPay...'),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
 
     try {
       // Process VNPay payment for existing order
-      final vnpayResponse = await VNPayService.processVNPayPaymentForExistingOrder(
-        orderId: orderId,
-      );
+      final vnpayResponse =
+          await VNPayService.processVNPayPaymentForExistingOrder(
+            orderId: orderId,
+          );
 
       // Đóng dialog loading
-      if(mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop();
 
       if (vnpayResponse.success) {
         // Show success message
@@ -1047,7 +1050,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         if (mounted) {
           MyAppFunctions.showErrorOrWarningDialog(
             context: context,
-            subtitle: vnpayResponse.message ?? 'Có lỗi xảy ra khi khởi tạo thanh toán VNPay.',
+            subtitle:
+                vnpayResponse.message ??
+                'Có lỗi xảy ra khi khởi tạo thanh toán VNPay.',
             isError: true,
             fct: () {},
           );
@@ -1059,7 +1064,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (mounted) {
         MyAppFunctions.showErrorOrWarningDialog(
           context: context,
-          subtitle: 'Có lỗi xảy ra khi khởi tạo thanh toán VNPay: ${error.toString()}',
+          subtitle:
+              'Có lỗi xảy ra khi khởi tạo thanh toán VNPay: ${error.toString()}',
           isError: true,
           fct: () {},
         );

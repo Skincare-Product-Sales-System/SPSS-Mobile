@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'dart:io';
 
 import '../consts/app_colors.dart';
 import '../models/chat_message.dart' as model;

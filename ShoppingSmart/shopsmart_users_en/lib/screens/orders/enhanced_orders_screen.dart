@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/order_models.dart';
 import '../../providers/enhanced_order_view_model.dart';
-import '../../providers/order_state.dart';
+// Removed unused import
 import '../../services/jwt_service.dart';
 import '../../services/navigation_service.dart';
 import '../../services/service_locator.dart';
 import '../../widgets/title_text.dart';
 import '../../screens/auth/login.dart';
 import '../../screens/orders/enhanced_order_detail_screen.dart';
-import '../mvvm_screen_template.dart';
+// Removed unused import
 
 class EnhancedOrdersScreen extends StatefulWidget {
   static const routeName = '/enhanced-orders';
@@ -106,23 +107,70 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return MvvmScreenTemplate<EnhancedOrderViewModel, OrderState>(
-      title: 'Đơn hàng của tôi',
-      buildAppBar: (context, viewModel) => _buildAppBar(context),
-      buildContent: (context, viewModel) => _buildContent(context, viewModel),
-      isLoading: (viewModel) => viewModel.isLoading && viewModel.orders.isEmpty,
-      isEmpty: (viewModel) => !viewModel.isLoading && viewModel.orders.isEmpty,
-      getErrorMessage:
-          (viewModel) =>
-              viewModel.state.orders.hasError
-                  ? viewModel.state.orders.message
-                  : null,
-      onRefresh:
-          (viewModel) => viewModel.loadOrders(
-            refresh: true,
-            status: _selectedStatus == 'Tất cả' ? null : _selectedStatus,
+    // Use custom scaffold instead of MvvmScreenTemplate to have more control
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, _) {
+        return Scaffold(
+          appBar: _buildAppBar(context),
+          body: RefreshIndicator(
+            onRefresh:
+                () => viewModel.loadOrders(
+                  refresh: true,
+                  status: _selectedStatus == 'Tất cả' ? null : _selectedStatus,
+                ),
+            child: Column(
+              children: [
+                // Filter row is always visible
+                _buildStatusFilterRow(context, viewModel),
+                const SizedBox(height: 10),
+
+                // Content area
+                Expanded(
+                  child:
+                      viewModel.isLoading && viewModel.orders.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : viewModel.state.orders.hasError
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 60,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  viewModel.state.orders.message ??
+                                      'Đã xảy ra lỗi',
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed:
+                                      () => viewModel.loadOrders(
+                                        refresh: true,
+                                        status:
+                                            _selectedStatus == 'Tất cả'
+                                                ? null
+                                                : _selectedStatus,
+                                      ),
+                                  child: const Text('Thử lại'),
+                                ),
+                              ],
+                            ),
+                          )
+                          : viewModel.orders.isEmpty
+                          ? _selectedStatus == 'Tất cả'
+                              ? _buildEmptyState()
+                              : _buildEmptyFilterResult(context)
+                          : _buildOrdersList(context, viewModel),
+                ),
+              ],
+            ),
           ),
-      buildEmpty: (context, viewModel) => _buildEmptyState(),
+        );
+      },
     );
   }
 
@@ -138,25 +186,7 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
         icon: const Icon(IconlyLight.arrow_left_2, size: 24),
       ),
     );
-  }
-
-  Widget _buildContent(BuildContext context, EnhancedOrderViewModel viewModel) {
-    return Column(
-      children: [
-        // Status filter row
-        _buildStatusFilterRow(context, viewModel),
-        const SizedBox(height: 10),
-
-        // Orders list
-        Expanded(
-          child:
-              viewModel.orders.isEmpty && !viewModel.isLoading
-                  ? _buildEmptyFilterResult(context)
-                  : _buildOrdersList(context, viewModel),
-        ),
-      ],
-    );
-  }
+  } // Content is now built directly in the build method
 
   Widget _buildStatusFilterRow(
     BuildContext context,
@@ -197,10 +227,21 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
                         setState(() {
                           _selectedStatus = status;
                         });
-                        viewModel.loadOrders(
-                          refresh: true,
-                          status: status == 'Tất cả' ? null : status,
-                        );
+                        viewModel
+                            .loadOrders(
+                              refresh: true,
+                              status: status == 'Tất cả' ? null : status,
+                            )
+                            .then((_) {
+                              // Scroll to the top when filter is changed
+                              if (_scrollController.hasClients) {
+                                _scrollController.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            });
                       }
                     },
                     backgroundColor: Colors.grey.shade200,
@@ -529,5 +570,5 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
         ],
       ),
     );
-  }
+  } // Empty with filters is now built directly in the build method
 }

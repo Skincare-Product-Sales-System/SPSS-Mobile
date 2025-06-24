@@ -261,7 +261,7 @@ class MessageItem extends StatelessWidget {
         onTap: () {
           Navigator.of(
             context,
-          ).pushNamed(ProductDetailsScreen.routName, arguments: productId);
+          ).pushNamed(ProductDetailsScreen.routeName, arguments: productId);
         },
         child: Card(
           shape: RoundedRectangleBorder(

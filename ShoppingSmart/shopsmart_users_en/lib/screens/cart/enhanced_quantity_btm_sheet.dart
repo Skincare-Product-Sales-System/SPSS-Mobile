@@ -33,11 +33,14 @@ class EnhancedQuantityBottomSheetWidget extends StatelessWidget {
             itemBuilder: (context, index) {
               return InkWell(
                 onTap: () {
-                  viewModel.updateQuantity(
-                    productItemId: cartModel.productItemId,
-                    quantity: index + 1,
-                  );
-                  Navigator.pop(context);
+                  // Use post-frame callback to avoid setState during build
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    viewModel.updateQuantity(
+                      productItemId: cartModel.productItemId,
+                      quantity: index + 1,
+                    );
+                    Navigator.pop(context);
+                  });
                 },
                 child: Center(
                   child: Padding(

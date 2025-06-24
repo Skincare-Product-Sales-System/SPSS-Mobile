@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../providers/enhanced_cart_view_model.dart';
 import '../../services/currency_formatter.dart';
 import '../checkout/enhanced_checkout_screen.dart';
@@ -20,135 +21,152 @@ class _EnhancedCartBottomSheetWidgetState
     extends State<EnhancedCartBottomSheetWidget> {
   @override
   Widget build(BuildContext context) {
-    final totalAmount = widget.viewModel.totalAmount;
-    final totalItems = widget.viewModel.totalQuantity;
-    final totalProducts = widget.viewModel.cartItems.length;
+    // Use Consumer to rebuild only this part when cart changes
+    return Consumer<EnhancedCartViewModel>(
+      builder: (context, viewModel, _) {
+        final totalAmount = viewModel.totalAmount;
+        final totalItems = viewModel.totalQuantity;
+        final totalProducts = viewModel.cartItems.length;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.25,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(
-            width: 1,
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Order Summary
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context).primaryColor.withOpacity(0.2),
-                ),
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.25,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border(
+              top: BorderSide(
+                width: 1,
+                color: Theme.of(context).dividerColor.withOpacity(0.3),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Order Summary
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).primaryColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Tổng sản phẩm',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tổng sản phẩm',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                              Text(
+                                '$totalProducts sản phẩm / $totalItems mặt hàng',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '$totalProducts sản phẩm / $totalItems mặt hàng',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Tổng tiền',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                            ),
-                          ),
-                          Text(
-                            CurrencyFormatter.formatVND(totalAmount),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Tổng tiền',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.formatVND(totalAmount),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
+                ),
+                const SizedBox(height: 12),
 
-            // Checkout Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed:
-                    totalAmount > 0
-                        ? () {
-                          _handleCheckout(context);
-                        }
-                        : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                // Checkout Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed:
+                        totalAmount > 0
+                            ? () {
+                              // Use post-frame callback to avoid setState during build
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _handleCheckout(context);
+                              });
+                            }
+                            : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                      disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                    ),
+                    icon: const Icon(Icons.shopping_cart_checkout, size: 20),
+                    label: Text(
+                      totalAmount > 0
+                          ? 'Thanh toán • ${CurrencyFormatter.formatVND(totalAmount)}'
+                          : 'Giỏ hàng trống',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  elevation: 2,
-                  disabledBackgroundColor: Colors.grey.withOpacity(0.3),
                 ),
-                icon: const Icon(Icons.shopping_cart_checkout, size: 20),
-                label: Text(
-                  totalAmount > 0
-                      ? 'Thanh toán • ${CurrencyFormatter.formatVND(totalAmount)}'
-                      : 'Giỏ hàng trống',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

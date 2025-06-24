@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:provider/provider.dart';
+
+import '../../widgets/product_review_modal.dart';
+import '../../screens/inner_screen/enhanced_product_detail.dart';
 
 import '../../models/order_models.dart';
 import '../../providers/enhanced_order_view_model.dart';
@@ -490,72 +494,93 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
   }
 
   Widget _buildOrderItemCard(BuildContext context, OrderDetail item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: item.productImage,
-                fit: BoxFit.cover,
-                placeholder:
-                    (context, url) => Container(
-                      color: Colors.grey[300],
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                errorWidget:
-                    (context, url, error) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
-                    ),
+    return InkWell(
+      onTap: () {
+        // Navigate to product details screen when tapped
+        Navigator.of(context).pushNamed(
+          EnhancedProductDetailsScreen.routeName,
+          arguments: item.productId,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: item.productImage,
+                  fit: BoxFit.cover,
+                  placeholder:
+                      (context, url) => Container(
+                        color: Colors.grey[300],
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                  errorWidget:
+                      (context, url, error) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                    ],
                   ),
-                ),
-                if (item.variationOptionValues.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    item.variationOptionValues.join(", "),
-                    style: TextStyle(color: Colors.grey[600]),
+                  if (item.variationOptionValues.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      item.variationOptionValues.join(", "),
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        CurrencyFormatter.formatVND(item.price),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text('SL: ${item.quantity}'),
+                    ],
                   ),
                 ],
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      CurrencyFormatter.formatVND(item.price),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('SL: ${item.quantity}'),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -567,8 +592,12 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
   ) {
     // Hiển thị nút hủy đơn hàng chỉ khi đơn hàng đang ở trạng thái có thể hủy
     final canCancel = _canCancelOrder(orderDetail.status);
+    // Có thể đánh giá nếu đơn hàng đã giao VÀ có ít nhất một sản phẩm có thể đánh giá
+    final canReview =
+        orderDetail.status.toLowerCase() == 'delivered' &&
+        orderDetail.orderDetails.any((item) => item.isReviewable);
 
-    if (!canCancel) return const SizedBox.shrink();
+    if (!canCancel && !canReview) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -597,25 +626,49 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed:
-                    () => _confirmCancelOrder(context, orderDetail, viewModel),
-                child: const Text(
-                  'Hủy đơn hàng',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            if (canCancel)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed:
+                      () =>
+                          _confirmCancelOrder(context, orderDetail, viewModel),
+                  child: const Text(
+                    'Hủy đơn hàng',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
-            ),
+            if (canReview) ...[
+              if (canCancel) const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed:
+                      () => _navigateToReviewProducts(context, orderDetail),
+                  child: const Text(
+                    'Đánh giá sản phẩm',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -667,6 +720,190 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
         }
       }
     }
+  }
+
+  void _navigateToReviewProducts(
+    BuildContext context,
+    OrderDetailModel orderDetail,
+  ) {
+    // Lấy bản sao của orderDetail để có thể cập nhật trạng thái ngay lập tức
+    final orderDetails = List<OrderDetail>.from(orderDetail.orderDetails);
+
+    // Đảm bảo xóa hết state review trước khi mở modal
+    final viewModel = Provider.of<EnhancedOrderViewModel>(
+      context,
+      listen: false,
+    );
+    viewModel.cleanupReviewImages();
+
+    // Hiển thị dialog cho người dùng chọn sản phẩm để đánh giá
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Chọn sản phẩm để đánh giá',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: orderDetails.length,
+                        itemBuilder: (context, index) {
+                          final item = orderDetails[index];
+                          return ListTile(
+                            enabled: item.isReviewable,
+                            onTap:
+                                item.isReviewable
+                                    ? () {
+                                      Navigator.of(context).pop();
+                                      // Đánh giá sản phẩm
+                                      ProductReviewModal.show(
+                                        context,
+                                        item.productItemId,
+                                        item.productName,
+                                        item.productImage,
+                                        orderId: orderId,
+                                      ).then((_) {
+                                        // Cập nhật trạng thái UI ngay lập tức
+                                        if (context.mounted) {
+                                          // Cập nhật trạng thái UI ngay lập tức
+                                          setState(() {
+                                            // Tìm và cập nhật sản phẩm đã đánh giá
+                                            final productIndex = orderDetails
+                                                .indexWhere(
+                                                  (p) =>
+                                                      p.productItemId ==
+                                                      item.productItemId,
+                                                );
+                                            if (productIndex >= 0) {
+                                              orderDetails[productIndex] =
+                                                  orderDetails[productIndex]
+                                                      .copyWith(
+                                                        isReviewable: false,
+                                                      );
+                                            }
+                                          });
+
+                                          // Hiển thị lại modal nếu còn sản phẩm có thể đánh giá
+                                          if (orderDetails.any(
+                                            (item) => item.isReviewable,
+                                          )) {
+                                            _navigateToReviewProducts(
+                                              context,
+                                              orderDetail,
+                                            );
+                                          }
+                                        }
+                                      });
+                                    }
+                                    : null,
+                            leading: Stack(
+                              children: [
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CachedNetworkImage(
+                                      imageUrl: item.productImage,
+                                      fit: BoxFit.cover,
+                                      placeholder:
+                                          (context, url) => Container(
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          ),
+                                      errorWidget:
+                                          (context, url, error) => Container(
+                                            color: Colors.grey[300],
+                                            child: const Icon(Icons.error),
+                                          ),
+                                      color:
+                                          item.isReviewable
+                                              ? null
+                                              : Colors.grey,
+                                      colorBlendMode:
+                                          item.isReviewable
+                                              ? null
+                                              : BlendMode.saturation,
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () {
+                                        // Navigate to product details when image is tapped
+                                        Navigator.of(context).pop();
+                                        Navigator.of(context).pushNamed(
+                                          EnhancedProductDetailsScreen
+                                              .routeName,
+                                          arguments: item.productId,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            title: Text(
+                              item.productName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: item.isReviewable ? null : Colors.grey,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (item.variationOptionValues.isNotEmpty)
+                                  Text(
+                                    item.variationOptionValues.join(", "),
+                                    style: TextStyle(
+                                      color:
+                                          item.isReviewable
+                                              ? null
+                                              : Colors.grey,
+                                    ),
+                                  ),
+                                if (!item.isReviewable)
+                                  const Text(
+                                    'Bạn đã đánh giá sản phẩm này',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+          ),
+    );
   }
 
   Widget _buildSummaryRow(
@@ -764,6 +1001,7 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     final vietnamTime = dateTime.add(const Duration(hours: 7));
     return DateFormat('HH:mm').format(vietnamTime);
   }
+  // Method removed as it's not used
 
   bool _canCancelOrder(String status) {
     final lowerStatus = status.toLowerCase();

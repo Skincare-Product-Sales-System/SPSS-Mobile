@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
@@ -14,15 +15,17 @@ import 'package:shopsmart_users_en/providers/enhanced_quiz_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_skin_analysis_view_model.dart';
 import 'package:shopsmart_users_en/providers/enhanced_viewed_products_provider.dart';
 import 'package:shopsmart_users_en/providers/enhanced_wishlist_view_model.dart';
+import 'package:shopsmart_users_en/providers/enhanced_brands_view_model.dart';
+import 'package:shopsmart_users_en/providers/enhanced_skin_types_view_model.dart';
+import 'package:shopsmart_users_en/providers/temp_cart_provider.dart';
 import 'package:shopsmart_users_en/providers/theme_provider.dart';
 import 'package:shopsmart_users_en/root_screen.dart';
 import 'package:shopsmart_users_en/screens/auth/enhanced_login.dart';
-import 'package:shopsmart_users_en/screens/enhanced_search_screen.dart';
+import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_all_products_screen.dart';
-import 'package:shopsmart_users_en/screens/enhanced_quiz_screen.dart';
 import 'package:shopsmart_users_en/screens/enhanced_quiz_question_screen.dart';
 import 'package:shopsmart_users_en/screens/orders/enhanced_orders_screen.dart';
-import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_intro_screen.dart';
+import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_hub_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_camera_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_result_screen.dart';
 import 'package:shopsmart_users_en/screens/skin_analysis/enhanced_skin_analysis_history_screen.dart';
@@ -36,6 +39,7 @@ import 'package:shopsmart_users_en/services/jwt_service.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_wishlist.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_reviews_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_product_detail.dart';
+import 'package:shopsmart_users_en/screens/user_reviews_screen.dart';
 import 'screens/profile/enhanced_edit_profile_screen.dart';
 import 'screens/profile/enhanced_address_screen.dart';
 import 'screens/checkout/enhanced_checkout_screen.dart';
@@ -45,6 +49,8 @@ import 'package:shopsmart_users_en/screens/inner_screen/enhanced_offers_screen.d
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_blog_detail.dart';
 import 'package:shopsmart_users_en/screens/checkout/enhanced_order_success_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_success_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
@@ -60,16 +66,55 @@ import 'consts/theme_data.dart';
 void main() async {
   // Đảm bảo Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint("Main: Flutter binding initialized");
 
-  // Khởi tạo Service Locator
-  await setupServiceLocator();
+  try {
+    // Khởi tạo Service Locator
+    debugPrint("Main: Setting up service locator");
+    await setupServiceLocator();
+    debugPrint("Main: Service locator setup completed");
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+    debugPrint("Main: App started");
+  } catch (e, stackTrace) {
+    debugPrint("Main: Error during initialization: $e");
+    debugPrint(stackTrace.toString());
+    // Create a minimal app that displays the error
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Initialization Error",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    e.toString(),
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
-
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -99,7 +144,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     try {
       final initialUri = await _appLinks.getInitialAppLink();
       if (!mounted) return;
-      if (initialUri != null && initialUri.scheme == 'spss' && initialUri.host == 'vnpay-return') {
+      if (initialUri != null &&
+          initialUri.scheme == 'spss' &&
+          initialUri.host == 'vnpay-return') {
         handleVnPayDeepLink(initialUri);
       }
     } catch (e) {
@@ -133,10 +180,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       } else {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => VNPayFailureScreen(
-              orderId: orderId,
-              errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
-            ),
+            builder:
+                (context) => VNPayFailureScreen(
+                  orderId: orderId,
+                  errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
+                ),
           ),
           (route) => false,
         );
@@ -184,22 +232,59 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("MyApp: Building with providers");
     return MultiProvider(
       providers: [
+        // Ensure providers are created in the correct order
         ChangeNotifierProvider(
           create: (_) {
+            debugPrint("MyApp: Creating ThemeProvider");
             return ThemeProvider();
           },
         ),
-        // Đã thay thế bằng EnhancedProductsViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return ProductsProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
-            return sl<EnhancedProductsViewModel>();
+            debugPrint("MyApp: Creating EnhancedBrandsViewModel");
+            try {
+              final provider = sl<EnhancedBrandsViewModel>();
+              debugPrint("MyApp: EnhancedBrandsViewModel created successfully");
+              return provider;
+            } catch (e) {
+              debugPrint("MyApp: Error creating EnhancedBrandsViewModel: $e");
+              rethrow;
+            }
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            debugPrint("MyApp: Creating EnhancedSkinTypesViewModel");
+            try {
+              final provider = sl<EnhancedSkinTypesViewModel>();
+              debugPrint(
+                "MyApp: EnhancedSkinTypesViewModel created successfully",
+              );
+              return provider;
+            } catch (e) {
+              debugPrint(
+                "MyApp: Error creating EnhancedSkinTypesViewModel: $e",
+              );
+              rethrow;
+            }
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            debugPrint("MyApp: Creating EnhancedProductsViewModel");
+            try {
+              final provider = sl<EnhancedProductsViewModel>();
+              debugPrint(
+                "MyApp: EnhancedProductsViewModel created successfully",
+              );
+              return provider;
+            } catch (e) {
+              debugPrint("MyApp: Error creating EnhancedProductsViewModel: $e");
+              rethrow;
+            }
           },
         ),
         // Đã thay thế bằng EnhancedCategoriesViewModel
@@ -301,6 +386,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return sl<EnhancedQuizViewModel>();
           },
         ),
+        ChangeNotifierProvider(
+          create: (_) => TempCartProvider(),
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -331,8 +419,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const EnhancedChatScreen(),
 
               // Product screens
-              // ProductDetailsScreen.routName:
-              //     (context) => const ProductDetailsScreen(), // Sử dụng Enhanced thay thế
+              // ProductDetailsScreen.routName:              //     (context) => const ProductDetailsScreen(), // Sử dụng Enhanced thay thế
               EnhancedProductDetailsScreen.routeName:
                   (context) => const EnhancedProductDetailsScreen(),
               // ViewedRecentlyScreen.routName:
@@ -343,14 +430,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               //     (context) => const AllProductsScreen(), // Sử dụng Enhanced thay thế
               EnhancedAllProductsScreen.routeName:
                   (context) => const EnhancedAllProductsScreen(),
-              // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng Enhanced thay thế
-              EnhancedSearchScreen.routeName:
-                  (context) => const EnhancedSearchScreen(),
-
-              // Quiz screens
+              // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng SimpleSearchScreen thay thế
+              SimpleSearchScreen.routeName:
+                  (context) => const SimpleSearchScreen(), // Quiz screens
               // QuizScreen.routeName: (context) => const QuizScreen(), // Sử dụng Enhanced thay thế
-              EnhancedQuizScreen.routeName:
-                  (context) => const EnhancedQuizScreen(),
+              EnhancedSkinAnalysisHubScreen.routeName:
+                  (context) => const EnhancedSkinAnalysisHubScreen(),
 
               // Blog screens
               // BlogDetailsScreen.routeName:
@@ -377,11 +462,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               // SkinAnalysisHistoryScreen.routeName:
               //     (context) => const SkinAnalysisHistoryScreen(), // Sử dụng Enhanced thay thế
               // SkinAnalysisPaymentScreen.routeName:
-              //     (context) => const SkinAnalysisPaymentScreen(), // Sử dụng Enhanced thay thế
-
-              // Enhanced skin analysis screens
-              EnhancedSkinAnalysisIntroScreen.routeName:
-                  (context) => const EnhancedSkinAnalysisIntroScreen(),
+              //     (context) => const SkinAnalysisPaymentScreen(), // Sử dụng Enhanced thay thế              // Enhanced skin analysis screens
               EnhancedSkinAnalysisCameraScreen.routeName:
                   (context) => const EnhancedSkinAnalysisCameraScreen(),
               EnhancedSkinAnalysisHistoryScreen.routeName:
@@ -413,6 +494,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (ctx) => const EnhancedAddressScreen(),
               EnhancedCheckoutScreen.routeName:
                   (ctx) => const EnhancedCheckoutScreen(),
+              EnhancedUserReviewsScreen.routeName:
+                  (ctx) => const EnhancedUserReviewsScreen(),
               // EnhancedQuizQuestionScreen is handled in onGenerateRoute because it requires parameters
             },
             // Xử lý các route đặc biệt cần tham số
