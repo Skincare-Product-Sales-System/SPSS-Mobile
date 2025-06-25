@@ -7,7 +7,7 @@ import '../checkout/enhanced_order_success_screen.dart';
 class BankPaymentScreen extends StatefulWidget {
   final OrderResponse order;
 
-  const BankPaymentScreen({Key? key, required this.order}) : super(key: key);
+  const BankPaymentScreen({super.key, required this.order});
 
   @override
   State<BankPaymentScreen> createState() => _BankPaymentScreenState();
@@ -41,7 +41,8 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
       final description = Uri.encodeComponent(widget.order.orderId);
       final accountName = Uri.encodeComponent('DANG HO TUAN CUONG');
 
-      final qrUrl = 'https://img.vietqr.io/image/$bankId-$accountNo-$template.png?amount=$amount&addInfo=$description&accountName=$accountName';
+      final qrUrl =
+          'https://img.vietqr.io/image/$bankId-$accountNo-$template.png?amount=$amount&addInfo=$description&accountName=$accountName';
 
       setState(() {
         qrImageUrl = qrUrl;
@@ -122,7 +123,9 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
                           Expanded(
                             child: Text(
                               widget.order.orderId,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                               textAlign: TextAlign.right,
                               softWrap: true,
                               overflow: TextOverflow.visible,
@@ -137,20 +140,25 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
                         children: [
                           const Text('Trạng thái:'),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: widget.order.status == 'Awaiting payment' 
-                                  ? Colors.orange.withOpacity(0.2)
-                                  : Colors.grey.withOpacity(0.2),
+                              color:
+                                  widget.order.status == 'Awaiting payment'
+                                      ? Colors.orange.withOpacity(0.2)
+                                      : Colors.grey.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               widget.order.status,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: widget.order.status == 'Awaiting payment' 
-                                    ? Colors.orange[700]
-                                    : Colors.grey[700],
+                                color:
+                                    widget.order.status == 'Awaiting payment'
+                                        ? Colors.orange[700]
+                                        : Colors.grey[700],
                               ),
                             ),
                           ),
@@ -196,15 +204,17 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
                     children: [
                       Text(
                         'Thông tin thanh toán',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
                       _buildInfoRow('Ngân hàng:', 'MB Bank'),
                       _buildInfoRow('Số tài khoản:', '0352314340'),
                       _buildInfoRow('Tên tài khoản:', 'DANG HO TUAN CUONG'),
-                      _buildInfoRow('Số tiền:', '${widget.order.totalAmount.toStringAsFixed(0)} VNĐ'),
+                      _buildInfoRow(
+                        'Số tiền:',
+                        '${widget.order.totalAmount.toStringAsFixed(0)} VNĐ',
+                      ),
                       _buildInfoRow('Nội dung:', widget.order.orderId),
                     ],
                   ),
@@ -219,9 +229,8 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
                     children: [
                       Text(
                         'Quét mã QR để thanh toán',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       if (isLoading)
@@ -303,10 +312,7 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
                       const Text(
                         'Vui lòng mở ứng dụng ngân hàng và quét mã QR để thanh toán',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -340,15 +346,9 @@ class _BankPaymentScreenState extends State<BankPaymentScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
-} 
+}

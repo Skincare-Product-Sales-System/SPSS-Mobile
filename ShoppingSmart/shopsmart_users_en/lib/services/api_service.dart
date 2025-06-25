@@ -2635,4 +2635,76 @@ class ApiService {
       );
     }
   }
+
+  // Get voucher by code
+  static Future<ApiResponse<VoucherModel>> getVoucherByCode(
+    String voucherCode,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<VoucherModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/voucher/code/$voucherCode');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => VoucherModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Voucher không hợp lệ',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: 'Failed to get voucher',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
 }

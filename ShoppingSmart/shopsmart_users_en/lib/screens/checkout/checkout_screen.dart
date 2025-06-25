@@ -16,8 +16,6 @@ import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
-import '../../models/order_models.dart' as order_models;
-import '../../widgets/app_name_text.dart';
 import '../payment/bank_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {

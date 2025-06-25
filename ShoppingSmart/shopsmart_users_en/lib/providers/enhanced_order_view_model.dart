@@ -503,6 +503,74 @@ class EnhancedOrderViewModel extends BaseViewModel<OrderState> {
     return lowerStatus == 'delivered';
   }
 
+  // Lấy voucher theo mã
+  Future<bool> getVoucherByCode(
+    String voucherCode, {
+    double? cartAmount,
+  }) async {
+    try {
+      print(
+        'EnhancedOrderViewModel.getVoucherByCode: Fetching voucher with code: $voucherCode',
+      );
+      final response = await _orderRepository.getVoucherByCode(voucherCode);
+      print(
+        'EnhancedOrderViewModel.getVoucherByCode: API Response success: ${response.success}',
+      );
+
+      if (response.success && response.data != null) {
+        final voucher = response.data;
+        print(
+          'EnhancedOrderViewModel.getVoucherByCode: Voucher data: ${voucher?.toJson()}',
+        );
+        print(
+          'EnhancedOrderViewModel.getVoucherByCode: Voucher minimumOrderValue: ${voucher?.minimumOrderValue}',
+        );
+        print(
+          'EnhancedOrderViewModel.getVoucherByCode: Voucher isValid: ${voucher?.isValid}',
+        );
+
+        // Validate voucher against cart amount
+        if (cartAmount != null && voucher != null) {
+          String? validationError = voucher.getValidationError(cartAmount);
+          if (validationError != null) {
+            // Voucher is not valid for this order
+            print(
+              'EnhancedOrderViewModel.getVoucherByCode: Validation error: $validationError',
+            );
+            updateState(state.copyWith(creatingOrderError: validationError));
+            return false;
+          }
+        }
+
+        // Voucher is valid, save it to state
+        updateState(
+          state.copyWith(selectedVoucher: voucher, creatingOrderError: null),
+        );
+        return true;
+      } else {
+        // Cập nhật lỗi khi voucher không hợp lệ
+        print(
+          'EnhancedOrderViewModel.getVoucherByCode: Invalid voucher, message: ${response.message}',
+        );
+        updateState(
+          state.copyWith(
+            creatingOrderError: response.message ?? 'Mã giảm giá không hợp lệ',
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      print('EnhancedOrderViewModel.getVoucherByCode: Error: ${e.toString()}');
+      handleError(e, source: 'getVoucherByCode');
+      updateState(
+        state.copyWith(
+          creatingOrderError: 'Lỗi khi kiểm tra mã giảm giá: ${e.toString()}',
+        ),
+      );
+      return false;
+    }
+  }
+
   @override
   void handleError(
     dynamic error, {

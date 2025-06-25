@@ -7,7 +7,6 @@ import '../../providers/enhanced_products_view_model.dart';
 import '../../providers/enhanced_profile_view_model.dart';
 import '../../providers/enhanced_order_view_model.dart';
 import '../../models/voucher_model.dart';
-import '../../models/payment_method_model.dart';
 import '../../widgets/title_text.dart';
 import '../../services/currency_formatter.dart';
 import '../../services/vnpay_service.dart';
@@ -34,6 +33,8 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
   String? _selectedVoucherId;
   VoucherModel? _selectedVoucher;
   final _notesController = TextEditingController();
+  final TextEditingController _voucherController = TextEditingController();
+  bool _isApplyingVoucher = false;
 
   @override
   void initState() {
@@ -88,6 +89,7 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
 
   @override
   void dispose() {
+    _voucherController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -210,10 +212,14 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                       _buildAddressSection(),
                       _buildSectionTitle('Phương thức thanh toán'),
                       _buildPaymentMethodSection(),
+                      _buildSectionTitle('Mã giảm giá'),
+                      _buildVoucherSection(),
                       _buildSectionTitle('Thông tin đơn hàng'),
                       _buildOrderSummary(cartViewModel),
                       _buildSectionTitle('Ghi chú'),
                       _buildNotesSection(),
+                      // _buildSectionTitle('Voucher'),
+                      // _buildVoucherSection(),
                       const SizedBox(height: 120), // Space for bottom button
                     ],
                   ),
@@ -371,8 +377,15 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
     final cartItems = cartViewModel.cartItems;
     final totalAmount = cartViewModel.totalAmount;
 
-    final discount = _selectedVoucher?.discountAmount ?? 0.0;
-    final finalAmount = totalAmount - discount;
+    // Use helper method to calculate discount and final amount
+    final amounts = _calculateOrderAmounts(totalAmount);
+    final discount = amounts['discount']!;
+    final finalAmount = amounts['finalAmount']!;
+
+    // Debug print
+    print(
+      '_buildOrderSummary: totalAmount=$totalAmount, discount=$discount, finalAmount=$finalAmount',
+    );
 
     return Card(
       elevation: 0.5,
@@ -525,10 +538,187 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
     );
   }
 
+  Widget _buildVoucherSection() {
+    final orderViewModel = Provider.of<EnhancedOrderViewModel>(
+      context,
+      listen: false,
+    );
+
+    return Card(
+      elevation: 0.5,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nếu đã có voucher được áp dụng, hiển thị thông tin
+            if (_selectedVoucher != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Đã áp dụng mã: ${_selectedVoucher!.code}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            _selectedVoucher!.name,
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (_selectedVoucher!.discountType == 'Percentage')
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Giảm ${_selectedVoucher!.discountRate}% ${_selectedVoucher!.maxDiscount != null ? "(Tối đa ${CurrencyFormatter.format(_selectedVoucher!.maxDiscount!)} đ)" : ""}',
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Builder(
+                                  builder: (context) {
+                                    final cartViewModel =
+                                        Provider.of<EnhancedCartViewModel>(
+                                          context,
+                                        );
+                                    final totalAmount =
+                                        cartViewModel.totalAmount;
+                                    final discount = _selectedVoucher!
+                                        .calculateDiscount(totalAmount);
+                                    return Text(
+                                      '= ${CurrencyFormatter.format(discount)} đ',
+                                      style: const TextStyle(
+                                        color: Colors.green,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            )
+                          else
+                            Text(
+                              'Giảm ${CurrencyFormatter.format(_selectedVoucher!.discountRate)} đ',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 13,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () {
+                        setState(() {
+                          _selectedVoucher = null;
+                          _selectedVoucherId = null;
+                          _voucherController.clear();
+                        });
+                        orderViewModel.clearSelectedVoucher();
+
+                        // Force rebuild to update totals
+                        setState(() {});
+
+                        // Show message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã xóa mã giảm giá'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _voucherController,
+                      decoration: InputDecoration(
+                        hintText: 'Nhập mã giảm giá',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        errorText: orderViewModel.creatingOrderError,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _isApplyingVoucher ? null : _applyVoucher,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child:
+                        _isApplyingVoucher
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : const Text('Áp dụng'),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomCheckout(EnhancedCartViewModel cartViewModel) {
     final totalAmount = cartViewModel.totalAmount;
-    final discount = _selectedVoucher?.discountAmount ?? 0.0;
-    final finalAmount = totalAmount - discount;
+
+    // Use helper method to calculate discount and final amount
+    final amounts = _calculateOrderAmounts(totalAmount);
+    final discount = amounts['discount']!;
+    final finalAmount = amounts['finalAmount']!;
+
+    // Debug print
+    print(
+      '_buildBottomCheckout: totalAmount=$totalAmount, discount=$discount, finalAmount=$finalAmount',
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -578,6 +768,111 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         ],
       ),
     );
+  }
+
+  // Phương thức kiểm tra và áp dụng voucher
+  Future<void> _applyVoucher() async {
+    final voucherCode = _voucherController.text.trim();
+    if (voucherCode.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isApplyingVoucher = true;
+    });
+
+    try {
+      final orderViewModel = Provider.of<EnhancedOrderViewModel>(
+        context,
+        listen: false,
+      );
+
+      // Get cart total amount
+      final cartViewModel = Provider.of<EnhancedCartViewModel>(
+        context,
+        listen: false,
+      );
+      final totalAmount = cartViewModel.totalAmount;
+
+      // Gọi API để kiểm tra voucher và validate với giá trị đơn hàng
+      final response = await orderViewModel.getVoucherByCode(
+        voucherCode,
+        cartAmount: totalAmount, // Pass cart amount for validation
+      );
+
+      if (response) {
+        // Voucher hợp lệ, lấy thông tin và áp dụng
+        setState(() {
+          _selectedVoucher = orderViewModel.selectedVoucher;
+          _selectedVoucherId = _selectedVoucher?.id;
+          _isApplyingVoucher = false;
+        });
+
+        // Debug: Print discount calculation information
+        print('Applied voucher: ${_selectedVoucher?.code}');
+        print(
+          'Voucher details: status=${_selectedVoucher?.status}, isActive=${_selectedVoucher?.isActive}',
+        );
+        print(
+          'Voucher dates: startDate=${_selectedVoucher?.startDate}, endDate=${_selectedVoucher?.endDate}',
+        );
+        print(
+          'Voucher minimumOrderValue=${_selectedVoucher?.minimumOrderValue}',
+        );
+        print(
+          'Voucher discountRate=${_selectedVoucher?.discountRate}, discountType=${_selectedVoucher?.discountType}',
+        );
+        print('Total amount: $totalAmount');
+
+        // Use a different variable name to avoid conflict
+        double cartTotalAmount =
+            Provider.of<EnhancedCartViewModel>(
+              context,
+              listen: false,
+            ).totalAmount;
+        double discount =
+            _selectedVoucher?.calculateDiscount(cartTotalAmount) ?? 0;
+        print('Calculated discount: $discount');
+        print('Final amount: ${cartTotalAmount - discount}');
+
+        // Force rebuild of the entire widget tree to update all price displays
+        setState(() {});
+
+        // Hiển thị thông báo thành công
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Áp dụng mã giảm giá thành công'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        setState(() {
+          _isApplyingVoucher = false;
+        });
+
+        // Hiển thị thông báo lỗi
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              orderViewModel.creatingOrderError ?? 'Mã giảm giá không hợp lệ',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isApplyingVoucher = false;
+      });
+
+      // Hiển thị thông báo lỗi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xảy ra lỗi: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _placeOrder() async {
@@ -660,9 +955,7 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
             // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => BankPaymentScreen(
-                  order: orderResponse,
-                ),
+                builder: (context) => BankPaymentScreen(order: orderResponse),
               ),
             );
             // Xóa giỏ hàng sau khi đặt hàng thành công
@@ -671,7 +964,8 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
           } else if (VNPayService.isVNPayPayment(paymentType)) {
             // Xử lý thanh toán VNPay
             final token = await JwtService.getStoredToken();
-            final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
+            final userInfo =
+                token != null ? JwtService.getUserFromToken(token) : null;
             final userId = userInfo?['id'] ?? '';
 
             if (userId.isEmpty) {
@@ -706,7 +1000,9 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               if (mounted) {
                 MyAppFunctions.showErrorOrWarningDialog(
                   context: context,
-                  subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
+                  subtitle:
+                      vnpayResponse.message ??
+                      'Không thể khởi tạo thanh toán VNPay.',
                   isError: true,
                   fct: () {},
                 );
@@ -755,5 +1051,22 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         );
       }
     }
+  }
+
+  // Helper method to calculate discount and final amount
+  Map<String, double> _calculateOrderAmounts(double totalAmount) {
+    double discount = 0.0;
+    if (_selectedVoucher != null) {
+      // Calculate discount using the voucher model
+      discount = _selectedVoucher!.calculateDiscount(totalAmount);
+
+      // Debug print
+      print(
+        '_calculateOrderAmounts: totalAmount=$totalAmount, discount=$discount',
+      );
+    }
+    final finalAmount = totalAmount - discount;
+
+    return {'discount': discount, 'finalAmount': finalAmount};
   }
 }

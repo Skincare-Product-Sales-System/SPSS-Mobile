@@ -913,42 +913,42 @@ class _EnhancedProductDetailsScreenState
               ),
             ),
           ),
-          const SizedBox(width: 12), // Nút mua ngay
-          Expanded(
-            child: ElevatedButton(
-              onPressed:
-                  isOutOfStock || _selectedProductItemId == null
-                      ? null
-                      : () {
-                        // Using addPostFrameCallback to ensure we're not in build phase
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) {
-                            // First add to cart
-                            _addToCart(
-                              product,
-                              cartViewModel,
-                              navigateToCart: true,
-                            );
-                          }
-                        });
-                      },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                isOutOfStock ? 'Hết hàng' : 'Mua ngay',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          // const SizedBox(width: 12), // Nút mua ngay
+          // Expanded(
+          //   child: ElevatedButton(
+          //     onPressed:
+          //         isOutOfStock || _selectedProductItemId == null
+          //             ? null
+          //             : () {
+          //               // Using addPostFrameCallback to ensure we're not in build phase
+          //               WidgetsBinding.instance.addPostFrameCallback((_) {
+          //                 if (mounted) {
+          //                   // First add to cart
+          //                   _addToCart(
+          //                     product,
+          //                     cartViewModel,
+          //                     navigateToCart: true,
+          //                   );
+          //                 }
+          //               });
+          //             },
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: Colors.orange,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(vertical: 16),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(8),
+          //       ),
+          //     ),
+          //     child: Text(
+          //       isOutOfStock ? 'Hết hàng' : 'Mua ngay',
+          //       style: const TextStyle(
+          //         fontSize: 16,
+          //         fontWeight: FontWeight.bold,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

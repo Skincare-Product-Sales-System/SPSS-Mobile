@@ -42,7 +42,6 @@ import 'package:shopsmart_users_en/screens/user_reviews_screen.dart';
 import 'screens/profile/enhanced_edit_profile_screen.dart';
 import 'screens/profile/enhanced_address_screen.dart';
 import 'screens/checkout/enhanced_checkout_screen.dart';
-import 'screens/orders/enhanced_order_detail_screen.dart';
 import 'screens/enhanced_chat_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_offers_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_viewed_recently.dart';
