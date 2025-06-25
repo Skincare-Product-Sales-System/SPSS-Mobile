@@ -25,7 +25,7 @@ class UserRepository {
       }
 
       try {
-        final response = await _apiClient.get('accounts', requiresAuth: true);
+        final response = await _apiClient.get('/accounts', requiresAuth: true);
 
         // Check if response is not null and has the expected structure
         if (response['success'] == true && response['data'] != null) {
@@ -273,29 +273,88 @@ class UserRepository {
         return ApiResponse(success: false, message: 'Không có token xác thực');
       }
 
-      final response = await _apiClient.post(
-        '/addresses',
-        body: address.toMap(),
-        requiresAuth: true,
+      // Tạo bản sao của address.toMap() và loại bỏ trường id nếu rỗng
+      final Map<String, dynamic> addressMap = {...address.toMap()};
+      if (addressMap['id'] == '') {
+        addressMap.remove('id');
+      }
+
+      // Debug: In ra URL và body trước khi gửi request
+      print('Adding address to URL: ${_apiClient.baseUrl}/addresses');
+      print('Request body: ${jsonEncode(addressMap)}');
+
+      // Gọi API trực tiếp thay vì qua ApiClient
+      final response = await http.post(
+        Uri.parse('${_apiClient.baseUrl}/addresses'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(addressMap),
       );
 
-      if (response['success'] && response['data'] != null) {
-        final addressData = AddressModel.fromJson(response['data']);
-        return ApiResponse(
-          success: true,
-          data: addressData,
-          message: 'Thêm địa chỉ thành công',
-        );
+      print('API response status code: ${response.statusCode}');
+      print('API response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          final jsonData = json.decode(response.body);
+          if (jsonData['success'] == true && jsonData['data'] != null) {
+            final addressData = AddressModel.fromJson(jsonData['data']);
+            return ApiResponse(
+              success: true,
+              data: addressData,
+              message: 'Thêm địa chỉ thành công',
+            );
+          } else {
+            return ApiResponse(
+              success: false,
+              message: jsonData['message'] ?? 'Không thể thêm địa chỉ',
+              errors:
+                  jsonData['errors'] != null
+                      ? (jsonData['errors'] as List<dynamic>)
+                          .map((e) => e.toString())
+                          .toList()
+                      : null,
+            );
+          }
+        } catch (jsonError) {
+          print('JSON parsing error: $jsonError');
+          return ApiResponse(
+            success: false,
+            message: 'Lỗi khi xử lý phản hồi: $jsonError',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
       } else {
-        return ApiResponse(
-          success: false,
-          message: response['message'] ?? 'Không thể thêm địa chỉ',
-        );
+        // Xử lý phản hồi lỗi
+        try {
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: false,
+            message: jsonData['message'] ?? 'Lỗi API: ${response.statusCode}',
+            errors:
+                jsonData['errors'] != null
+                    ? (jsonData['errors'] as List<dynamic>)
+                        .map((e) => e.toString())
+                        .toList()
+                    : ['Response body: ${response.body}'],
+          );
+        } catch (jsonError) {
+          return ApiResponse(
+            success: false,
+            message: 'Lỗi API: ${response.statusCode}',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
       }
     } catch (e) {
+      print('Exception in addAddress: $e');
       return ApiResponse(
         success: false,
         message: 'Lỗi khi thêm địa chỉ: ${e.toString()}',
+        errors: ['Error: $e'],
       );
     }
   }
@@ -308,29 +367,111 @@ class UserRepository {
         return ApiResponse(success: false, message: 'Không có token xác thực');
       }
 
-      final response = await _apiClient.put(
-        '/addresses/${address.id}',
-        body: address.toMap(),
-        requiresAuth: true,
+      // Debug: In ra URL và body trước khi gửi request
+      print(
+        'Updating address to URL: ${_apiClient.baseUrl}/addresses/${address.id}',
+      );
+      print('Request body: ${jsonEncode(address.toMap())}');
+
+      // Gọi API trực tiếp thay vì qua ApiClient
+      final response = await http.patch(
+        Uri.parse('${_apiClient.baseUrl}/addresses/${address.id}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(address.toMap()),
       );
 
-      if (response['success'] && response['data'] != null) {
-        final addressData = AddressModel.fromJson(response['data']);
-        return ApiResponse(
-          success: true,
-          data: addressData,
-          message: 'Cập nhật địa chỉ thành công',
-        );
+      print('API response status code: ${response.statusCode}');
+      print('API response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          final jsonData = json.decode(response.body);
+          if (jsonData['success'] == true) {
+            // Kiểm tra nếu data là boolean thay vì đối tượng địa chỉ
+            if (jsonData['data'] is bool) {
+              // API trả về thành công nhưng không có dữ liệu địa chỉ
+              // Trả về địa chỉ đã được cập nhật từ input
+              return ApiResponse(
+                success: true,
+                data: address,
+                message: jsonData['message'] ?? 'Cập nhật địa chỉ thành công',
+              );
+            } else if (jsonData['data'] != null) {
+              // Nếu API trả về đối tượng địa chỉ
+              final addressData = AddressModel.fromJson(jsonData['data']);
+              return ApiResponse(
+                success: true,
+                data: addressData,
+                message: jsonData['message'] ?? 'Cập nhật địa chỉ thành công',
+              );
+            } else {
+              // Trường hợp success = true nhưng không có data
+              return ApiResponse(
+                success: true,
+                data: address,
+                message: jsonData['message'] ?? 'Cập nhật địa chỉ thành công',
+              );
+            }
+          } else {
+            return ApiResponse(
+              success: false,
+              message: jsonData['message'] ?? 'Không thể cập nhật địa chỉ',
+              errors:
+                  jsonData['errors'] != null
+                      ? (jsonData['errors'] as List<dynamic>)
+                          .map((e) => e.toString())
+                          .toList()
+                      : null,
+            );
+          }
+        } catch (jsonError) {
+          print('JSON parsing error: $jsonError');
+          // Nếu có lỗi khi parse JSON nhưng status code là 200, có thể coi là thành công
+          if (response.statusCode == 200) {
+            return ApiResponse(
+              success: true,
+              data: address,
+              message: 'Cập nhật địa chỉ thành công',
+            );
+          }
+          return ApiResponse(
+            success: false,
+            message: 'Lỗi khi xử lý phản hồi: $jsonError',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
       } else {
-        return ApiResponse(
-          success: false,
-          message: response['message'] ?? 'Không thể cập nhật địa chỉ',
-        );
+        // Xử lý phản hồi lỗi
+        try {
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: false,
+            message: jsonData['message'] ?? 'Lỗi API: ${response.statusCode}',
+            errors:
+                jsonData['errors'] != null
+                    ? (jsonData['errors'] as List<dynamic>)
+                        .map((e) => e.toString())
+                        .toList()
+                    : ['Response body: ${response.body}'],
+          );
+        } catch (jsonError) {
+          return ApiResponse(
+            success: false,
+            message: 'Lỗi API: ${response.statusCode}',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
       }
     } catch (e) {
+      print('Exception in updateAddress: $e');
       return ApiResponse(
         success: false,
         message: 'Lỗi khi cập nhật địa chỉ: ${e.toString()}',
+        errors: ['Error: $e'],
       );
     }
   }
@@ -343,20 +484,81 @@ class UserRepository {
         return ApiResponse(success: false, message: 'Không có token xác thực');
       }
 
-      final response = await _apiClient.delete(
-        '/addresses/$addressId',
-        requiresAuth: true,
+      // Debug: In ra URL trước khi gửi request
+      print(
+        'Deleting address at URL: ${_apiClient.baseUrl}/addresses/$addressId',
       );
 
-      return ApiResponse(
-        success: response['success'],
-        data: response['success'],
-        message: response['message'] ?? 'Xóa địa chỉ thành công',
+      // Gọi API trực tiếp thay vì qua ApiClient
+      final response = await http.delete(
+        Uri.parse('${_apiClient.baseUrl}/addresses/$addressId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
+
+      print('API response status code: ${response.statusCode}');
+      print('API response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        try {
+          if (response.body.isEmpty) {
+            // Nếu body rỗng nhưng status code là 200 hoặc 204, coi là thành công
+            return ApiResponse(
+              success: true,
+              data: true,
+              message: 'Xóa địa chỉ thành công',
+            );
+          }
+
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: jsonData['success'] ?? true,
+            data: jsonData['success'] ?? true,
+            message: jsonData['message'] ?? 'Xóa địa chỉ thành công',
+          );
+        } catch (jsonError) {
+          print('JSON parsing error: $jsonError');
+          // Nếu có lỗi khi parse JSON nhưng status code là 200/204, có thể coi là thành công
+          return ApiResponse(
+            success: true,
+            data: true,
+            message: 'Xóa địa chỉ thành công',
+          );
+        }
+      } else {
+        // Xử lý phản hồi lỗi
+        try {
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: false,
+            data: false,
+            message: jsonData['message'] ?? 'Lỗi API: ${response.statusCode}',
+            errors:
+                jsonData['errors'] != null
+                    ? (jsonData['errors'] as List<dynamic>)
+                        .map((e) => e.toString())
+                        .toList()
+                    : ['Response body: ${response.body}'],
+          );
+        } catch (jsonError) {
+          return ApiResponse(
+            success: false,
+            data: false,
+            message: 'Lỗi API: ${response.statusCode}',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
+      }
     } catch (e) {
+      print('Exception in deleteAddress: $e');
       return ApiResponse(
         success: false,
+        data: false,
         message: 'Lỗi khi xóa địa chỉ: ${e.toString()}',
+        errors: ['Error: $e'],
       );
     }
   }
@@ -369,20 +571,81 @@ class UserRepository {
         return ApiResponse(success: false, message: 'Không có token xác thực');
       }
 
-      final response = await _apiClient.put(
-        '/addresses/$addressId/default',
-        requiresAuth: true,
+      // Debug: In ra URL trước khi gửi request
+      print(
+        'Setting default address at URL: ${_apiClient.baseUrl}/addresses/$addressId/set-default',
       );
 
-      return ApiResponse(
-        success: response['success'],
-        data: response['success'],
-        message: response['message'] ?? 'Đặt địa chỉ mặc định thành công',
+      // Gọi API trực tiếp thay vì qua ApiClient
+      final response = await http.patch(
+        Uri.parse('${_apiClient.baseUrl}/addresses/$addressId/set-default'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
+
+      print('API response status code: ${response.statusCode}');
+      print('API response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        try {
+          if (response.body.isEmpty) {
+            // Nếu body rỗng nhưng status code là 200 hoặc 204, coi là thành công
+            return ApiResponse(
+              success: true,
+              data: true,
+              message: 'Đặt địa chỉ mặc định thành công',
+            );
+          }
+
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: jsonData['success'] ?? true,
+            data: jsonData['success'] ?? true,
+            message: jsonData['message'] ?? 'Đặt địa chỉ mặc định thành công',
+          );
+        } catch (jsonError) {
+          print('JSON parsing error: $jsonError');
+          // Nếu có lỗi khi parse JSON nhưng status code là 200/204, có thể coi là thành công
+          return ApiResponse(
+            success: true,
+            data: true,
+            message: 'Đặt địa chỉ mặc định thành công',
+          );
+        }
+      } else {
+        // Xử lý phản hồi lỗi
+        try {
+          final jsonData = json.decode(response.body);
+          return ApiResponse(
+            success: false,
+            data: false,
+            message: jsonData['message'] ?? 'Lỗi API: ${response.statusCode}',
+            errors:
+                jsonData['errors'] != null
+                    ? (jsonData['errors'] as List<dynamic>)
+                        .map((e) => e.toString())
+                        .toList()
+                    : ['Response body: ${response.body}'],
+          );
+        } catch (jsonError) {
+          return ApiResponse(
+            success: false,
+            data: false,
+            message: 'Lỗi API: ${response.statusCode}',
+            errors: ['Response body: ${response.body}'],
+          );
+        }
+      }
     } catch (e) {
+      print('Exception in setDefaultAddress: $e');
       return ApiResponse(
         success: false,
+        data: false,
         message: 'Lỗi khi đặt địa chỉ mặc định: ${e.toString()}',
+        errors: ['Error: $e'],
       );
     }
   }

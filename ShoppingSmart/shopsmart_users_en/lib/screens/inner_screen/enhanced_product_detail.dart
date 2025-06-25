@@ -7,10 +7,12 @@ import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
 import '../../providers/enhanced_products_view_model.dart';
 import '../../widgets/products/heart_btn.dart';
+import '../auth/enhanced_login.dart';
 import '../inner_screen/enhanced_reviews_screen.dart';
 import '../../providers/enhanced_cart_view_model.dart';
 import '../../providers/enhanced_wishlist_view_model.dart';
 import '../cart/enhanced_cart_screen.dart';
+import '../../services/jwt_service.dart';
 
 class EnhancedProductDetailsScreen extends StatefulWidget {
   static const routeName = "/EnhancedProductDetailsScreen";
@@ -664,13 +666,6 @@ class _EnhancedProductDetailsScreenState
                     : Column(
                       children: [
                         ...reviews.map((review) => _buildReviewItem(review)),
-                        const SizedBox(height: 16),
-                        TextButton.icon(
-                          onPressed:
-                              () => _navigateToReviewsScreen(context, product),
-                          icon: const Icon(Icons.add_comment),
-                          label: const Text('Viết đánh giá mới'),
-                        ),
                       ],
                     ),
           ),
@@ -961,6 +956,42 @@ class _EnhancedProductDetailsScreenState
     bool navigateToCart = false,
   }) async {
     if (_selectedProductItemId == null) return;
+
+    // Check if user is authenticated before adding to cart
+    final token = await JwtService.getStoredToken();
+    if (token == null || token.isEmpty) {
+      // User is not authenticated, show login prompt
+      if (!mounted) return;
+
+      final result = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Đăng nhập để tiếp tục'),
+              content: const Text(
+                'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Đăng nhập'),
+                ),
+              ],
+            ),
+      );
+
+      if (result == true) {
+        // Navigate to login screen
+        if (!mounted) return;
+        // Using the route constant instead of a hardcoded string
+        Navigator.of(context).pushNamed(EnhancedLoginScreen.routeName);
+      }
+      return;
+    }
 
     // Tìm kiếm thông tin sản phẩm đã chọn
     final selectedItem = _getSelectedProductItem(product);

@@ -444,12 +444,28 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
           state.copyWith(detailedProduct: ViewState.loaded(response.data)),
         );
       } else {
+        // Check if this could be an authentication error
+        String errorMessage =
+            response.message ?? 'Failed to load product details';
+        List<String>? errors = response.errors;
+
+        // Only show authentication error if API explicitly returns one
+        if (errorMessage.toLowerCase().contains('unauthorized') ||
+            errorMessage.toLowerCase().contains('authentication') ||
+            errorMessage.toLowerCase().contains('token') ||
+            (errors != null &&
+                errors.any(
+                  (e) =>
+                      e.toLowerCase().contains('unauthorized') ||
+                      e.toLowerCase().contains('authentication') ||
+                      e.toLowerCase().contains('token'),
+                ))) {
+          errorMessage = 'Vui lòng đăng nhập để xem chi tiết sản phẩm này';
+        }
+
         updateState(
           state.copyWith(
-            detailedProduct: ViewState.error(
-              response.message ?? 'Failed to load product details',
-              response.errors,
-            ),
+            detailedProduct: ViewState.error(errorMessage, response.errors),
           ),
         );
 
@@ -461,12 +477,17 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
       }
     } catch (e) {
       handleError(e, source: 'getProductDetails', severity: ErrorSeverity.high);
+
+      // Only suggest authentication if error specifically mentions auth
+      String errorMessage = 'Failed to load product details: ${e.toString()}';
+      if (e.toString().toLowerCase().contains('token') ||
+          e.toString().toLowerCase().contains('auth') ||
+          e.toString().toLowerCase().contains('unauthorized')) {
+        errorMessage = 'Vui lòng đăng nhập để xem chi tiết sản phẩm';
+      }
+
       updateState(
-        state.copyWith(
-          detailedProduct: ViewState.error(
-            'Failed to load product details: ${e.toString()}',
-          ),
-        ),
+        state.copyWith(detailedProduct: ViewState.error(errorMessage)),
       );
     }
   }

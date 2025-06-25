@@ -342,62 +342,61 @@ class _EmptyBagWidgetState extends State<EmptyBagWidget>
                   const SizedBox(height: 40),
 
                   // Suggested actions
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).dividerColor.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "💡 Quick Actions",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildQuickAction(
-                                context,
-                                "🔥",
-                                "Best Sellers",
-                                () {
-                                  // Navigate to search screen with "All" to show best sellers
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/SearchScreen',
-                                    arguments: "All",
-                                  );
-                                },
-                              ),
-                              _buildQuickAction(context, "💝", "Offers", () {
-                                // Navigate to offers screen
-                                Navigator.pushNamed(context, "/OffersScreen");
-                              }),
-                              _buildQuickAction(context, "❤️", "Wishlist", () {
-                                // Navigate to wishlist
-                                Navigator.pushNamed(context, "/WishlistScreen");
-                              }),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
+                  // FadeTransition(
+                  //   opacity: _fadeAnimation,
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(20),
+                  //     decoration: BoxDecoration(
+                  //       color: Theme.of(context).cardColor,
+                  //       borderRadius: BorderRadius.circular(20),
+                  //       border: Border.all(
+                  //         color: Theme.of(
+                  //           context,
+                  //         ).dividerColor.withOpacity(0.2),
+                  //       ),
+                  //     ),
+                  //     child: Column(
+                  //       children: [
+                  //         Text(
+                  //           "💡 Quick Actions",
+                  //           style: TextStyle(
+                  //             fontSize: 16,
+                  //             fontWeight: FontWeight.bold,
+                  //             color:
+                  //                 Theme.of(context).textTheme.bodyLarge?.color,
+                  //           ),
+                  //         ),
+                  //         const SizedBox(height: 16),
+                  //         Row(
+                  //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //           children: [
+                  //             _buildQuickAction(
+                  //               context,
+                  //               "🔥",
+                  //               "Best Sellers",
+                  //               () {
+                  //                 // Navigate to search screen with "All" to show best sellers
+                  //                 Navigator.pushNamed(
+                  //                   context,
+                  //                   '/SearchScreen',
+                  //                   arguments: "All",
+                  //                 );
+                  //               },
+                  //             ),
+                  //             _buildQuickAction(context, "💝", "Offers", () {
+                  //               // Navigate to offers screen
+                  //               Navigator.pushNamed(context, "/OffersScreen");
+                  //             }),
+                  //             _buildQuickAction(context, "❤️", "Wishlist", () {
+                  //               // Navigate to wishlist
+                  //               Navigator.pushNamed(context, "/WishlistScreen");
+                  //             }),
+                  //           ],
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                   const SizedBox(height: 40),
                 ],
               ),

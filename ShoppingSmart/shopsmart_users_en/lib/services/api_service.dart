@@ -359,15 +359,17 @@ class ApiService {
     String productId,
   ) async {
     try {
+      // Try to get token but proceed even if it's null
       final token = await JwtService.getStoredToken();
+      final headers = {'Content-Type': 'application/json'};
+
+      // Only add Authorization header if token exists
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http
-          .get(
-            Uri.parse('$baseUrl/products/$productId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+          .get(Uri.parse('$baseUrl/products/$productId'), headers: headers)
           .timeout(timeout);
 
       final Map<String, dynamic> responseData = json.decode(response.body);

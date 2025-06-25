@@ -3,14 +3,12 @@ import 'package:iconly/iconly.dart';
 import '../../root_screen.dart';
 import '../../screens/auth/enhanced_forgot_password.dart';
 import '../../screens/auth/enhanced_register.dart';
-import '../../screens/mvvm_screen_template.dart';
 import '../../widgets/app_name_text.dart';
 import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
-import '../../providers/enhanced_auth_view_model.dart';
-import '../../services/my_app_function.dart';
+import '../../repositories/auth_repository.dart';
+import '../../services/service_locator.dart';
 import '../../widgets/auth/google_btn.dart';
-import '../../providers/auth_state.dart';
 
 class EnhancedLoginScreen extends StatefulWidget {
   static const routeName = '/EnhancedLoginScreen';
@@ -22,33 +20,23 @@ class EnhancedLoginScreen extends StatefulWidget {
 
 class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
   bool obscureText = true;
-  late final TextEditingController _emailController;
-  late final TextEditingController _passwordController;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  late final FocusNode _emailFocusNode;
-  late final FocusNode _passwordFocusNode;
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   final _formkey = GlobalKey<FormState>();
 
-  @override
-  void initState() {
-    _emailController = TextEditingController();
-    _passwordController = TextEditingController();
-    // Focus Nodes
-    _emailFocusNode = FocusNode();
-    _passwordFocusNode = FocusNode();
-    super.initState();
-  }
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
-    if (mounted) {
-      _emailController.dispose();
-      _passwordController.dispose();
-      // Focus Nodes
-      _emailFocusNode.dispose();
-      _passwordFocusNode.dispose();
-    }
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -58,27 +46,24 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
     final String? fromScreen =
         ModalRoute.of(context)?.settings.arguments as String?;
 
-    return MvvmScreenTemplate<EnhancedAuthViewModel, AuthState>(
-      title: 'Đăng nhập',
-      isLoading: (viewModel) => viewModel.isLoading,
-      getErrorMessage: (viewModel) => viewModel.errorMessage,
-      buildAppBar:
-          (context, viewModel) =>
-              AppBar(title: const Text('Đăng nhập'), elevation: 0),
-      buildContent:
-          (context, viewModel) => _buildContent(context, viewModel, fromScreen),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Đăng nhập'), elevation: 0),
+      body: Stack(
+        children: [
+          _buildContent(context, fromScreen),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+        ],
+      ),
     );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    EnhancedAuthViewModel viewModel,
-    String? fromScreen,
-  ) {
+  Widget _buildContent(BuildContext context, String? fromScreen) {
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: SingleChildScrollView(
@@ -99,8 +84,35 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
                   context,
                 ).textTheme.bodyMedium?.color?.withOpacity(0.7),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 16),
 
+              // Error message (if any)
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+
+              // Login Form
               Form(
                 key: _formkey,
                 child: Column(
@@ -236,7 +248,7 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        onPressed: () => _loginFct(viewModel, fromScreen),
+                        onPressed: _isLoading ? null : () => _login(fromScreen),
                         child: const Text(
                           "Đăng nhập",
                           style: TextStyle(
@@ -314,61 +326,60 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
     );
   }
 
-  Future<void> _loginFct(
-    EnhancedAuthViewModel viewModel,
-    String? fromScreen,
-  ) async {
+  Future<void> _login(String? fromScreen) async {
+    // Validate form
+    if (!_formkey.currentState!.validate()) {
+      return;
+    }
+
+    // Clear any previous error
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+
+    // Remove keyboard
+    FocusScope.of(context).unfocus();
+
     try {
-      final isValid = _formkey.currentState!.validate();
-      FocusScope.of(context).unfocus();
+      // Get repository instance
+      final authRepository = sl<AuthRepository>();
 
-      if (!isValid) return;
-
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đang đăng nhập...'),
-          duration: Duration(seconds: 2),
-        ),
+      // Call login API
+      final result = await authRepository.login(
+        usernameOrEmail: _emailController.text.trim(),
+        password: _passwordController.text,
       );
 
-      final success = await viewModel.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      // Check if widget is still mounted before updating UI
+      if (!mounted) return;
 
-      if (success && mounted) {
-        // Navigate to appropriate screen
+      // Handle login result
+      if (result.success && result.data != null) {
+        // Login successful
         if (fromScreen == 'checkout') {
           Navigator.of(context).pushReplacementNamed('/enhanced-checkout');
         } else {
           Navigator.of(context).pushReplacementNamed(RootScreen.routeName);
         }
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng nhập thành công! Chào mừng trở lại.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else if (mounted) {
-        // Show error dialog
-        await MyAppFunctions.showErrorOrWarningDialog(
-          context: context,
-          subtitle: viewModel.errorMessage ?? 'Đăng nhập thất bại',
-          fct: () {},
-        );
+      } else {
+        // Login failed - show error
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result.message ?? 'Đăng nhập thất bại';
+          _passwordController.clear();
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+        });
       }
     } catch (e) {
-      // Handle any unexpected errors
+      // Handle error
       if (mounted) {
-        await MyAppFunctions.showErrorOrWarningDialog(
-          context: context,
-          subtitle: 'Lỗi: ${e.toString()}',
-          fct: () {},
-        );
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Lỗi: ${e.toString()}';
+          _passwordController.clear();
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+        });
       }
     }
   }
