@@ -51,7 +51,7 @@ class ChatService {
   HubConnection? _connection;
   bool isConnected = false;
   String? userId;
-  final String hubUrl = 'http://10.0.2.2:5041/chathub';
+  final String hubUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/chathub';
 
   // Callback for message received
   Function(ChatMessage message)? onMessageReceived;

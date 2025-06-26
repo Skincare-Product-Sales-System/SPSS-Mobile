@@ -29,6 +29,9 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
   bool get isUpdating => state.isUpdating;
   String? get errorMessage => state.errorMessage;
 
+  /// Getter cho userRepository để sử dụng trong các màn hình
+  UserRepository get userRepository => _userRepository;
+
   // Getters for checkout functionality
   List<AddressModel> get addresses => state.addresses.data?.items ?? [];
   List<PaymentMethodModel> get paymentMethods =>
@@ -170,6 +173,7 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
     try {
       final response = await _userRepository.updateUserProfile(request);
       if (response.success && response.data != null) {
+        // Update user profile data
         updateState(
           state.copyWith(
             userProfile: ViewState<UserProfileModel>.loaded(response.data!),
@@ -177,6 +181,22 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
             errorMessage: null,
           ),
         );
+
+        // Also update userInfo to reflect the new username
+        if (state.userInfo != null) {
+          final updatedUserInfo = UserInfo(
+            id: state.userInfo!.id,
+            email: state.userInfo!.email,
+            userName: request.userName, // Use the new username from the request
+            roles: state.userInfo!.roles,
+          );
+
+          // Update state with new user info
+          updateState(state.copyWith(userInfo: updatedUserInfo));
+
+          // Force a complete refresh of user data
+          await checkAuthentication();
+        }
       } else {
         updateState(
           state.copyWith(
@@ -376,9 +396,29 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
 
   /// Kiểm tra và cập nhật lại trạng thái đăng nhập
   Future<void> checkLoginStatus() async {
-    await checkAuthentication();
-    if (isLoggedIn) {
-      await fetchUserProfile();
+    try {
+      await checkAuthentication();
+      if (isLoggedIn) {
+        await fetchUserProfile();
+      }
+    } catch (e) {
+      // Log the error but don't update state with error message
+      // This way, the UI will still show the current data even if refresh fails
+      handleError(e, source: 'checkLoginStatus', severity: ErrorSeverity.low);
+    }
+  }
+
+  /// Cập nhật trực tiếp thông tin người dùng trong UI mà không cần gọi API
+  void updateUserInfoDirectly(String userName) {
+    if (state.userInfo != null) {
+      final updatedUserInfo = UserInfo(
+        id: state.userInfo!.id,
+        email: state.userInfo!.email,
+        userName: userName,
+        roles: state.userInfo!.roles,
+      );
+
+      updateState(state.copyWith(userInfo: updatedUserInfo));
     }
   }
 }

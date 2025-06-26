@@ -5,7 +5,7 @@ import '../../../widgets/title_text.dart';
 import 'orders_widget.dart';
 
 class OrdersScreenFree extends StatefulWidget {
-  static const routeName = '/OrderScreen';
+  static const routeName = '/EnhancedOrderScreen';
 
   const OrdersScreenFree({super.key});
 

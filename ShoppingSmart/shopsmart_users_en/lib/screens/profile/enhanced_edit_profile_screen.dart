@@ -92,6 +92,19 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
     setState(() {
       _editingField = null;
     });
+
+    // After update is complete, pop back with the updated data
+    if (mounted) {
+      // Return the updated user data directly to the profile screen
+      // This ensures the UI can update even if API calls fail
+      Navigator.of(context).pop({
+        'userName': request.userName,
+        'surName': request.surName,
+        'lastName': request.lastName,
+        'emailAddress': request.emailAddress,
+        'phoneNumber': request.phoneNumber,
+      });
+    }
   }
 
   @override

@@ -9,7 +9,7 @@ class QuizScreen extends StatelessWidget {
 
   Future<List<Map<String, dynamic>>> fetchQuizSets() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:5041/api/quiz-sets?pageNumber=1&pageSize=10'),
+      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/quiz-sets?pageNumber=1&pageSize=10'),
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

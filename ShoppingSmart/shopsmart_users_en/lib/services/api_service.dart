@@ -21,7 +21,7 @@ import 'package:flutter/foundation.dart';
 class ApiService {
   // Use different base URLs for different platforms
   static String get baseUrl {
-    return 'http://10.0.2.2:5041/api';
+    return 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
   }
 
   static const Duration timeout = Duration(seconds: 30);
@@ -359,15 +359,17 @@ class ApiService {
     String productId,
   ) async {
     try {
+      // Try to get token but proceed even if it's null
       final token = await JwtService.getStoredToken();
+      final headers = {'Content-Type': 'application/json'};
+
+      // Only add Authorization header if token exists
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http
-          .get(
-            Uri.parse('$baseUrl/products/$productId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+          .get(Uri.parse('$baseUrl/products/$productId'), headers: headers)
           .timeout(timeout);
 
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -2631,6 +2633,78 @@ class ApiService {
       return ApiResponse<bool>(
         success: false,
         message: 'Failed to delete image: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get voucher by code
+  static Future<ApiResponse<VoucherModel>> getVoucherByCode(
+    String voucherCode,
+  ) async {
+    try {
+      final token = await JwtService.getStoredToken();
+      if (token == null) {
+        return ApiResponse<VoucherModel>(
+          success: false,
+          message: 'User not authenticated',
+          errors: ['No authentication token found'],
+        );
+      }
+
+      final uri = Uri.parse('$baseUrl/voucher/code/$voucherCode');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        return ApiResponse.fromJson(
+          jsonData,
+          (data) => VoucherModel.fromJson(data),
+        );
+      } else {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: jsonData['message'] ?? 'Voucher không hợp lệ',
+            errors:
+                jsonData['errors'] != null
+                    ? List<String>.from(jsonData['errors'])
+                    : ['Failed with status code: ${response.statusCode}'],
+          );
+        } catch (e) {
+          return ApiResponse<VoucherModel>(
+            success: false,
+            message: 'Failed to get voucher',
+            errors: ['Invalid error response format'],
+          );
+        }
+      }
+    } on SocketException catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'Connection failed: ${e.message}',
+        errors: [
+          'Cannot connect to server at $baseUrl',
+          'Make sure your API server is running',
+          'Error: ${e.toString()}',
+        ],
+      );
+    } catch (e) {
+      return ApiResponse<VoucherModel>(
+        success: false,
+        message: 'An unexpected error occurred: ${e.toString()}',
         errors: [e.toString()],
       );
     }

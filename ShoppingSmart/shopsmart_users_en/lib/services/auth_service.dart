@@ -8,17 +8,7 @@ import '../models/auth_models.dart';
 class AuthService {
   // Use different base URLs for different platforms
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      // For Android emulator, use 10.0.2.2 instead of localhost
-      return 'http://10.0.2.2:5041/api';
-    } else if (Platform.isIOS) {
-      // For iOS simulator, use localhost (or your machine's IP)
-      return 'http://localhost:5041/api';
-      // Alternative: return 'http://YOUR_MACHINE_IP:5041/api';
-    } else {
-      // For web or other platforms
-      return 'http://localhost:5041/api';
-    }
+    return 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
   }
 
   static const Duration timeout = Duration(seconds: 30);

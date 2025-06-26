@@ -42,7 +42,6 @@ import 'package:shopsmart_users_en/screens/user_reviews_screen.dart';
 import 'screens/profile/enhanced_edit_profile_screen.dart';
 import 'screens/profile/enhanced_address_screen.dart';
 import 'screens/checkout/enhanced_checkout_screen.dart';
-import 'screens/orders/enhanced_order_detail_screen.dart';
 import 'screens/enhanced_chat_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_offers_screen.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_viewed_recently.dart';
@@ -383,9 +382,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return sl<EnhancedQuizViewModel>();
           },
         ),
-        ChangeNotifierProvider(
-          create: (_) => TempCartProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => TempCartProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -450,6 +447,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   (context) => const EnhancedOrdersScreen(),
               EnhancedOrderSuccessScreen.routeName:
                   (context) => const EnhancedOrderSuccessScreen(),
+              // Removed EnhancedOrderDetailScreen route since we're using direct navigation
 
               // Skin analysis screens
               // SkinAnalysisIntroScreen.routeName:
@@ -516,13 +514,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               //     builder: (context) => OrderDetailScreen(orderId: orderId),
               //   );
               // } // Sử dụng Enhanced thay thế
-              if (settings.name == EnhancedOrderDetailScreen.routeName) {
-                final orderId = settings.arguments as String;
-                return MaterialPageRoute(
-                  builder:
-                      (context) => EnhancedOrderDetailScreen(orderId: orderId),
-                );
-              }
               if (settings.name == EnhancedReviewsScreen.routeName) {
                 final args = settings.arguments as Map<String, dynamic>;
                 return MaterialPageRoute(

@@ -27,7 +27,7 @@ class _AddressScreenState extends State<AddressScreen> {
     final token = await JwtService.getStoredToken();
     final res = await http.get(
       Uri.parse(
-        'http://10.0.2.2:5041/api/addresses/user?pageNumber=1&pageSize=10',
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/user?pageNumber=1&pageSize=10',
       ),
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ class _AddressScreenState extends State<AddressScreen> {
   Future<void> deleteAddress(String id) async {
     final token = await JwtService.getStoredToken();
     final res = await http.delete(
-      Uri.parse('http://10.0.2.2:5041/api/addresses/$id'),
+      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -80,7 +80,7 @@ class _AddressScreenState extends State<AddressScreen> {
   Future<void> setDefault(String id) async {
     final token = await JwtService.getStoredToken();
     final res = await http.patch(
-      Uri.parse('http://10.0.2.2:5041/api/addresses/$id/set-default'),
+      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id/set-default'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -337,7 +337,7 @@ class _AddressFormState extends State<AddressForm> {
     final token = await JwtService.getStoredToken();
     final res = await http.get(
       Uri.parse(
-        'http://10.0.2.2:5041/api/addresses/user?pageNumber=1&pageSize=1',
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/user?pageNumber=1&pageSize=1',
       ),
       headers: {
         'Content-Type': 'application/json',
@@ -390,7 +390,7 @@ class _AddressFormState extends State<AddressForm> {
     http.Response res;
     if (widget.address == null) {
       res = await http.post(
-        Uri.parse('http://10.0.2.2:5041/api/addresses'),
+        Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -400,7 +400,7 @@ class _AddressFormState extends State<AddressForm> {
     } else {
       res = await http.patch(
         Uri.parse(
-          'http://10.0.2.2:5041/api/addresses/${widget.address!['id']}',
+          'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/${widget.address!['id']}',
         ),
         headers: {
           'Content-Type': 'application/json',

@@ -78,6 +78,7 @@ class EnhancedQuizViewModel extends BaseViewModel<QuizState> {
         selectedOptionIds: [],
         totalScore: 0,
         isDone: false,
+        quizSetId: quizSetId,
       ),
     );
 
@@ -200,14 +201,9 @@ class EnhancedQuizViewModel extends BaseViewModel<QuizState> {
     updateState(state.copyWith(quizResult: ViewState.loading()));
 
     try {
-      final quizSetId =
-          state.quizQuestions.data?.isNotEmpty == true
-              ? (state.quizQuestions.data?.first['quizSetId'] ?? '')
-              : '';
-
       final response = await _quizRepository.getQuizResultByScore(
         score,
-        quizSetId,
+        state.quizSetId,
       );
 
       if (response.success && response.data != null) {
@@ -246,6 +242,7 @@ class EnhancedQuizViewModel extends BaseViewModel<QuizState> {
         selectedOptionIds: [],
         totalScore: 0,
         isDone: false,
+        quizSetId: '',
       ),
     );
   }

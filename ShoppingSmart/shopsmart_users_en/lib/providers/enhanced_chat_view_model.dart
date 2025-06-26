@@ -420,7 +420,7 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
           '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
 
       // Sử dụng API endpoint để upload ảnh
-      final url = Uri.parse('http://10.0.2.2:5041/api/images');
+      final url = Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/images');
 
       // Tạo multipart request
       final request = http.MultipartRequest('POST', url);
@@ -523,7 +523,7 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
 
   Future<List<Map<String, dynamic>>> _fetchProducts() async {
     final url = Uri.parse(
-      'http://10.0.2.2:5041/api/products?pageNumber=1&pageSize=10&sortBy=newest',
+      'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/products?pageNumber=1&pageSize=10&sortBy=newest',
     );
     final res = await http.get(url);
     if (res.statusCode == 200) {

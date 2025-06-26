@@ -83,28 +83,13 @@ class OrderRepository {
     );
   }
 
-  // Validate a voucher code
+  // Get voucher by code
+  Future<ApiResponse<VoucherModel>> getVoucherByCode(String voucherCode) async {
+    return ApiService.getVoucherByCode(voucherCode);
+  }
+
+  // Validate voucher by code
   Future<ApiResponse<VoucherModel>> validateVoucher(String voucherCode) async {
-    // Implement this method to validate a voucher with the API
-    // For now, we'll return a mock response
-    final now = DateTime.now();
-    return ApiResponse<VoucherModel>(
-      success: true,
-      message: 'Voucher validated successfully',
-      data: VoucherModel(
-        id: 'mock-id',
-        code: voucherCode,
-        description: 'Mock voucher for testing',
-        status: 'active',
-        discountRate: 0.1, // 10% discount
-        usageLimit: 1,
-        minimumOrderValue: 0,
-        startDate: now,
-        endDate: now.add(const Duration(days: 7)),
-        createdBy: 'system',
-        createdTime: now,
-        isDeleted: false,
-      ),
-    );
+    return ApiService.validateVoucher(voucherCode);
   }
 }

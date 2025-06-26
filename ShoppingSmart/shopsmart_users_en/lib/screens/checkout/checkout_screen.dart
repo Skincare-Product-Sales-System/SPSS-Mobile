@@ -16,8 +16,6 @@ import '../../screens/profile_screen.dart';
 import '../../models/voucher_model.dart';
 import '../../widgets/voucher_card_widget.dart';
 import '../../services/vnpay_service.dart';
-import '../../models/order_models.dart';
-import '../../widgets/app_name_text.dart';
 import '../payment/bank_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -907,9 +905,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BankPaymentScreen(
-                    order: response.data!,
-                  ),
+                  builder:
+                      (context) => BankPaymentScreen(order: response.data!),
                 ),
               );
               // Xóa giỏ hàng trong một microtask để tránh vấn đề rebuild

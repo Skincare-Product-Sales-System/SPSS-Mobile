@@ -5,9 +5,9 @@ import '../models/api_response_model.dart';
 import 'jwt_service.dart';
 
 class VNPayService {
-  static const String baseUrl = 'http://10.0.2.2:5041';
-  static const String apiUrl = 'http://localhost:5041';
-  static const String nGrokUrl = 'https://2796-118-69-182-144.ngrok-free.app';
+  static const String baseUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
+  static const String apiUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
+  static const String nGrokUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net';
 
   static const Duration timeout = Duration(seconds: 30);
 
@@ -17,9 +17,11 @@ class VNPayService {
     required String userId,
     String? urlReturn,
   }) async {
+    print('DEBUG VNPayService: Getting VNPay transaction status for order: $orderId, user: $userId');
     try {
       final token = await JwtService.getStoredToken();
       if (token == null) {
+        print('DEBUG VNPayService: No authentication token found');
         return ApiResponse<String>(
           success: false,
           message: 'User not authenticated',
@@ -35,6 +37,8 @@ class VNPayService {
         '$baseUrl/api/VNPAY/get-transaction-status-vnpay?orderId=$orderId&userId=$userId&urlReturn=$encodedUrl',
       );
 
+      print('DEBUG VNPayService: Calling API: $uri');
+
       final response = await http
           .get(
             uri,
@@ -46,10 +50,14 @@ class VNPayService {
           )
           .timeout(timeout);
 
+      print('DEBUG VNPayService: API response status: ${response.statusCode}');
+      print('DEBUG VNPayService: API response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
         if (jsonData['success'] == true && jsonData['data'] != null) {
+          print('DEBUG VNPayService: Successfully got VNPay URL: ${jsonData['data']}');
           return ApiResponse<String>(
             success: true,
             data: jsonData['data'],
@@ -58,6 +66,7 @@ class VNPayService {
                 'VNPay payment URL generated successfully',
           );
         } else {
+          print('DEBUG VNPayService: Failed to get VNPay URL: ${jsonData['message']}');
           return ApiResponse<String>(
             success: false,
             message:
@@ -65,6 +74,7 @@ class VNPayService {
           );
         }
       } else {
+        print('DEBUG VNPayService: API call failed with status: ${response.statusCode}');
         return ApiResponse<String>(
           success: false,
           message:
@@ -72,6 +82,7 @@ class VNPayService {
         );
       }
     } catch (e) {
+      print('DEBUG VNPayService: Error generating VNPay payment URL: $e');
       return ApiResponse<String>(
         success: false,
         message: 'Error generating VNPay payment URL: ${e.toString()}',
@@ -176,6 +187,9 @@ class VNPayService {
 
   /// Check if payment method is VNPay
   static bool isVNPayPayment(String paymentType) {
-    return paymentType.toUpperCase() == 'VNPAY';
+    print('DEBUG VNPayService: Checking payment type: "$paymentType"');
+    final isVNPay = paymentType.toUpperCase() == 'VNPAY';
+    print('DEBUG VNPayService: Is VNPay payment: $isVNPay');
+    return isVNPay;
   }
 }

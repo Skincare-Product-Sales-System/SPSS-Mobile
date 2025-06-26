@@ -45,7 +45,7 @@ final GetIt sl = GetIt.instance;
 Future<void> setupServiceLocator() async {
   // Services - Singleton
   sl.registerLazySingleton(
-    () => ApiClient(baseUrl: 'http://10.0.2.2:5041/api'),
+    () => ApiClient(baseUrl: 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api'),
   );
   sl.registerLazySingleton(() => ApiService());
   sl.registerLazySingleton(() => AuthService());

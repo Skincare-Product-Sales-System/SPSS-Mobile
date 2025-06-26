@@ -9,7 +9,6 @@ import '../screens/auth/enhanced_change_password.dart';
 import '../screens/auth/enhanced_login.dart';
 import '../screens/inner_screen/enhanced_viewed_recently.dart';
 import '../screens/inner_screen/enhanced_wishlist.dart';
-import '../screens/mvvm_screen_template.dart';
 import '../screens/orders/enhanced_orders_screen.dart';
 import '../screens/profile/enhanced_address_screen.dart';
 import '../screens/profile/enhanced_edit_profile_screen.dart';
@@ -30,61 +29,118 @@ class EnhancedProfileScreen extends StatefulWidget {
 }
 
 class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   @override
   bool get wantKeepAlive => true; // Keep the state alive when switching tabs
+
+  @override
+  void initState() {
+    super.initState();
+    // Đăng ký observer để biết khi app được resume
+    WidgetsBinding.instance.addObserver(this);
+
+    // Load user profile when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadProfileData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Hủy đăng ký observer khi widget bị hủy
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Khi app được resume từ background, cập nhật lại dữ liệu
+    if (state == AppLifecycleState.resumed && mounted) {
+      _refreshProfileData();
+    }
+  }
+
+  void _loadProfileData() {
+    final viewModel = Provider.of<EnhancedProfileViewModel>(
+      context,
+      listen: false,
+    );
+    viewModel.initialize();
+  }
+
+  void _refreshProfileData() {
+    final viewModel = Provider.of<EnhancedProfileViewModel>(
+      context,
+      listen: false,
+    );
+    // Chỉ gọi fetchUserProfile thay vì initialize để tránh các tác vụ không cần thiết
+    if (viewModel.isLoggedIn) {
+      viewModel.fetchUserProfile();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Cập nhật dữ liệu khi widget được rebuild
+    _refreshProfileData();
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
-    return MvvmScreenTemplate<EnhancedProfileViewModel, ProfileState>(
-      title: 'Hồ sơ',
-      onInit: (viewModel) => viewModel.initialize(),
-      isLoading: (viewModel) => viewModel.isLoading,
-      getErrorMessage: (viewModel) => viewModel.errorMessage,
-      buildAppBar: (context, viewModel) => _buildAppBar(context),
-      buildContent: (context, viewModel) => _buildContent(context, viewModel),
-      buildError: (context, viewModel, errorMessage) {
-        // Hiển thị lỗi theo cách thân thiện với người dùng
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Theme.of(context).colorScheme.error,
-                size: 60,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Không thể tải thông tin',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  errorMessage ?? 'Đã xảy ra lỗi không xác định',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  final viewModel = Provider.of<EnhancedProfileViewModel>(
-                    context,
-                    listen: false,
-                  );
-                  viewModel.initialize();
-                },
-                child: const Text('Thử lại'),
-              ),
-            ],
-          ),
+    return Consumer<EnhancedProfileViewModel>(
+      builder: (context, viewModel, child) {
+        return Scaffold(
+          appBar: _buildAppBar(context),
+          body:
+              viewModel.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : viewModel.errorMessage != null
+                  ? _buildErrorWidget(context, viewModel)
+                  : _buildContent(context, viewModel),
         );
       },
+    );
+  }
+
+  Widget _buildErrorWidget(
+    BuildContext context,
+    EnhancedProfileViewModel viewModel,
+  ) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+            size: 60,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Không thể tải thông tin',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              viewModel.errorMessage ?? 'Đã xảy ra lỗi không xác định',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _loadProfileData,
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -104,233 +160,257 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
   ) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Visibility(
-            visible: !viewModel.isLoggedIn,
-            child: const Padding(
-              padding: EdgeInsets.all(18.0),
-              child: TitlesTextWidget(
-                label: "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
+    return RefreshIndicator(
+      onRefresh: () async {
+        await viewModel.initialize();
+        if (mounted) {
+          setState(() {});
+        }
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Visibility(
+              visible: !viewModel.isLoggedIn,
+              child: const Padding(
+                padding: EdgeInsets.all(18.0),
+                child: TitlesTextWidget(
+                  label: "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
+                ),
               ),
             ),
-          ),
-          Visibility(
-            visible: viewModel.isLoggedIn,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Theme.of(context).cardColor,
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.surface,
-                        width: 3,
-                      ),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png",
+            Visibility(
+              visible: viewModel.isLoggedIn,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(context).cardColor,
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.surface,
+                          width: 3,
                         ),
-                        fit: BoxFit.fill,
+                        image: const DecorationImage(
+                          image: NetworkImage(
+                            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png",
+                          ),
+                          fit: BoxFit.fill,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TitlesTextWidget(
+                            label: viewModel.userInfo?.userName ?? "User",
+                          ),
+                          const SizedBox(height: 6),
+                          SubtitleTextWidget(
+                            label:
+                                viewModel.userInfo?.email ?? "user@example.com",
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit,
+                        color: Theme.of(context).primaryColor,
+                        size: 28,
+                      ),
+                      tooltip: 'Chỉnh sửa hồ sơ',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const EnhancedEditProfileScreen(),
+                          ),
+                        ).then((result) {
+                          // Check if we received updated profile data
+                          if (result != null &&
+                              result is Map<String, dynamic>) {
+                            // Directly update the UI with the returned data
+                            if (result.containsKey('userName')) {
+                              // Update the user info directly in the view model
+                              viewModel.updateUserInfoDirectly(
+                                result['userName'],
+                              );
+
+                              // Force rebuild of this widget
+                              setState(() {});
+                            }
+
+                            // Also try to refresh data from the server
+                            viewModel.checkLoginStatus();
+                          } else if (result == true) {
+                            // Just refresh data from server (old behavior)
+                            viewModel.checkLoginStatus();
+
+                            // Force rebuild of this widget
+                            setState(() {});
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(thickness: 1),
+                  const SizedBox(height: 10),
+                  const TitlesTextWidget(label: "Chung"),
+                  const SizedBox(height: 10),
+
+                  // Hiển thị các mục chung chỉ khi đã đăng nhập
+                  Visibility(
+                    visible: viewModel.isLoggedIn,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TitlesTextWidget(
-                          label: viewModel.userInfo?.userName ?? "User",
+                        CustomListTile(
+                          text: "Tất cả đơn hàng",
+                          imagePath: AssetsManager.orderBag,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedOrdersScreen.routeName,
+                            );
+                          },
                         ),
-                        const SizedBox(height: 6),
-                        SubtitleTextWidget(
-                          label:
-                              viewModel.userInfo?.email ?? "user@example.com",
+                        CustomListTile(
+                          text: "Danh sách yêu thích",
+                          imagePath: AssetsManager.wishlistSvg,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedWishlistScreen.routeName,
+                            );
+                          },
+                        ),
+                        CustomListTile(
+                          text: "Đã xem gần đây",
+                          imagePath: AssetsManager.recent,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedViewedRecentlyScreen.routeName,
+                            );
+                          },
+                        ),
+                        CustomListTile(
+                          text: "Địa chỉ",
+                          imagePath: AssetsManager.address,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedAddressScreen.routeName,
+                            );
+                          },
+                        ),
+                        CustomListTile(
+                          text: "Lịch sử phân tích da",
+                          imagePath: AssetsManager.cosmetics,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedSkinAnalysisHistoryScreen.routeName,
+                            );
+                          },
+                        ),
+                        CustomListTile(
+                          text: "Đánh giá của tôi",
+                          imagePath: AssetsManager.bagWish,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedUserReviewsScreen.routeName,
+                            );
+                          },
+                        ),
+                        CustomListTile(
+                          text: "Đổi mật khẩu",
+                          imagePath: AssetsManager.privacy,
+                          function: () {
+                            Navigator.pushNamed(
+                              context,
+                              EnhancedChangePasswordScreen.routeName,
+                            );
+                          },
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit,
-                      color: Theme.of(context).primaryColor,
-                      size: 28,
+
+                  // Hiển thị nút đăng nhập khi chưa đăng nhập
+                  Visibility(
+                    visible: !viewModel.isLoggedIn,
+                    child: CustomListTile(
+                      text: "Đăng nhập",
+                      imagePath: AssetsManager.login,
+                      function: () {
+                        Navigator.pushNamed(
+                          context,
+                          EnhancedLoginScreen.routeName,
+                        );
+                      },
                     ),
-                    tooltip: 'Chỉnh sửa hồ sơ',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => const EnhancedEditProfileScreen(),
-                        ),
-                      ).then((needReload) {
-                        if (needReload == true) {
-                          viewModel.checkLoginStatus();
-                        }
-                      });
+                  ),
+
+                  // Hiển thị nút đăng xuất chỉ khi đã đăng nhập
+                  Visibility(
+                    visible: viewModel.isLoggedIn,
+                    child: CustomListTile(
+                      text: "Đăng xuất",
+                      imagePath: AssetsManager.logout,
+                      function: () async {
+                        await _showLogoutDialog(context, viewModel);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                  const Divider(thickness: 1),
+                  const SizedBox(height: 10),
+
+                  // Phần cài đặt luôn hiển thị
+                  const TitlesTextWidget(label: "Cài đặt"),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    title: const Text('Chế độ tối'),
+                    secondary: Icon(
+                      themeProvider.getIsDarkTheme
+                          ? Icons.dark_mode_outlined
+                          : Icons.light_mode_outlined,
+                    ),
+                    value: themeProvider.getIsDarkTheme,
+                    onChanged: (value) {
+                      themeProvider.setDarkTheme(themeValue: value);
                     },
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 15),
-          Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Divider(thickness: 1),
-                const SizedBox(height: 10),
-                const TitlesTextWidget(label: "Chung"),
-                const SizedBox(height: 10),
-
-                // Hiển thị các mục chung chỉ khi đã đăng nhập
-                Visibility(
-                  visible: viewModel.isLoggedIn,
-                  child: Column(
-                    children: [
-                      CustomListTile(
-                        text: "Tất cả đơn hàng",
-                        imagePath:
-                            AssetsManager.orderBag, // Biểu tượng túi đơn hàng
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedOrdersScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Danh sách yêu thích",
-                        imagePath:
-                            AssetsManager
-                                .wishlistSvg, // Biểu tượng trái tim yêu thích
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedWishlistScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Đã xem gần đây",
-                        imagePath: AssetsManager.recent, // Biểu tượng gần đây
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedViewedRecentlyScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Địa chỉ",
-                        imagePath: AssetsManager.address, // Biểu tượng vị trí
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedAddressScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Lịch sử phân tích da",
-                        imagePath:
-                            AssetsManager
-                                .cosmetics, // Biểu tượng mỹ phẩm phù hợp với phân tích da
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedSkinAnalysisHistoryScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Đánh giá của tôi",
-                        imagePath:
-                            AssetsManager
-                                .bagWish, // Biểu tượng đánh giá/bình luận
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedUserReviewsScreen.routeName,
-                          );
-                        },
-                      ),
-                      CustomListTile(
-                        text: "Đổi mật khẩu",
-                        imagePath: AssetsManager.privacy, // Biểu tượng bảo mật
-                        function: () {
-                          Navigator.pushNamed(
-                            context,
-                            EnhancedChangePasswordScreen.routeName,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Hiển thị nút đăng nhập khi chưa đăng nhập
-                Visibility(
-                  visible: !viewModel.isLoggedIn,
-                  child: CustomListTile(
-                    text: "Đăng nhập",
-                    imagePath: AssetsManager.login,
-                    function: () {
-                      Navigator.pushNamed(
-                        context,
-                        EnhancedLoginScreen.routeName,
-                      );
-                    },
-                  ),
-                ),
-
-                // Hiển thị nút đăng xuất chỉ khi đã đăng nhập
-                Visibility(
-                  visible: viewModel.isLoggedIn,
-                  child: CustomListTile(
-                    text: "Đăng xuất",
-                    imagePath: AssetsManager.logout,
-                    function: () async {
-                      await _showLogoutDialog(context, viewModel);
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-                const Divider(thickness: 1),
-                const SizedBox(height: 10),
-
-                // Phần cài đặt luôn hiển thị
-                const TitlesTextWidget(label: "Cài đặt"),
-                const SizedBox(height: 10),
-                SwitchListTile(
-                  title: const Text('Chế độ tối'),
-                  secondary: Icon(
-                    themeProvider.getIsDarkTheme
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                  ),
-                  value: themeProvider.getIsDarkTheme,
-                  onChanged: (value) {
-                    themeProvider.setDarkTheme(themeValue: value);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

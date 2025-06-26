@@ -97,9 +97,10 @@ class _EnhancedOrderSuccessScreenState
             // View orders button
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(
-                  context,
-                  EnhancedOrdersScreen.routeName,
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const EnhancedOrdersScreen(),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(

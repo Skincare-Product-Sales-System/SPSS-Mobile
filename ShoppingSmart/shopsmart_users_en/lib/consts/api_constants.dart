@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base API URL
-  static String baseUrl = 'http://10.0.2.2:5041/api';
+  static String baseUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
 
   // Auth endpoints
   static const String login = '/auth/login';

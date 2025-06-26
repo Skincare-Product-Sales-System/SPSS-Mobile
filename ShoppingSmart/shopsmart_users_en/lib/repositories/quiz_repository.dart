@@ -6,7 +6,7 @@ import 'dart:developer' as developer;
 
 /// Repository xử lý các tác vụ liên quan đến quiz
 class QuizRepository {
-  final String _baseUrl = 'http://10.0.2.2:5041/api';
+  final String _baseUrl = 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api';
 
   /// Lấy danh sách bộ câu hỏi quiz
   Future<ApiResponse<List<Map<String, dynamic>>>> getQuizSets({
@@ -198,10 +198,11 @@ class QuizRepository {
   ) async {
     try {
       final token = await JwtService.getStoredToken();
+      print('[QUIZ DEBUG] GỬI QUIZ RESULT: quizSetId=$quizSetId, score=$score');
+      print('[QUIZ DEBUG] TOKEN: $token');
       final url =
           '$_baseUrl/quiz-results/by-point-and-set?score=$score&quizSetId=$quizSetId';
-      developer.log('Calling API: $url', name: 'QuizRepository');
-
+      print('[QUIZ DEBUG] API URL: $url');
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -209,12 +210,8 @@ class QuizRepository {
           'Content-Type': 'application/json',
         },
       );
-
-      developer.log(
-        'Response status: ${response.statusCode}',
-        name: 'QuizRepository',
-      );
-      developer.log('Response body: ${response.body}', name: 'QuizRepository');
+      print('[QUIZ DEBUG] RESPONSE STATUS: \\${response.statusCode}');
+      print('[QUIZ DEBUG] RESPONSE BODY: \\${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -227,18 +224,14 @@ class QuizRepository {
         return ApiResponse<Map<String, dynamic>>(
           success: false,
           message:
-              'Failed to load quiz result. Status code: ${response.statusCode}',
+              'Failed to load quiz result. Status code: \\${response.statusCode}',
         );
       }
     } catch (e) {
-      developer.log(
-        'Exception: ${e.toString()}',
-        name: 'QuizRepository',
-        error: e,
-      );
+      print('[QUIZ DEBUG] EXCEPTION: \\${e.toString()}');
       return ApiResponse<Map<String, dynamic>>(
         success: false,
-        message: 'Error fetching quiz result: ${e.toString()}',
+        message: 'Error fetching quiz result: \\${e.toString()}',
       );
     }
   }
