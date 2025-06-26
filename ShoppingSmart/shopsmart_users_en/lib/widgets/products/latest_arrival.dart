@@ -19,34 +19,34 @@ class LatestArrivalProductsWidget extends StatelessWidget {
       context,
     );
 
-    return Container(
-      margin: const EdgeInsets.all(3.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.3),
-          width: 1,
+    return IntrinsicHeight(
+      child: Container(
+        margin: const EdgeInsets.all(3.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.3),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            viewedProductsProvider.addViewedProduct(productsModel.productId);
-            await Navigator.pushNamed(
-              context,
-              EnhancedProductDetailsScreen.routeName,
-              arguments: productsModel.productId,
-            );
-          },
-          child: SizedBox(
-            height: 280, // Tăng thêm 10px từ 270 lên 280
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              viewedProductsProvider.addViewedProduct(productsModel.productId);
+              await Navigator.pushNamed(
+                context,
+                EnhancedProductDetailsScreen.routeName,
+                arguments: productsModel.productId,
+              );
+            },
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image section with fixed height and proper layout
+                  // Image section
                   Container(
                     height: 150,
                     width: double.infinity,
@@ -101,77 +101,70 @@ class LatestArrivalProductsWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Product title - fixed height
-                  SizedBox(
-                    height: 36,
-                    child: Text(
-                      productsModel.productTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        height: 1.2,
-                      ),
+                  // Product title
+                  Text(
+                    productsModel.productTitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 6), // Tăng từ 4px lên 6px
-                  // Price section - fixed height
-                  SizedBox(
-                    height: 40, // Tăng từ 36px lên 40px
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "${productsModel.formattedPrice} VND",
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        if (productsModel.marketPrice >
-                            productsModel.price) ...[
-                          const SizedBox(height: 3), // Tăng từ 2px lên 3px
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "${productsModel.formattedMarketPrice} VND",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    decoration: TextDecoration.lineThrough,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color
-                                        ?.withOpacity(0.6),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const Spacer(), // Sử dụng Spacer để đảm bảo nút luôn ở dưới cùng
-                  // Action buttons - Only Heart button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  const SizedBox(height: 6),
+
+                  // Price section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        width: 26,
-                        height: 26,
-                        child: HeartButtonWidget(
-                          productId: productsModel.productId,
-                          size: 16,
+                      Text(
+                        "${productsModel.formattedPrice} VND",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
+                      if (productsModel.marketPrice > productsModel.price) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "${productsModel.formattedMarketPrice} VND",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  decoration: TextDecoration.lineThrough,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withOpacity(0.6),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
+                  ),
+                  const Spacer(),
+
+                  // Heart button
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: HeartButtonWidget(
+                        productId: productsModel.productId,
+                        size: 16,
+                      ),
+                    ),
                   ),
                 ],
               ),

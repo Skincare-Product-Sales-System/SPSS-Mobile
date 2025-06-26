@@ -108,7 +108,10 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                 children: [
                   SafeArea(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -133,7 +136,11 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                               ),
                             ],
                           ),
-                          Icon(Icons.shopping_cart, color: Colors.white, size: 32),
+                          Icon(
+                            Icons.shopping_cart,
+                            color: Colors.white,
+                            size: 32,
+                          ),
                         ],
                       ),
                     ),
@@ -193,10 +200,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF8F5CFF),
-                    Color(0xFFBCA7FF),
-                  ],
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -207,9 +211,17 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                 children: [
                   Row(
                     children: [
-                      const TitlesTextWidget(label: "Bán Chạy Nhất", fontSize: 20, color: Colors.white),
+                      const TitlesTextWidget(
+                        label: "Bán Chạy Nhất",
+                        fontSize: 20,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 8),
-                      Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 26),
+                      Icon(
+                        Icons.local_fire_department,
+                        color: Colors.orangeAccent,
+                        size: 26,
+                      ),
                     ],
                   ),
                   Container(
@@ -219,7 +231,10 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                     ),
                     child: TextButton(
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         minimumSize: Size(0, 36),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -253,10 +268,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF8F5CFF),
-                    Color(0xFFBCA7FF),
-                  ],
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -265,7 +277,11 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const TitlesTextWidget(label: "Tất Cả Sản Phẩm", fontSize: 20, color: Colors.white),
+                  const TitlesTextWidget(
+                    label: "Tất Cả Sản Phẩm",
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -273,7 +289,10 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
                     ),
                     child: TextButton(
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         minimumSize: Size(0, 36),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -383,7 +402,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 15,
-          childAspectRatio: 0.65,
+          childAspectRatio: 0.63,
         ),
         itemCount:
             viewModel.bestSellers.length > 10

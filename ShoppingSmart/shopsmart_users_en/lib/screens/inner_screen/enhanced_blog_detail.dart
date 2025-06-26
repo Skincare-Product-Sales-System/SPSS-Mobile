@@ -29,7 +29,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // If blogId wasn't passed as a constructor parameter, try to get it from route arguments
     _blogId ??= ModalRoute.of(context)?.settings.arguments as String?;
   }
 
@@ -86,13 +85,11 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
       return const Center(child: Text('Không tìm thấy dữ liệu'));
     }
 
-    // Combine sections content for display
     final String content =
         detailedBlog.sections.isNotEmpty
             ? detailedBlog.sections.map((s) => s.content).join('\n\n')
             : detailedBlog.description;
 
-    // Get categories and tags
     final category =
         detailedBlog.sections.isNotEmpty
             ? detailedBlog.sections
@@ -119,7 +116,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Blog Header Image
           FancyShimmerImage(
             imageUrl: detailedBlog.thumbnail,
             height: size.height * 0.3,
@@ -142,7 +138,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Blog Title
                 Text(
                   detailedBlog.title,
                   style: TextStyle(
@@ -154,7 +149,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Author and Date Info
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -203,7 +197,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Blog Content
                 Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
@@ -213,25 +206,11 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
                     ),
                   ),
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Content
-                      Text(
-                        content,
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.6,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: buildRichContent(content),
                 ),
 
                 const SizedBox(height: 24),
 
-                // Category and Tags
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -241,7 +220,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category
                       Row(
                         children: [
                           Icon(
@@ -272,8 +250,6 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
                           ),
                         ],
                       ),
-
-                      // Tags
                       if (tags.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Row(
@@ -329,7 +305,43 @@ class _EnhancedBlogDetailScreenState extends State<EnhancedBlogDetailScreen> {
     );
   }
 
-  // Format the date for display
+  Widget buildRichContent(String content) {
+    final RegExp imgRegex = RegExp(
+      r'(https?:\/\/[^\s]+\.(png|jpe?g|gif|webp))',
+      caseSensitive: false,
+    );
+    final lines = content.split('\n');
+    final widgets =
+        lines.map<Widget>((line) {
+          if (imgRegex.hasMatch(line.trim())) {
+            final match = imgRegex.firstMatch(line.trim());
+            if (match != null) {
+              final imageUrl = match.group(0)!;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Image.network(imageUrl, fit: BoxFit.cover),
+              );
+            }
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              line,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.6,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+          );
+        }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
+
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'Không rõ ngày';
     try {

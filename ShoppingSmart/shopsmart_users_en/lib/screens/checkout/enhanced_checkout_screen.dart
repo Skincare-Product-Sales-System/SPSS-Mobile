@@ -17,6 +17,7 @@ import '../../screens/auth/enhanced_login.dart';
 import '../profile/enhanced_address_screen.dart';
 import '../payment/bank_payment_screen.dart';
 import 'enhanced_order_success_screen.dart';
+import '../../widgets/voucher_selection_widget.dart';
 
 class EnhancedCheckoutScreen extends StatefulWidget {
   static const routeName = '/enhanced-checkout';
@@ -117,7 +118,11 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(IconlyLight.arrow_left_2, size: 24, color: Colors.white),
+                  icon: const Icon(
+                    IconlyLight.arrow_left_2,
+                    size: 24,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
@@ -394,22 +399,66 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               const Center(child: Text('Không có phương thức thanh toán nào'))
             else
               for (final method in paymentMethods)
-                RadioListTile<String>(
-                  title: Text(
-                    method.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(method.description),
-                  value: method.id,
-                  groupValue:
-                      _selectedPaymentMethodId ?? paymentMethods.first.id,
-                  onChanged: (value) {
+                InkWell(
+                  onTap: () {
                     setState(() {
-                      _selectedPaymentMethodId = value;
+                      _selectedPaymentMethodId = method.id;
                     });
                   },
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: Theme.of(context).primaryColor,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color:
+                            (_selectedPaymentMethodId ??
+                                        paymentMethods.first.id) ==
+                                    method.id
+                                ? Theme.of(context).primaryColor
+                                : Colors.transparent,
+                        width: 2,
+                      ),
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[900]
+                              : Theme.of(context).cardColor,
+                    ),
+                    child: ListTile(
+                      leading:
+                          method.imageUrl.isNotEmpty
+                              ? Image.network(
+                                method.imageUrl,
+                                width: 40,
+                                height: 40,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.payment, size: 32);
+                                },
+                              )
+                              : const Icon(Icons.payment, size: 32),
+                      title: Text(
+                        method.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        'Phương thức thanh toán: ${method.paymentType}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                      trailing: Radio<String>(
+                        value: method.id,
+                        groupValue:
+                            _selectedPaymentMethodId ?? paymentMethods.first.id,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPaymentMethodId = value;
+                          });
+                        },
+                        activeColor: Theme.of(context).primaryColor,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
                 ),
           ],
         ),
@@ -420,8 +469,10 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
   Widget _buildOrderSummary(EnhancedCartViewModel cartViewModel) {
     final cartItems = cartViewModel.cartItems;
     final totalAmount = cartViewModel.totalAmount;
-
-    final discount = _selectedVoucher?.discountAmount ?? 0.0;
+    final discount =
+        _selectedVoucher != null
+            ? _selectedVoucher!.calculateDiscount(totalAmount)
+            : 0.0;
     final finalAmount = totalAmount - discount;
 
     return Card(
@@ -589,36 +640,62 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
         child: Row(
           children: [
             Expanded(
-              child: _selectedVoucher != null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.local_offer, color: Color(0xFF8F5CFF)),
-                            const SizedBox(width: 8),
-                            Text(
-                              _selectedVoucher!.code,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF8F5CFF),
+              child:
+                  _selectedVoucher != null
+                      ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.local_offer, color: Color(0xFF8F5CFF)),
+                              const SizedBox(width: 8),
+                              Text(
+                                _selectedVoucher!.code,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8F5CFF),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _selectedVoucher!.description,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          if (_selectedVoucher!.getValidationError(
+                                totalAmount,
+                              ) !=
+                              null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                _selectedVoucher!.getValidationError(
+                                  totalAmount,
+                                )!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _selectedVoucher!.description,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    )
-                  : const Text('Chưa áp dụng mã giảm giá'),
+                        ],
+                      )
+                      : const Text('Chưa áp dụng mã giảm giá'),
             ),
             TextButton(
               onPressed: () async {
-                // Hiển thị bottom sheet chọn voucher
-                // TODO: Gọi showVoucherSelection hoặc widget tương ứng
+                showVoucherSelection(
+                  context: context,
+                  orderTotal: totalAmount,
+                  selectedVoucher: _selectedVoucher,
+                  onVoucherSelected: (voucher) {
+                    setState(() {
+                      _selectedVoucher = voucher;
+                      _selectedVoucherId = voucher?.id;
+                    });
+                  },
+                );
               },
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFF8F5CFF),
@@ -634,7 +711,10 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
 
   Widget _buildBottomCheckout(EnhancedCartViewModel cartViewModel) {
     final totalAmount = cartViewModel.totalAmount;
-    final discount = _selectedVoucher?.discountAmount ?? 0.0;
+    final discount =
+        _selectedVoucher != null
+            ? _selectedVoucher!.calculateDiscount(totalAmount)
+            : 0.0;
     final finalAmount = totalAmount - discount;
 
     return Container(
@@ -682,7 +762,10 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -690,7 +773,11 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               ),
               child: const Text(
                 'Đặt hàng',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -779,9 +866,7 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
             // Nếu là thanh toán qua ngân hàng, chuyển đến màn hình QR Bank
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => BankPaymentScreen(
-                  order: orderResponse,
-                ),
+                builder: (context) => BankPaymentScreen(order: orderResponse),
               ),
             );
             // Xóa giỏ hàng sau khi đặt hàng thành công
@@ -790,7 +875,8 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
           } else if (VNPayService.isVNPayPayment(paymentType)) {
             // Xử lý thanh toán VNPay
             final token = await JwtService.getStoredToken();
-            final userInfo = token != null ? JwtService.getUserFromToken(token) : null;
+            final userInfo =
+                token != null ? JwtService.getUserFromToken(token) : null;
             final userId = userInfo?['id'] ?? '';
 
             if (userId.isEmpty) {
@@ -825,7 +911,9 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               if (mounted) {
                 MyAppFunctions.showErrorOrWarningDialog(
                   context: context,
-                  subtitle: vnpayResponse.message ?? 'Không thể khởi tạo thanh toán VNPay.',
+                  subtitle:
+                      vnpayResponse.message ??
+                      'Không thể khởi tạo thanh toán VNPay.',
                   isError: true,
                   fct: () {},
                 );
