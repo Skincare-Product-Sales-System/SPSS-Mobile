@@ -87,86 +87,156 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 15),
-
-            // Banner Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: SizedBox(
-                height: size.height * 0.25,
-                child: ClipRRect(
-                  child: Swiper(
-                    autoplay: true,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Image.asset(
-                        AppConstants.bannersImage[index],
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[300],
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.error_outline, size: 40),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Lỗi: ${error.toString().substring(0, math.min(error.toString().length, 50))}',
-                                  ),
-                                ],
+            // Header + Banner gradient tím bao trọn
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF8F5CFF), // tím đậm
+                    Color(0xFFBCA7FF), // tím nhạt
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+              ),
+              child: Column(
+                children: [
+                  SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Xin chào!',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    itemCount: AppConstants.bannersImage.length,
-                    pagination: const SwiperPagination(
-                      builder: DotSwiperPaginationBuilder(
-                        activeColor: Colors.red,
-                        color: Colors.white,
+                              SizedBox(height: 4),
+                              Text(
+                                'Chúc bạn mua sắm vui vẻ',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Icon(Icons.shopping_cart, color: Colors.white, size: 32),
+                        ],
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  // Banner Section
+                  SizedBox(
+                    height: size.height * 0.25,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
+                      ),
+                      child: Swiper(
+                        autoplay: true,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Image.asset(
+                            AppConstants.bannersImage[index],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[300],
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.error_outline, size: 40),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Lỗi:  ${error.toString().substring(0, math.min(error.toString().length, 50))}',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        itemCount: AppConstants.bannersImage.length,
+                        pagination: const SwiperPagination(
+                          builder: DotSwiperPaginationBuilder(
+                            activeColor: Colors.red,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
 
-            // // Categories Section
-            // _buildCategorySection(context, viewModel),
-            // const SizedBox(height: 20),
-
-            // Best Sellers section
-            _buildBestSellersSection(context, viewModel),
-            const SizedBox(height: 15.0),
-
-            // Best Sellers Products
-            _buildBestSellersProducts(context, viewModel, size),
-
-            const SizedBox(height: 20.0),
-
-            // All Products Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            // Best Sellers section (bọc gradient tím cho Row tiêu đề)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF8F5CFF),
+                    Color(0xFFBCA7FF),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const TitlesTextWidget(label: "Tất Cả Sản Phẩm"),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        SimpleSearchScreen.routeName,
-                        arguments: "Tất Cả",
-                      );
-                    },
-                    child: Text(
-                      'Xem Tất Cả',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).primaryColor,
+                  Row(
+                    children: [
+                      const TitlesTextWidget(label: "Bán Chạy Nhất", fontSize: 20, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 26),
+                    ],
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        minimumSize: Size(0, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          SimpleSearchScreen.routeName,
+                          arguments: "Tất Cả",
+                        );
+                      },
+                      child: const Text(
+                        'Xem Tất Cả',
+                        style: TextStyle(
+                          color: Color(0xFF8F5CFF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -174,10 +244,61 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
               ),
             ),
             const SizedBox(height: 15.0),
+            _buildBestSellersProducts(context, viewModel, size),
+            const SizedBox(height: 20.0),
 
-            // All Products Grid
+            // All Products Section (trở lại như cũ, không bọc gradient)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF8F5CFF),
+                    Color(0xFFBCA7FF),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const TitlesTextWidget(label: "Tất Cả Sản Phẩm", fontSize: 20, color: Colors.white),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        minimumSize: Size(0, 36),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          SimpleSearchScreen.routeName,
+                          arguments: "Tất Cả",
+                        );
+                      },
+                      child: const Text(
+                        'Xem Tất Cả',
+                        style: TextStyle(
+                          color: Color(0xFF8F5CFF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 15.0),
             _buildAllProductsGrid(context, viewModel, size),
-
             const SizedBox(height: 20.0),
 
             // Blog Section
@@ -186,38 +307,6 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
             const SizedBox(height: 20.0),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBestSellersSection(
-    BuildContext context,
-    EnhancedHomeViewModel viewModel,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const TitlesTextWidget(label: "Bán Chạy Nhất"),
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                SimpleSearchScreen.routeName,
-                arguments: "Tất Cả",
-              );
-            },
-            child: Text(
-              'Xem Tất Cả',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

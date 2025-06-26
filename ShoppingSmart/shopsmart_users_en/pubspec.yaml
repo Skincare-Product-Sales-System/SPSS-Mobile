@@ -99,6 +99,7 @@ flutter:
     - assets/images/bag/
     - assets/images/banners/
     - assets/images/categories/
+    - assets/images/bag/logo.png
   
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -131,33 +131,45 @@ class _EnhancedCartBottomSheetWidgetState
                 SizedBox(
                   width: double.infinity,
                   height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        totalAmount > 0
-                            ? () {
-                              // Use post-frame callback to avoid setState during build
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: totalAmount > 0
+                          ? const LinearGradient(
+                              colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: totalAmount > 0 ? null : Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: totalAmount > 0
+                          ? () {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 _handleCheckout(context);
                               });
                             }
-                            : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                        disabledBackgroundColor: Colors.transparent,
                       ),
-                      elevation: 2,
-                      disabledBackgroundColor: Colors.grey.withOpacity(0.3),
-                    ),
-                    icon: const Icon(Icons.shopping_cart_checkout, size: 20),
-                    label: Text(
-                      totalAmount > 0
-                          ? 'Thanh toán • ${CurrencyFormatter.formatVND(totalAmount)}'
-                          : 'Giỏ hàng trống',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                      icon: const Icon(Icons.shopping_cart_checkout, size: 20),
+                      label: Text(
+                        totalAmount > 0
+                            ? 'Thanh toán • ${CurrencyFormatter.formatVND(totalAmount)}'
+                            : 'Giỏ hàng trống',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

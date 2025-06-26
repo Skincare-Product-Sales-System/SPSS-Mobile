@@ -44,18 +44,46 @@ class _EnhancedCartScreenState extends State<EnhancedCartScreen>
     BuildContext context,
     EnhancedCartViewModel cartViewModel,
   ) {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      title: const TitlesTextWidget(label: "Giỏ hàng"),
-      actions: [
-        IconButton(
-          onPressed: () {
-            _showClearCartDialog(context, cartViewModel);
-          },
-          icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(80),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF8F5CFF),
+              Color(0xFFBCA7FF),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
         ),
-      ],
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 20, top: 16, bottom: 16),
+                child: TitlesTextWidget(
+                  label: "Giỏ hàng",
+                  fontSize: 22,
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  _showClearCartDialog(context, cartViewModel);
+                },
+                icon: const Icon(Icons.delete_forever_rounded, color: Colors.white),
+                tooltip: 'Xóa giỏ hàng',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -148,6 +176,7 @@ class _EnhancedCartScreenState extends State<EnhancedCartScreen>
                     child: RefreshIndicator(
                       onRefresh: () => viewModel.fetchCartFromServer(),
                       child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight + 80),
                         itemCount: viewModel.cartItems.length,
                         itemBuilder: (context, index) {
                           final cartModel =

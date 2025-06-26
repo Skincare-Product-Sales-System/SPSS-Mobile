@@ -562,179 +562,211 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
     BuildContext context,
     EnhancedProductsViewModel viewModel,
   ) {
-    return AppBar(
-      elevation: 0,
-      title: const TitlesTextWidget(label: "Tìm kiếm"),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Row(
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(120),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF8F5CFF),
+              Color(0xFFBCA7FF),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search box
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      fillColor: Theme.of(context).cardColor,
-                      filled: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      hintText: 'Tìm kiếm sản phẩm...',
-                      prefixIcon: const Icon(Icons.search),
-                      // Clear button
-                      suffixIcon:
-                          _searchController.text.isNotEmpty
-                              ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  debugPrint(
-                                    "SimpleSearchScreen: Clearing search field",
-                                  );
-
-                                  // Clear the search text field
-                                  setState(() {
-                                    _searchController.clear();
-                                  }); // Get the current view model
-                                  final viewModel =
-                                      Provider.of<EnhancedProductsViewModel>(
-                                        context,
-                                        listen: false,
-                                      );
-
-                                  // 1. First, fully reset search state to ensure no cached values remain
-                                  viewModel.resetSearch();
-
-                                  // Debug check to verify searchQuery is null
-                                  debugPrint(
-                                    "SimpleSearchScreen: After resetSearch, currentSearchQuery=${viewModel.currentSearchQuery}",
-                                  );
-
-                                  // 2. Add a small delay to ensure the reset is complete
-                                  Future.delayed(const Duration(milliseconds: 50), () {
-                                    // Check if we have any active filters
-                                    bool hasFilters =
-                                        _selectedCategoryId != null ||
-                                        _selectedBrandId != null ||
-                                        _selectedSkinTypeId != null ||
-                                        _selectedSortBy != null;
-
-                                    debugPrint(
-                                      "SimpleSearchScreen: Has active filters: $hasFilters",
-                                    ); // The key fix: explicitly pass searchText as empty string to ensure
-                                    // the API is called with name=null while preserving any active filters
-                                    if (_selectedCategoryId != null) {
-                                      // Case 1: We have a category filter
-                                      // Call loadProductsByCategory with the category and other filters
-                                      viewModel.loadProductsByCategory(
-                                        categoryId: _selectedCategoryId!,
-                                        refresh: true, // Force refresh
-                                        sortBy: _selectedSortBy,
-                                        brandId: _selectedBrandId,
-                                        skinTypeId: _selectedSkinTypeId,
-                                      );
-
-                                      debugPrint(
-                                        "SimpleSearchScreen: Reloaded products with category filter: $_selectedCategoryId",
-                                      );
-                                    } else {
-                                      // Case 2: No category, but might have other filters
-                                      // We use loadProducts instead of searchProducts to ensure we're not in search mode
-                                      // This will call the API with name=null
-                                      viewModel.loadProducts(
-                                        refresh: true, // Force refresh
-                                        sortBy: _selectedSortBy,
-                                        brandId: _selectedBrandId,
-                                        skinTypeId: _selectedSkinTypeId,
-                                      );
-
-                                      debugPrint(
-                                        "SimpleSearchScreen: Reloaded all products with filters but no search query",
-                                      );
-                                    }
-
-                                    // Show appropriate notification based on filter state
-                                    if (hasFilters) {
-                                      // ScaffoldMessenger.of(
-                                      //   context,
-                                      // ).showSnackBar(
-                                      //   const SnackBar(
-                                      //     content: Text(
-                                      //       'Đã xóa tìm kiếm, giữ các bộ lọc',
-                                      //     ),
-                                      //     duration: Duration(seconds: 1),
-                                      //     behavior: SnackBarBehavior.floating,
-                                      //   ),
-                                      // );
-                                    } else {
-                                      // ScaffoldMessenger.of(
-                                      //   context,
-                                      // ).showSnackBar(
-                                      //   const SnackBar(
-                                      //     content: Text('Đã xóa tìm kiếm'),
-                                      //     duration: Duration(seconds: 1),
-                                      //     behavior: SnackBarBehavior.floating,
-                                      //   ),
-                                      // );
-                                    }
-                                  });
-                                },
-                              )
-                              : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 8, right: 16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    onChanged: (value) {
-                      setState(() {}); // Update UI for clear button visibility
-                    },
-                    onSubmitted: _performSearch,
-                    textInputAction: TextInputAction.search,
-                  ),
-                ),
-              ),
-
-              // Filter button
-              const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
+                    const SizedBox(width: 4),
+                    const TitlesTextWidget(label: "Tìm kiếm", color: Colors.white, fontSize: 22),
                   ],
                 ),
-                child: Material(
-                  color:
-                      _isFilterVisible
-                          ? AppColors.lightAccent.withOpacity(0.2)
-                          : Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: _toggleFilter,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        Icons.filter_list,
-                        color: _isFilterVisible ? AppColors.lightAccent : null,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    // Search box
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            fillColor: Colors.white,
+                            filled: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            hintText: 'Tìm kiếm sản phẩm...',
+                            prefixIcon: const Icon(Icons.search),
+                            // Clear button
+                            suffixIcon:
+                                _searchController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          debugPrint(
+                                            "SimpleSearchScreen: Clearing search field",
+                                          );
+
+                                          // Clear the search text field
+                                          setState(() {
+                                            _searchController.clear();
+                                          }); // Get the current view model
+                                          final viewModel =
+                                              Provider.of<EnhancedProductsViewModel>(
+                                                context,
+                                                listen: false,
+                                              );
+
+                                          // 1. First, fully reset search state to ensure no cached values remain
+                                          viewModel.resetSearch();
+
+                                          // Debug check to verify searchQuery is null
+                                          debugPrint(
+                                            "SimpleSearchScreen: After resetSearch, currentSearchQuery=${viewModel.currentSearchQuery}",
+                                          );
+
+                                          // 2. Add a small delay to ensure the reset is complete
+                                          Future.delayed(const Duration(milliseconds: 50), () {
+                                            // Check if we have any active filters
+                                            bool hasFilters =
+                                                _selectedCategoryId != null ||
+                                                _selectedBrandId != null ||
+                                                _selectedSkinTypeId != null ||
+                                                _selectedSortBy != null;
+
+                                            debugPrint(
+                                              "SimpleSearchScreen: Has active filters: $hasFilters",
+                                            ); // The key fix: explicitly pass searchText as empty string to ensure
+                                            // the API is called with name=null while preserving any active filters
+                                            if (_selectedCategoryId != null) {
+                                              // Case 1: We have a category filter
+                                              // Call loadProductsByCategory with the category and other filters
+                                              viewModel.loadProductsByCategory(
+                                                categoryId: _selectedCategoryId!,
+                                                refresh: true, // Force refresh
+                                                sortBy: _selectedSortBy,
+                                                brandId: _selectedBrandId,
+                                                skinTypeId: _selectedSkinTypeId,
+                                              );
+
+                                              debugPrint(
+                                                "SimpleSearchScreen: Reloaded products with category filter: $_selectedCategoryId",
+                                              );
+                                            } else {
+                                              // Case 2: No category, but might have other filters
+                                              // We use loadProducts instead of searchProducts to ensure we're not in search mode
+                                              // This will call the API with name=null
+                                              viewModel.loadProducts(
+                                                refresh: true, // Force refresh
+                                                sortBy: _selectedSortBy,
+                                                brandId: _selectedBrandId,
+                                                skinTypeId: _selectedSkinTypeId,
+                                              );
+
+                                              debugPrint(
+                                                "SimpleSearchScreen: Reloaded all products with filters but no search query",
+                                              );
+                                            }
+
+                                            // Show appropriate notification based on filter state
+                                            if (hasFilters) {
+                                              // ScaffoldMessenger.of(
+                                              //   context,
+                                              // ).showSnackBar(
+                                              //   const SnackBar(
+                                              //     content: Text(
+                                              //       'Đã xóa tìm kiếm, giữ các bộ lọc',
+                                              //     ),
+                                              //     duration: Duration(seconds: 1),
+                                              //     behavior: SnackBarBehavior.floating,
+                                              //   ),
+                                              // );
+                                            } else {
+                                              // ScaffoldMessenger.of(
+                                              //   context,
+                                              // ).showSnackBar(
+                                              //   const SnackBar(
+                                              //     content: Text('Đã xóa tìm kiếm'),
+                                              //     duration: Duration(seconds: 1),
+                                              //     behavior: SnackBarBehavior.floating,
+                                              //   ),
+                                              // );
+                                            }
+                                          });
+                                        },
+                                      )
+                                      : null,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {}); // Update UI for clear button visibility
+                          },
+                          onSubmitted: _performSearch,
+                          textInputAction: TextInputAction.search,
+                        ),
                       ),
                     ),
-                  ),
+
+                    // Filter button
+                    const SizedBox(width: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color:
+                            _isFilterVisible
+                                ? AppColors.lightAccent.withOpacity(0.2)
+                                : Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _toggleFilter,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.filter_list,
+                              color: _isFilterVisible ? AppColors.lightAccent : null,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -756,12 +788,7 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
     final skinTypesViewModel = Provider.of<EnhancedSkinTypesViewModel>(
       context,
       listen: false,
-    ); // Disable debug prints for better performance
-    // debugPrint("SimpleSearchScreen: Building filter panel with:");
-    // debugPrint("Categories: ${categoriesViewModel.categories.length}");
-    // debugPrint("Brands: ${brandsViewModel.brands.length}");
-    // debugPrint("Skin Types: ${skinTypesViewModel.skinTypes.length}");
-
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -773,27 +800,34 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
+            // Header gradient tím nhạt
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.lightAccent.withOpacity(0.1),
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFBCA7FF),
+                    Color(0xFFF3EFFF),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Bộ lọc tìm kiếm",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    'Bộ lọc tìm kiếm',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6C3EFF)),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: _toggleFilter,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  GestureDetector(
+                    onTap: () => setState(() => _isFilterVisible = false),
+                    child: const Icon(Icons.close, color: Color(0xFF6C3EFF)),
                   ),
                 ],
               ),
@@ -972,11 +1006,12 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
                     child: ElevatedButton(
                       onPressed: _clearFilters,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF8F5CFF),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(color: Color(0xFF8F5CFF), width: 1.2),
                         ),
                       ),
                       child: const Text("Xóa bộ lọc"),
@@ -987,7 +1022,7 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
                     child: ElevatedButton(
                       onPressed: _applyFilters,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.lightAccent,
+                        backgroundColor: const Color(0xFF8F5CFF),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -1016,13 +1051,24 @@ class _SimpleSearchScreenState extends State<SimpleSearchScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.lightAccent : Colors.grey.shade100,
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : const Color(0xFF8F5CFF),
+            width: 1.2,
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
+            color: isSelected ? Colors.white : const Color(0xFF8F5CFF),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
