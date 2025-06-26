@@ -2,6 +2,7 @@ import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
@@ -13,6 +14,8 @@ import '../../providers/enhanced_cart_view_model.dart';
 import '../../providers/enhanced_wishlist_view_model.dart';
 import '../cart/enhanced_cart_screen.dart';
 import '../../services/jwt_service.dart';
+import '../../root_screen.dart';
+import 'package:shopsmart_users_en/services/navigation_service.dart';
 
 class EnhancedProductDetailsScreen extends StatefulWidget {
   static const routeName = "/EnhancedProductDetailsScreen";
@@ -230,6 +233,112 @@ class _EnhancedProductDetailsScreenState
         SliverAppBar(
           expandedHeight: 300,
           pinned: true,
+          leading: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(100),
+                onTap: () {
+                  Navigator.of(context).maybePop();
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            // Nút home với màu nền và bo tròn full circle
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(100),
+                  onTap: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      RootScreen.routeName,
+                      (route) => false,
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(6.0),
+                    child: Icon(
+                      Icons.home,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Nút giỏ hàng với màu nền và bo tròn full circle
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(100),
+                      onTap: () {
+                        Navigator.of(context).pushNamed(
+                          EnhancedCartScreen.routeName,
+                        );
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(6.0),
+                        child: Icon(
+                          Icons.shopping_cart,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 2,
+                    top: 2,
+                    child: Consumer<EnhancedCartViewModel>(
+                      builder: (context, cartVM, child) {
+                        if (cartVM.totalQuantity == 0) return SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8F5CFF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${cartVM.totalQuantity}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           flexibleSpace: FlexibleSpaceBar(
             background: Stack(
               children: [
@@ -281,11 +390,6 @@ class _EnhancedProductDetailsScreenState
                       );
                     },
                   ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: HeartButtonWidget(productId: product.id),
                 ),
               ],
             ),
@@ -382,27 +486,24 @@ class _EnhancedProductDetailsScreenState
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    isSelected
-                                        ? Theme.of(
-                                          context,
-                                        ).primaryColor.withOpacity(0.1)
-                                        : Colors.grey.withOpacity(0.1),
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                color: isSelected ? null : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color:
-                                      isSelected
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.grey.withOpacity(0.3),
+                                  color: isSelected ? Colors.transparent : const Color(0xFF8F5CFF),
+                                  width: 1.2,
                                 ),
                               ),
                               child: Text(
                                 displayName,
                                 style: TextStyle(
-                                  color:
-                                      isSelected
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.black,
+                                  color: isSelected ? Colors.white : const Color(0xFF8F5CFF),
                                   fontWeight:
                                       isSelected
                                           ? FontWeight.bold
@@ -484,8 +585,9 @@ class _EnhancedProductDetailsScreenState
                 const SizedBox(height: 16),
                 TabBar(
                   controller: _tabController,
-                  labelColor: Theme.of(context).primaryColor,
+                  labelColor: const Color(0xFF8F5CFF),
                   unselectedLabelColor: Colors.grey,
+                  indicatorColor: const Color(0xFF8F5CFF),
                   tabs: const [
                     Tab(text: 'Chi tiết'),
                     Tab(text: 'Thông số'),
@@ -892,7 +994,7 @@ class _EnhancedProductDetailsScreenState
                         });
                       },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: const Color(0xFF8F5CFF),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

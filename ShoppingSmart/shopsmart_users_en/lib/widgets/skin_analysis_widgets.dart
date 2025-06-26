@@ -37,11 +37,15 @@ class SkinAnalysisFeatureCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: theme.primaryColor, size: 30),
+                child: Icon(icon, color: Colors.white, size: 30),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -53,6 +57,7 @@ class SkinAnalysisFeatureCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF8F5CFF),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -66,10 +71,10 @@ class SkinAnalysisFeatureCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: theme.primaryColor,
+                color: Color(0xFF8F5CFF),
               ),
             ],
           ),
@@ -105,11 +110,15 @@ class SkinAnalysisFeatureItem extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
-            child: Icon(icon, color: Theme.of(context).primaryColor, size: 28),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -121,6 +130,7 @@ class SkinAnalysisFeatureItem extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF8F5CFF),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -170,11 +180,15 @@ class SkinAnalysisHeroSection extends StatelessWidget {
           Container(
             width: 110,
             height: 110,
-            decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
-            child: Icon(iconData, size: 60, color: primaryColor),
+            child: Icon(iconData, size: 60, color: Colors.white),
           ),
           const SizedBox(height: 24),
         ],
@@ -182,9 +196,10 @@ class SkinAnalysisHeroSection extends StatelessWidget {
         // Title
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            fontSize: 24,
+            color: Color(0xFF8F5CFF),
           ),
           textAlign: TextAlign.center,
         ),
@@ -202,18 +217,30 @@ class SkinAnalysisHeroSection extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           height: 50,
-          child: ElevatedButton.icon(
-            onPressed: onButtonPressed,
-            icon: const Icon(Icons.camera_alt),
-            label: Text(
-              buttonText,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: ElevatedButton.icon(
+              onPressed: onButtonPressed,
+              icon: const Icon(Icons.camera_alt, color: Colors.white),
+              label: Text(
+                buttonText,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),

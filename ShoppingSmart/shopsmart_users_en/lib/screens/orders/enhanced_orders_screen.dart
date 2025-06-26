@@ -175,88 +175,129 @@ class _EnhancedOrdersScreenState extends State<EnhancedOrdersScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: Theme.of(context).textTheme.bodyLarge?.color,
-      centerTitle: true,
-      title: const TitlesTextWidget(label: 'Đơn hàng của tôi', fontSize: 22),
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(IconlyLight.arrow_left_2, size: 24),
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(90),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(28),
+            bottomRight: Radius.circular(28),
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(IconlyLight.arrow_left_2, size: 24, color: Colors.white),
+                ),
+              ),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: TitlesTextWidget(
+                    label: 'Đơn hàng của tôi',
+                    fontSize: 22,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
-  } // Content is now built directly in the build method
+  }
 
   Widget _buildStatusFilterRow(
     BuildContext context,
     EnhancedOrderViewModel viewModel,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      color: Colors.transparent,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
-          children:
-              _statusOptions.map((status) {
-                final isSelected = _selectedStatus == status;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: FilterChip(
-                    label: Text(
-                      status,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedStatus = status;
-                        });
-                        viewModel
-                            .loadOrders(
-                              refresh: true,
-                              status: status == 'Tất cả' ? null : status,
-                            )
-                            .then((_) {
-                              // Scroll to the top when filter is changed
-                              if (_scrollController.hasClients) {
-                                _scrollController.animateTo(
-                                  0,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOut,
-                                );
-                              }
-                            });
-                      }
-                    },
-                    backgroundColor: Colors.grey.shade200,
-                    selectedColor: Theme.of(
-                      context,
-                    ).primaryColor.withOpacity(0.2),
-                    checkmarkColor: Theme.of(context).primaryColor,
-                    elevation: isSelected ? 2 : 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
+          children: _statusOptions.map((status) {
+            final isSelected = _selectedStatus == status;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FilterChip(
+                label: Text(
+                  status,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? const Color(0xFF8F5CFF) : Colors.grey[700],
                   ),
-                );
-              }).toList(),
+                ),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedStatus = status;
+                    });
+                    viewModel
+                        .loadOrders(
+                          refresh: true,
+                          status: status == 'Tất cả' ? null : status,
+                        )
+                        .then((_) {
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(
+                              0,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                            );
+                          }
+                        });
+                  }
+                },
+                backgroundColor: isSelected
+                    ? const LinearGradient(
+                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(const Rect.fromLTWH(0, 0, 120, 40)) !=
+                            null
+                        ? Colors.transparent
+                        : const Color(0xFFF3EDFF)
+                    : const Color(0xFFF3EDFF),
+                selectedColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: isSelected
+                      ? const BorderSide(color: Color(0xFF8F5CFF), width: 2)
+                      : BorderSide.none,
+                ),
+                elevation: isSelected ? 2 : 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                showCheckmark: false,
+                // Custom gradient background for selected
+                avatar: isSelected
+                    ? Container(
+                        width: 0,
+                        height: 0,
+                        decoration: const BoxDecoration(),
+                      )
+                    : null,
+                clipBehavior: Clip.antiAlias,
+                // Nếu muốn gradient thực sự, cần custom widget, ở đây dùng border và chữ màu tím đậm
+              ),
+            );
+          }).toList(),
         ),
       ),
     );

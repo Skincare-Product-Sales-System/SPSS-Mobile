@@ -52,6 +52,7 @@ import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
+import 'package:shopsmart_users_en/screens/cart/enhanced_cart_screen.dart';
 
 import 'consts/theme_data.dart';
 // Các providers đã được thay thế bằng MVVM providers mới
@@ -70,7 +71,7 @@ void main() async {
     await setupServiceLocator();
     debugPrint("Main: Service locator setup completed");
 
-    runApp(const MyApp());
+  runApp(const MyApp());
     debugPrint("Main: App started");
   } catch (e, stackTrace) {
     debugPrint("Main: Error during initialization: $e");
@@ -495,6 +496,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             },
             // Xử lý các route đặc biệt cần tham số
             onGenerateRoute: (settings) {
+              if (settings.name == '/enhanced-cart') {
+                return MaterialPageRoute(
+                  builder: (context) => EnhancedCartScreen(),
+                );
+              }
               // if (settings.name == SkinAnalysisResultScreen.routeName) {
               //   final result = settings.arguments as SkinAnalysisResult;
               //   return MaterialPageRoute(
