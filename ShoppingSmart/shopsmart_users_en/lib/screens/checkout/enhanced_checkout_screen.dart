@@ -641,7 +641,7 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                         // Force rebuild to update totals
                         setState(() {});
 
-                        // Show message
+                        // Show messagec
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Đã xóa mã giảm giá'),
