@@ -100,14 +100,27 @@ class MessageItem extends StatelessWidget {
     try {
       // Try to parse as JSON
       final contentJson = jsonDecode(message.content);
+      
+      // Debug: Print parsed content
+      print('Parsed JSON content: $contentJson');
 
       // Check if it's a product message
-      if (contentJson['type'] == 'product') {
+      if (contentJson is Map<String, dynamic> && contentJson['type'] == 'product') {
         return _buildProductMessage(context, contentJson, isUser);
       }
       // Check if it's an image message
-      else if (contentJson['type'] == 'image') {
-        return _buildImageMessage(context, contentJson, isUser);
+      else if (contentJson is Map<String, dynamic> && contentJson['type'] == 'image') {
+        // Validate that url exists
+        if (contentJson['url'] != null && contentJson['url'].toString().isNotEmpty) {
+          return _buildImageMessage(context, contentJson, isUser);
+        } else {
+          // If no valid URL, show as text with error message
+          return _buildTextMessage(context, 'Không thể hiển thị ảnh', isUser);
+        }
+      }
+      // If it's an object with 'path' field (local file reference), show error
+      else if (contentJson is Map<String, dynamic> && contentJson['path'] != null) {
+        return _buildTextMessage(context, 'Ảnh đang được tải lên...', isUser);
       }
       // Otherwise treat as text
       else {
@@ -178,7 +191,6 @@ class MessageItem extends StatelessWidget {
     bool isUser,
   ) {
     final imageUrl = contentJson['url'] as String;
-    final actualPrimaryColor = primaryColor ?? AppColors.lightPrimary;
 
     return Column(
       crossAxisAlignment:
@@ -225,7 +237,20 @@ class MessageItem extends StatelessWidget {
                 placeholder:
                     (context, url) =>
                         const Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
+                errorWidget: (context, url, error) => Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Không thể tải ảnh',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -234,7 +259,7 @@ class MessageItem extends StatelessWidget {
           padding: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
           child: Text(
             _formatTime(message.timestamp),
-            style: TextStyle(fontSize: 10.0, color: Colors.black54),
+            style: const TextStyle(fontSize: 10.0, color: Colors.black54),
           ),
         ),
       ],

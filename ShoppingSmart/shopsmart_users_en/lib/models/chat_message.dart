@@ -1,5 +1,5 @@
 /// Loại tin nhắn trong chat
-enum MessageType { user, staff, system }
+enum MessageType { user, staff, system, ai }
 
 /// Lớp đại diện cho một tin nhắn chat
 class ChatMessage {

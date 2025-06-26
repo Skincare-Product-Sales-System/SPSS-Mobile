@@ -9,6 +9,7 @@ import '../../providers/order_provider.dart';
 import '../../services/currency_formatter.dart';
 import '../../services/vnpay_service.dart';
 import '../../services/my_app_function.dart';
+import '../../providers/enhanced_order_view_model.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   static const routeName = '/order-detail';
@@ -21,7 +22,7 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
-  late OrderProvider _orderProvider;
+  late EnhancedOrderViewModel _viewModel;
   OrderDetailModel? orderDetail;
   bool isLoading = true;
   String? errorMessage;
@@ -36,8 +37,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _loadOrderDetail() async {
-    _orderProvider = Provider.of<OrderProvider>(context, listen: false);
-    await _orderProvider.getOrderDetail(widget.orderId);
+    _viewModel = Provider.of<EnhancedOrderViewModel>(context, listen: false);
+    await _viewModel.loadOrderDetail(widget.orderId);
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -170,9 +171,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildOrderStatusCard() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, child) {
-        final orderDetail = orderProvider.orderDetail;
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, child) {
+        final orderDetail = viewModel.selectedOrder;
         if (orderDetail == null) return const SizedBox.shrink();
 
         // Thiết kế mới theo mẫu screenshot
@@ -305,9 +306,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildOrderSummaryCard() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, child) {
-        final orderDetail = orderProvider.orderDetail;
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, child) {
+        final orderDetail = viewModel.selectedOrder;
         if (orderDetail == null) return const SizedBox.shrink();
 
         return Container(
@@ -414,9 +415,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildProductsCard() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, child) {
-        final orderDetail = orderProvider.orderDetail;
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, child) {
+        final orderDetail = viewModel.selectedOrder;
         if (orderDetail == null || orderDetail.orderDetails.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -564,9 +565,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildShippingAddressCard() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, child) {
-        final orderDetail = orderProvider.orderDetail;
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, child) {
+        final orderDetail = viewModel.selectedOrder;
         if (orderDetail == null) return const SizedBox.shrink();
 
         final address = orderDetail.address;
@@ -657,9 +658,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildOrderTimelineCard() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, child) {
-        final orderDetail = orderProvider.orderDetail;
+    return Consumer<EnhancedOrderViewModel>(
+      builder: (context, viewModel, child) {
+        final orderDetail = viewModel.selectedOrder;
         if (orderDetail == null || orderDetail.statusChanges.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -775,11 +776,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Chi tiết đơn hàng'), centerTitle: true),
-      body: Consumer<OrderProvider>(
-        builder: (context, orderProvider, child) {
-          final orderDetail = orderProvider.orderDetail;
-          final isLoading = orderProvider.isLoading;
-          final errorMessage = orderProvider.errorMessage;
+      body: Consumer<EnhancedOrderViewModel>(
+        builder: (context, viewModel, child) {
+          final orderDetail = viewModel.selectedOrder;
+          final isLoading = viewModel.isLoadingOrderDetail;
+          final errorMessage = viewModel.state.selectedOrder.message;
 
           if (isLoading) {
             return _buildShimmerLoading();
@@ -946,13 +947,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
 
     try {
-      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-      final response = await orderProvider.cancelOrder(orderId);
+      final viewModel = Provider.of<EnhancedOrderViewModel>(context, listen: false);
+      final success = await viewModel.cancelOrder(orderId);
 
       // Đóng dialog loading
       Navigator.of(context).pop();
 
-      if (response.success) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Đơn hàng đã được hủy thành công'),
@@ -962,7 +963,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Không thể hủy đơn hàng: ${response.message}'),
+            content: Text('Không thể hủy đơn hàng. Vui lòng thử lại sau.'),
             backgroundColor: Colors.red,
           ),
         );
