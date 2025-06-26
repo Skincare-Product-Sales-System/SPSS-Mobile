@@ -107,12 +107,10 @@ class EnhancedChatScreen extends StatelessWidget {
     BuildContext context,
     EnhancedChatViewModel viewModel,
   ) {
-    final TextEditingController messageController = TextEditingController(
-      text: viewModel.newMessage,
-    );
+    final TextEditingController messageController = TextEditingController();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -133,35 +131,66 @@ class EnhancedChatScreen extends StatelessWidget {
           ),
           // Input text
           Expanded(
-            child: TextField(
-              controller: messageController,
-              decoration: const InputDecoration(
-                hintText: 'Nhập tin nhắn...',
-                border: InputBorder.none,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(20),
               ),
-              enabled: !viewModel.isSending,
-              onChanged: viewModel.setNewMessage,
+              child: TextField(
+                controller: messageController,
+                decoration: const InputDecoration(
+                  hintText: 'Nhập tin nhắn...',
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                enabled: !viewModel.isSending,
+                textDirection:
+                    TextDirection.ltr, // Ensure left-to-right text direction
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (text) {
+                  if (text.trim().isNotEmpty) {
+                    viewModel.setNewMessage(text);
+                    viewModel.sendMessage();
+                    messageController.clear();
+                  }
+                },
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           // Nút gửi
-          IconButton(
-            icon:
-                viewModel.isSending
-                    ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : Icon(Icons.send, color: AppColors.lightAccent),
-            onPressed:
-                viewModel.isSending
-                    ? null
-                    : () {
-                      if (messageController.text.trim().isNotEmpty) {
-                        viewModel.sendMessage();
-                        messageController.clear();
-                      }
-                    },
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.lightAccent,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon:
+                  viewModel.isSending
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Icon(Icons.send, color: Colors.white),
+              onPressed:
+                  viewModel.isSending
+                      ? null
+                      : () {
+                        final text = messageController.text.trim();
+                        if (text.isNotEmpty) {
+                          viewModel.setNewMessage(text);
+                          viewModel.sendMessage();
+                          messageController.clear();
+                        }
+                      },
+            ),
           ),
         ],
       ),
@@ -196,7 +225,7 @@ class EnhancedChatScreen extends StatelessWidget {
         serviceType = service.MessageType.system;
         break;
       default:
-        serviceType = service.MessageType.user;
+        serviceType = service.MessageType.system;
     }
 
     return service.ChatMessage(

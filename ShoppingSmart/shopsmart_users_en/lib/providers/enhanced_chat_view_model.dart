@@ -301,6 +301,8 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
           'url': uploadedUrl, // Sử dụng URL từ Firebase
         });
 
+        print('Image content created: $imageContent'); // Debug log
+
         final imageMessage = model.ChatMessage(
           content: imageContent,
           type: model.MessageType.user,
@@ -309,7 +311,11 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
 
         final updatedMessages = [...messages, imageMessage];
         updateState(
-          state.copyWith(messages: ViewState.loaded(updatedMessages)),
+          state.copyWith(
+            messages: ViewState.loaded(updatedMessages),
+            isSending:
+                false, // Set to false immediately after adding to local state
+          ),
         );
 
         // Thử kết nối lại nếu chưa kết nối
@@ -319,12 +325,14 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
           updateState(state.copyWith(isConnected: connected));
         }
 
-        // Gửi ảnh đến server với URL từ Firebase
+        // Gửi ảnh đến server với URL từ Firebase (không cần chờ response)
         final imageData = {'type': 'image', 'url': uploadedUrl};
-        await _chatService.sendMessage(jsonEncode(imageData));
-
-        // Cập nhật state sau khi gửi thành công
-        updateState(state.copyWith(isSending: false));
+        _chatService.sendMessage(jsonEncode(imageData)).catchError((error) {
+          print('Error sending image to server: $error');
+          // Optionally add system message about send failure
+          _addSystemMessage('Gửi ảnh thất bại, nhưng ảnh đã được lưu cục bộ.');
+          return false;
+        });
       }
     } catch (e) {
       handleError(e, source: 'ChatViewModel.pickImage');
@@ -420,7 +428,9 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
           '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
 
       // Sử dụng API endpoint để upload ảnh
-      final url = Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/images');
+      final url = Uri.parse(
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/images',
+      );
 
       // Tạo multipart request
       final request = http.MultipartRequest('POST', url);

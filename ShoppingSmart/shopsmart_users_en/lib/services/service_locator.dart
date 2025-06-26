@@ -45,7 +45,10 @@ final GetIt sl = GetIt.instance;
 Future<void> setupServiceLocator() async {
   // Services - Singleton
   sl.registerLazySingleton(
-    () => ApiClient(baseUrl: 'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api'),
+    () => ApiClient(
+      baseUrl:
+          'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api',
+    ),
   );
   sl.registerLazySingleton(() => ApiService());
   sl.registerLazySingleton(() => AuthService());
@@ -143,6 +146,7 @@ Future<void> setupServiceLocator() async {
 
   // Add the UserReviews ViewModel
   sl.registerFactory(
-    () => EnhancedUserReviewsViewModel(reviewRepository: sl<ReviewRepository>()),
+    () =>
+        EnhancedUserReviewsViewModel(reviewRepository: sl<ReviewRepository>()),
   );
 }

@@ -33,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
         chatViewModel.initChat();
       }
       // Đánh dấu tin nhắn đã đọc khi vào màn hình chat
-      chatViewModel.markMessagesAsRead();
+      // chatViewModel.markMessagesAsRead();
     });
   }
 
