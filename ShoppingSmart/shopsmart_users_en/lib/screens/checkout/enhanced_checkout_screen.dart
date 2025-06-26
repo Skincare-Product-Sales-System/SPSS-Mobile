@@ -17,6 +17,7 @@ import '../../screens/auth/enhanced_login.dart';
 import '../profile/enhanced_address_screen.dart';
 import '../payment/bank_payment_screen.dart';
 import 'enhanced_order_success_screen.dart';
+import 'vnpay_waiting_screen.dart';
 
 class EnhancedCheckoutScreen extends StatefulWidget {
   static const routeName = '/enhanced-checkout';
@@ -812,14 +813,14 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
 
             if (vnpayResponse.success) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Đang chuyển hướng đến VNPay...'),
-                    backgroundColor: Colors.blue,
+                // Không xóa giỏ hàng ở đây. Chuyển sang màn hình chờ.
+                // Deep link handler sẽ xử lý xóa giỏ hàng và chuyển hướng.
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VnPayWaitingScreen(orderId: orderResponse.orderId),
                   ),
                 );
-                await cartViewModel.clearCart();
-                // Deep link handler sẽ xử lý chuyển hướng
               }
             } else {
               if (mounted) {

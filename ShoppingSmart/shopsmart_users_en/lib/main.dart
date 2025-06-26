@@ -47,36 +47,26 @@ import 'package:shopsmart_users_en/screens/inner_screen/enhanced_offers_screen.d
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_viewed_recently.dart';
 import 'package:shopsmart_users_en/screens/inner_screen/enhanced_blog_detail.dart';
 import 'package:shopsmart_users_en/screens/checkout/enhanced_order_success_screen.dart';
-import 'package:shopsmart_users_en/screens/checkout/vnpay_success_screen.dart';
-import 'package:shopsmart_users_en/screens/checkout/vnpay_failure_screen.dart';
 import 'screens/auth/enhanced_register.dart';
 import 'screens/auth/enhanced_forgot_password.dart';
 import 'screens/auth/enhanced_change_password.dart';
 import 'package:shopsmart_users_en/screens/cart/enhanced_cart_screen.dart';
-
+import 'package:shopsmart_users_en/screens/orders/enhanced_order_detail_screen.dart';
+import 'package:shopsmart_users_en/screens/checkout/vnpay_waiting_screen.dart';
 import 'consts/theme_data.dart';
-// Các providers đã được thay thế bằng MVVM providers mới
-// import 'providers/cart_provider.dart';
-// import 'providers/viewed_recently_provider.dart';
-// import 'providers/wishlist_provider.dart';
 
 void main() async {
-  // Đảm bảo Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint("Main: Flutter binding initialized");
-
   try {
-    // Khởi tạo Service Locator
     debugPrint("Main: Setting up service locator");
     await setupServiceLocator();
     debugPrint("Main: Service locator setup completed");
-
-  runApp(const MyApp());
+    runApp(const MyApp());
     debugPrint("Main: App started");
   } catch (e, stackTrace) {
     debugPrint("Main: Error during initialization: $e");
     debugPrint(stackTrace.toString());
-    // Create a minimal app that displays the error
     runApp(
       MaterialApp(
         home: Scaffold(
@@ -129,15 +119,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
-    // Listen for incoming deep links
     _linkSub = _appLinks.uriLinkStream.listen((Uri? uri) {
       if (!mounted) return;
       if (uri != null && uri.scheme == 'spss' && uri.host == 'vnpay-return') {
         handleVnPayDeepLink(uri);
       }
     });
-
-    // Get the initial deep link if the app was opened with one
     try {
       final initialUri = await _appLinks.getInitialAppLink();
       if (!mounted) return;
@@ -153,39 +140,99 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   void handleVnPayDeepLink(Uri uri) async {
     final orderId = uri.queryParameters['id'];
-    if (orderId == null) return;
-
-    // Thêm delay để backend có thời gian cập nhật trạng thái đơn hàng
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Gọi API backend để lấy trạng thái đơn hàng thực tế
-    final orderDetailResponse = await ApiService.getOrderDetail(orderId);
-    String? orderStatus;
-    if (orderDetailResponse.success && orderDetailResponse.data != null) {
-      orderStatus = orderDetailResponse.data!.status.toLowerCase();
-    }
-
     final context = sl<NavigationService>().navigatorKey.currentContext;
-    if (context != null) {
-      if (orderStatus == 'processing' || orderStatus == 'paid') {
+
+    if (context == null || orderId == null || orderId.isEmpty) {
+      debugPrint("VNPay callback: Invalid context or orderId.");
+      // Optionally, navigate to a safe screen like home or orders list
+      if (context != null) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => VNPaySuccessScreen(orderId: orderId),
-          ),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder:
-                (context) => VNPayFailureScreen(
-                  orderId: orderId,
-                  errorMessage: "Thanh toán không thành công hoặc đã bị hủy.",
-                ),
-          ),
+          MaterialPageRoute(builder: (context) => const RootScreen()),
           (route) => false,
         );
       }
+      return;
+    }
+
+    final orderViewModel = Provider.of<EnhancedOrderViewModel>(context, listen: false);
+    final cartViewModel = Provider.of<EnhancedCartViewModel>(context, listen: false);
+
+    // Show a loading indicator while we verify the payment
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Give backend a moment to process the webhook from VNPay
+      await Future.delayed(const Duration(seconds: 2));
+
+      // **CRITICAL STEP:** Verify the final order status from our own backend
+      final response = await ApiService.getOrderDetail(orderId);
+
+      // Always refresh the main order list in the background
+      orderViewModel.loadOrders(refresh: true);
+
+      // Close the loading indicator
+      Navigator.of(context).pop();
+
+      if (response.success && response.data != null) {
+        final orderStatus = response.data!.status.toLowerCase();
+
+        // Check for statuses that confirm payment was successful
+        if (orderStatus == 'processing' || orderStatus == 'paid') {
+          await cartViewModel.clearCart();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán thành công!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          // Handle cases where payment was not successful (e.g., 'awaiting payment', 'cancelled')
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thanh toán không thành công hoặc đang chờ xử lý.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        // Handle API error when fetching order details
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể xác thực trạng thái đơn hàng: ${response.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+      // Navigate to the order detail screen regardless of status
+      // so the user can see the final state or retry payment.
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
+        ),
+        (route) => route.isFirst,
+      );
+
+    } catch (e) {
+      // Handle exceptions during the process
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xảy ra lỗi: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Navigate to a safe place on error
+       Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const RootScreen()),
+          (route) => false,
+      );
     }
   }
 
@@ -199,29 +246,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-
     switch (state) {
       case AppLifecycleState.detached:
-        // App is being terminated - clear all user data for security
         print('App is being terminated, clearing user data...');
         await JwtService.clearAllUserData();
         break;
       case AppLifecycleState.paused:
-        // App is in background - you can optionally clear sensitive data here
         print('App moved to background');
-        // Uncomment the line below if you want to clear data when app goes to background
-        // await JwtService.clearAllUserData();
         break;
       case AppLifecycleState.resumed:
-        // App is back in foreground
         print('App resumed from background');
         break;
       case AppLifecycleState.inactive:
-        // App is inactive (e.g., during phone call)
         print('App is inactive');
         break;
       case AppLifecycleState.hidden:
-        // App is hidden
         print('App is hidden');
         break;
     }
@@ -232,7 +271,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     debugPrint("MyApp: Building with providers");
     return MultiProvider(
       providers: [
-        // Ensure providers are created in the correct order
         ChangeNotifierProvider(
           create: (_) {
             debugPrint("MyApp: Creating ThemeProvider");
@@ -284,80 +322,36 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             }
           },
         ),
-        // Đã thay thế bằng EnhancedCategoriesViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return CategoriesProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedCategoriesViewModel>();
           },
         ),
-        // Đã thay thế bằng EnhancedCartViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return CartProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedCartViewModel>();
           },
         ),
-        // Đã thay thế bằng EnhancedWishlistViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return WishlistProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedWishlistViewModel>();
           },
         ),
-        // Đã thay thế bằng EnhancedViewedProductsProvider
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return ViewedProdProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedViewedProductsProvider>();
           },
         ),
-        // Đã thay thế bằng EnhancedChatViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     final provider = ChatProvider();
-        //     provider.initialize();
-        //     return provider;
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedChatViewModel>();
           },
         ),
-        // Đã thay thế bằng EnhancedSkinAnalysisViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return SkinAnalysisProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedSkinAnalysisViewModel>();
           },
         ),
-        // Đã thay thế bằng EnhancedOrderViewModel
-        // ChangeNotifierProvider(
-        //   create: (_) {
-        //     return OrderProvider();
-        //   },
-        // ),
         ChangeNotifierProvider(
           create: (_) {
             return sl<EnhancedOrderViewModel>();
@@ -397,157 +391,92 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ),
             home: const RootScreen(),
             routes: {
-              // Root screen
               RootScreen.routeName: (context) => const RootScreen(),
-
-              // Auth screens
-              // LoginScreen.routeName: (context) => const LoginScreen(), // Sử dụng Enhanced thay thế
-              EnhancedLoginScreen.routeName:
-                  (context) => const EnhancedLoginScreen(),
-
-              // Chat screens
-              // ChatScreen.routeName: (context) => const ChatScreen(), // Sử dụng Enhanced thay thế
-              // ChatAIScreen.routeName: (context) => const ChatAIScreen(), // Sử dụng Enhanced thay thế
-              EnhancedChatAIScreen.routeName:
-                  (context) => const EnhancedChatAIScreen(),
-              EnhancedChatScreen.routeName:
-                  (context) => const EnhancedChatScreen(),
-
-              // Product screens
-              // ProductDetailsScreen.routName:              //     (context) => const ProductDetailsScreen(), // Sử dụng Enhanced thay thế
-              EnhancedProductDetailsScreen.routeName:
-                  (context) => const EnhancedProductDetailsScreen(),
-              // ViewedRecentlyScreen.routName:
-              //     (context) => const ViewedRecentlyScreen(), // Sử dụng Enhanced thay thế
-              EnhancedViewedRecentlyScreen.routeName:
-                  (context) => const EnhancedViewedRecentlyScreen(),
-              // AllProductsScreen.routeName:
-              //     (context) => const AllProductsScreen(), // Sử dụng Enhanced thay thế
-              EnhancedAllProductsScreen.routeName:
-                  (context) => const EnhancedAllProductsScreen(),
-              // SearchScreen.routeName: (context) => const SearchScreen(), // Sử dụng SimpleSearchScreen thay thế
-              SimpleSearchScreen.routeName:
-                  (context) => const SimpleSearchScreen(), // Quiz screens
-              // QuizScreen.routeName: (context) => const QuizScreen(), // Sử dụng Enhanced thay thế
-              EnhancedSkinAnalysisHubScreen.routeName:
-                  (context) => const EnhancedSkinAnalysisHubScreen(),
-
-              // Blog screens
-              // BlogDetailsScreen.routeName:
-              //     (context) => const BlogDetailsScreen(), // Sử dụng Enhanced thay thế
-              EnhancedBlogDetailScreen.routeName:
-                  (context) => const EnhancedBlogDetailScreen(),
-              // OffersScreen.routeName: (context) => const OffersScreen(), // Sử dụng Enhanced thay thế
-              EnhancedOffersScreen.routeName:
-                  (context) => const EnhancedOffersScreen(),
-
-              // Order screens
-              // CheckoutScreen.routeName: (context) => const CheckoutScreen(), // Sử dụng Enhanced thay thế
-              // OrdersScreen.routeName: (context) => const OrdersScreen(), // Sử dụng Enhanced thay thế
-              EnhancedOrdersScreen.routeName:
-                  (context) => const EnhancedOrdersScreen(),
-              EnhancedOrderSuccessScreen.routeName:
-                  (context) => const EnhancedOrderSuccessScreen(),
-              // Removed EnhancedOrderDetailScreen route since we're using direct navigation
-
-              // Skin analysis screens
-              // SkinAnalysisIntroScreen.routeName:
-              //     (context) => const SkinAnalysisIntroScreen(), // Sử dụng Enhanced thay thế
-              // SkinAnalysisCameraScreen.routeName:
-              //     (context) => const SkinAnalysisCameraScreen(), // Sử dụng Enhanced thay thế
-              // SkinAnalysisHistoryScreen.routeName:
-              //     (context) => const SkinAnalysisHistoryScreen(), // Sử dụng Enhanced thay thế
-              // SkinAnalysisPaymentScreen.routeName:
-              //     (context) => const SkinAnalysisPaymentScreen(), // Sử dụng Enhanced thay thế              // Enhanced skin analysis screens
-              EnhancedSkinAnalysisCameraScreen.routeName:
-                  (context) => const EnhancedSkinAnalysisCameraScreen(),
-              EnhancedSkinAnalysisHistoryScreen.routeName:
-                  (context) => const EnhancedSkinAnalysisHistoryScreen(),
-              // EnhancedSkinAnalysisHistoryDetailScreen.routeName is handled in onGenerateRoute because it requires parameters
-              EnhancedPaymentScreen.routeName:
-                  (context) => const EnhancedPaymentScreen(),
-
-              // Auth screens
-              // ForgotPasswordScreen.routeName:
-              //     (context) => const ForgotPasswordScreen(), // Sử dụng Enhanced thay thế
-              // RegisterScreen.routName: (context) => const RegisterScreen(), // Sử dụng Enhanced thay thế
-              // ChangePasswordScreen.routeName:
-              //     (context) => const ChangePasswordScreen(), // Sử dụng Enhanced thay thế
-              EnhancedRegisterScreen.routeName:
-                  (context) => const EnhancedRegisterScreen(),
-              EnhancedForgotPasswordScreen.routeName:
-                  (context) => const EnhancedForgotPasswordScreen(),
-              EnhancedChangePasswordScreen.routeName:
-                  (context) => const EnhancedChangePasswordScreen(),
-
-              // Other screens
-              // WishlistScreen.routName: (context) => const WishlistScreen(), // Sử dụng Enhanced thay thế
-              EnhancedWishlistScreen.routeName:
-                  (context) => const EnhancedWishlistScreen(),
-              EnhancedEditProfileScreen.routeName:
-                  (ctx) => const EnhancedEditProfileScreen(),
-              EnhancedAddressScreen.routeName:
-                  (ctx) => const EnhancedAddressScreen(),
-              EnhancedCheckoutScreen.routeName:
-                  (ctx) => const EnhancedCheckoutScreen(),
-              EnhancedUserReviewsScreen.routeName:
-                  (ctx) => const EnhancedUserReviewsScreen(),
-              // EnhancedQuizQuestionScreen is handled in onGenerateRoute because it requires parameters
+              EnhancedLoginScreen.routeName: (context) =>
+                  const EnhancedLoginScreen(),
+              EnhancedChatAIScreen.routeName: (context) =>
+                  const EnhancedChatAIScreen(),
+              EnhancedChatScreen.routeName: (context) =>
+                  const EnhancedChatScreen(),
+              EnhancedProductDetailsScreen.routeName: (context) =>
+                  const EnhancedProductDetailsScreen(),
+              EnhancedViewedRecentlyScreen.routeName: (context) =>
+                  const EnhancedViewedRecentlyScreen(),
+              EnhancedAllProductsScreen.routeName: (context) =>
+                  const EnhancedAllProductsScreen(),
+              SimpleSearchScreen.routeName: (context) =>
+                  const SimpleSearchScreen(),
+              EnhancedSkinAnalysisHubScreen.routeName: (context) =>
+                  const EnhancedSkinAnalysisHubScreen(),
+              EnhancedBlogDetailScreen.routeName: (context) =>
+                  const EnhancedBlogDetailScreen(),
+              EnhancedOffersScreen.routeName: (context) =>
+                  const EnhancedOffersScreen(),
+              EnhancedOrdersScreen.routeName: (context) =>
+                  const EnhancedOrdersScreen(),
+              EnhancedOrderSuccessScreen.routeName: (context) =>
+                  const EnhancedOrderSuccessScreen(),
+              EnhancedSkinAnalysisCameraScreen.routeName: (context) =>
+                  const EnhancedSkinAnalysisCameraScreen(),
+              EnhancedSkinAnalysisHistoryScreen.routeName: (context) =>
+                  const EnhancedSkinAnalysisHistoryScreen(),
+              EnhancedPaymentScreen.routeName: (context) =>
+                  const EnhancedPaymentScreen(),
+              EnhancedRegisterScreen.routeName: (context) =>
+                  const EnhancedRegisterScreen(),
+              EnhancedForgotPasswordScreen.routeName: (context) =>
+                  const EnhancedForgotPasswordScreen(),
+              EnhancedChangePasswordScreen.routeName: (context) =>
+                  const EnhancedChangePasswordScreen(),
+              EnhancedWishlistScreen.routeName: (context) =>
+                  const EnhancedWishlistScreen(),
+              EnhancedEditProfileScreen.routeName: (ctx) =>
+                  const EnhancedEditProfileScreen(),
+              EnhancedAddressScreen.routeName: (ctx) =>
+                  const EnhancedAddressScreen(),
+              EnhancedCheckoutScreen.routeName: (ctx) =>
+                  const EnhancedCheckoutScreen(),
+              EnhancedUserReviewsScreen.routeName: (ctx) =>
+                  const EnhancedUserReviewsScreen(),
             },
-            // Xử lý các route đặc biệt cần tham số
             onGenerateRoute: (settings) {
               if (settings.name == '/enhanced-cart') {
                 return MaterialPageRoute(
                   builder: (context) => EnhancedCartScreen(),
                 );
               }
-              // if (settings.name == SkinAnalysisResultScreen.routeName) {
-              //   final result = settings.arguments as SkinAnalysisResult;
-              //   return MaterialPageRoute(
-              //     builder:
-              //         (context) => SkinAnalysisResultScreen(result: result),
-              //   );
-              // } // Sử dụng Enhanced thay thế
               if (settings.name == EnhancedSkinAnalysisResultScreen.routeName) {
                 return MaterialPageRoute(
-                  builder:
-                      (context) => const EnhancedSkinAnalysisResultScreen(),
+                  builder: (context) =>
+                      const EnhancedSkinAnalysisResultScreen(),
                 );
               }
-              // if (settings.name == OrderDetailScreen.routeName) {
-              //   final orderId = settings.arguments as String;
-              //   return MaterialPageRoute(
-              //     builder: (context) => OrderDetailScreen(orderId: orderId),
-              //   );
-              // } // Sử dụng Enhanced thay thế
               if (settings.name == EnhancedReviewsScreen.routeName) {
                 final args = settings.arguments as Map<String, dynamic>;
                 return MaterialPageRoute(
-                  builder:
-                      (context) => EnhancedReviewsScreen(
-                        productId: args['productId'],
-                        productName: args['productName'],
-                      ),
+                  builder: (context) => EnhancedReviewsScreen(
+                    productId: args['productId'],
+                    productName: args['productName'],
+                  ),
                 );
               }
               if (settings.name == EnhancedQuizQuestionScreen.routeName) {
                 final args = settings.arguments as Map<String, dynamic>;
                 return MaterialPageRoute(
-                  builder:
-                      (context) => EnhancedQuizQuestionScreen(
-                        quizSetId: args['quizSetId'],
-                        quizSetName: args['quizSetName'],
-                      ),
+                  builder: (context) => EnhancedQuizQuestionScreen(
+                    quizSetId: args['quizSetId'],
+                    quizSetName: args['quizSetName'],
+                  ),
                 );
               }
               if (settings.name ==
                   EnhancedSkinAnalysisHistoryDetailScreen.routeName) {
                 final args = settings.arguments as Map<String, dynamic>;
                 return MaterialPageRoute(
-                  builder:
-                      (context) => EnhancedSkinAnalysisHistoryDetailScreen(
-                        analysisId: args['analysisId'],
-                      ),
+                  builder: (context) =>
+                      EnhancedSkinAnalysisHistoryDetailScreen(
+                    analysisId: args['analysisId'],
+                  ),
                 );
               }
               return null;
