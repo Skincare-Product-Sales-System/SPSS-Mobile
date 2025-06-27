@@ -34,30 +34,67 @@ class EnhancedWishlistScreen extends StatelessWidget {
     BuildContext context,
     EnhancedWishlistViewModel viewModel,
   ) {
-    return AppBar(
-      leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Image.asset(AssetsManager.shoppingCart),
-      ),
-      title: TitlesTextWidget(
-        label: "Danh sách yêu thích (${viewModel.count})",
-      ),
-      actions: [
-        if (!viewModel.isEmpty)
-          IconButton(
-            onPressed: () {
-              MyAppFunctions.showErrorOrWarningDialog(
-                isError: false,
-                context: context,
-                subtitle: "Xóa danh sách yêu thích?",
-                fct: () {
-                  viewModel.clearWishlist();
-                },
-              );
-            },
-            icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-      ],
+        ),
+        child: SafeArea(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ),
+              Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Nếu muốn giữ icon nước, bỏ comment dòng dưới:
+                    // Image.asset('assets/images/bag/wishlist_svg.png', height: 28, width: 28),
+                    // const SizedBox(width: 8),
+                    Text(
+                      "Danh sách yêu thích (${viewModel.count})",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              if (!viewModel.isEmpty)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: () {
+                      MyAppFunctions.showErrorOrWarningDialog(
+                        isError: false,
+                        context: context,
+                        subtitle: "Xóa danh sách yêu thích?",
+                        fct: () {
+                          viewModel.clearWishlist();
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.delete_forever_rounded, color: Colors.white),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

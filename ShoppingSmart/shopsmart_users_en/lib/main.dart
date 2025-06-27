@@ -222,14 +222,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             backgroundColor: Colors.red,
           ),
         );
-        
+
         // Navigate to order detail screen on error so user can check status
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
-          ),
-          (route) => route.isFirst,
-        );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
+        ),
+        (route) => route.isFirst,
+      );
       }
 
     } catch (e) {

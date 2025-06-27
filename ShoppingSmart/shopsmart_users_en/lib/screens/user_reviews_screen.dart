@@ -54,9 +54,24 @@ class _EnhancedUserReviewsScreenState extends State<EnhancedUserReviewsScreen> {
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: Scaffold(
-        appBar: CustomAppBar(
-          title: 'Đánh giá của tôi',
-          automaticallyImplyLeading: true,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: AppBar(
+              title: const Text('Đánh giá của tôi'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              foregroundColor: Colors.white,
+              automaticallyImplyLeading: true,
+            ),
+          ),
         ),
         body: Consumer<EnhancedUserReviewsViewModel>(
           builder: (context, viewModel, child) {
@@ -122,297 +137,214 @@ class _EnhancedUserReviewsScreenState extends State<EnhancedUserReviewsScreen> {
     UserReviewModel review,
     EnhancedUserReviewsViewModel viewModel,
   ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product row with image and name
-            InkWell(
-              onTap: () {
-                // Navigate to product details when tapped
-                if (review.productIdSafe.isNotEmpty) {
-                  Navigator.pushNamed(
-                    context,
-                    '/product-details',
-                    arguments: review.productIdSafe,
-                  );
-                }
-              },
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product image
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image:
-                            review.productImageSafe.isNotEmpty
-                                ? NetworkImage(review.productImageSafe)
-                                : const AssetImage('assets/images/error.png')
-                                    as ImageProvider,
-                        fit: BoxFit.cover,
-                      ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFBCA7FF).withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Product row with image and name
+          InkWell(
+            onTap: () {
+              if (review.productIdSafe.isNotEmpty) {
+                Navigator.pushNamed(
+                  context,
+                  '/product-details',
+                  arguments: review.productIdSafe,
+                );
+              }
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product image
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: review.productImageSafe.isNotEmpty
+                          ? NetworkImage(review.productImageSafe)
+                          : const AssetImage('assets/images/error.png') as ImageProvider,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Product name and variant info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          review.productNameSafe,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(width: 14),
+                // Product name and variant info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        review.productNameSafe,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                        const SizedBox(height: 4),
-                        // Variant info
-                        if (review.variationOptionValues.isNotEmpty)
-                          Text(
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Variant info
+                      if (review.variationOptionValues.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFBCA7FF).withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
                             'Phiên bản: ${review.variationOptionValues.join(", ")}',
+                            style: const TextStyle(
+                              color: Color(0xFF8F5CFF),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      // Editable badge
+                      if (review.isEditbleSafe)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Có thể chỉnh sửa',
                             style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
+                              color: Colors.green,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        const SizedBox(height: 4),
-                        // Editable badge
-                        if (review.isEditbleSafe)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green[100],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Có thể chỉnh sửa',
-                              style: TextStyle(
-                                color: Colors.green[800],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 24),
-            // Rating and date
-            Row(
-              children: [
-                // Star rating visual representation
-                Row(
-                  children: List.generate(
-                    5,
-                    (index) => Icon(
-                      index < review.ratingValue
-                          ? Icons.star
-                          : Icons.star_outline,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Rating value as text
-                Text(
-                  '${review.ratingValue}/5',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                // Date
-                Text(
-                  _formatDate(review.lastUpdatedTime),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Review by user
-            Row(
-              children: [
-                // User avatar
-                CircleAvatar(
-                  backgroundImage:
-                      review.avatarUrl != null
-                          ? NetworkImage(review.avatarUrl!)
-                          : null,
-                  radius: 16,
-                  child:
-                      review.avatarUrl == null
-                          ? const Icon(Icons.person, size: 16)
-                          : null,
-                ),
-                const SizedBox(width: 8),
-                // Username
-                Text(
-                  review.userName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Review comment
-            Text(review.comment, style: const TextStyle(fontSize: 15)),
-            // Review images
-            if (review.reviewImages.isNotEmpty) ...[
-              const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 10),
+          // Rating row
+          Row(
+            children: [
+              ...List.generate(5, (i) => Icon(
+                Icons.star,
+                color: i < review.ratingValue
+                    ? const Color(0xFF8F5CFF)
+                    : Colors.grey[300],
+                size: 22,
+              )),
+              const SizedBox(width: 8),
               Text(
-                'Hình ảnh đính kèm:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
-                  fontSize: 14,
-                ),
+                '${review.ratingValue}/5',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: review.reviewImages.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap:
-                          () => _showFullImage(
-                            context,
-                            review.reviewImages[index],
-                          ),
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.3),
-                          ),
-                          image: DecorationImage(
-                            image: NetworkImage(review.reviewImages[index]),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              const Spacer(),
+              Text(
+                _formatDate(review.lastUpdatedTime),
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
-            // Reply (if any)
-            if (review.reply != null) ...[
-              const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 10),
+          // User row
+          Row(
+            children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage:
-                              review.reply!.avatarUrl != null
-                                  ? NetworkImage(review.reply!.avatarUrl!)
-                                  : null,
-                          radius: 12,
-                          child:
-                              review.reply!.avatarUrl == null
-                                  ? const Icon(Icons.person, size: 10)
-                                  : null,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          review.reply!.userName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        Text(
-                          _formatDate(review.reply!.lastUpdatedTime),
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      review.reply!.replyContent,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
+                child: const Icon(Icons.person, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                review.userName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
-            // Action buttons
-            if (review.isEditbleSafe)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Edit Button
-                    OutlinedButton.icon(
-                      onPressed:
-                          () =>
-                              _showEditReviewModal(context, review, viewModel),
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Sửa'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.blue,
-                        side: BorderSide(color: Colors.blue.shade300),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+          ),
+          const SizedBox(height: 8),
+          // Review content
+          Text(
+            review.comment,
+            style: const TextStyle(fontSize: 15),
+          ),
+          // Review images
+          if (review.reviewImages.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Hình ảnh đính kèm:',
+              style: TextStyle(color: Colors.grey[700], fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.reviewImages.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () => _showFullImage(context, review.reviewImages[index]),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        image: DecorationImage(
+                          image: NetworkImage(review.reviewImages[index]),
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                    // const SizedBox(width: 12),
-                    // // Delete Button
-                    // OutlinedButton.icon(
-                    //   onPressed:
-                    //       () => _confirmDelete(context, review.id, viewModel),
-                    //   icon: const Icon(Icons.delete, size: 16),
-                    //   label: const Text('Xóa'),
-                    //   style: OutlinedButton.styleFrom(
-                    //     foregroundColor: Colors.red,
-                    //     side: BorderSide(color: Colors.red.shade300),
-                    //     padding: const EdgeInsets.symmetric(
-                    //       horizontal: 12,
-                    //       vertical: 8,
-                    //     ),
-                    //   ),
-                    // ),
-                  ],
-                ),
+                  );
+                },
               ),
+            ),
           ],
-        ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () => _showEditReviewModal(context, review, viewModel),
+              icon: const Icon(Icons.edit, color: Color(0xFF8F5CFF)),
+              label: const Text(
+                'Sửa',
+                style: TextStyle(color: Color(0xFF8F5CFF), fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF8F5CFF), width: 2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -513,66 +445,6 @@ class _EnhancedUserReviewsScreenState extends State<EnhancedUserReviewsScreen> {
     );
   }
 
-  // Confirm delete dialog
-  // Future<void> _confirmDelete(
-  //   BuildContext context,
-  //   String reviewId,
-  //   EnhancedUserReviewsViewModel viewModel,
-  // ) async {
-  //   return showDialog<void>(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Xác nhận xóa'),
-  //         content: const Text(
-  //           'Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.',
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Hủy'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //           TextButton(
-  //             child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-  //             onPressed: () async {
-  //               Navigator.of(context).pop();
-
-  //               // Show loading indicator
-  //               if (context.mounted) {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   const SnackBar(
-  //                     content: Text('Đang xóa đánh giá...'),
-  //                     duration: Duration(seconds: 2),
-  //                   ),
-  //                 );
-  //               }
-
-  //               final success = await viewModel.deleteReview(reviewId);
-  //               if (!success && context.mounted) {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   SnackBar(
-  //                     content: Text(
-  //                       viewModel.reviewError ?? 'Không thể xóa đánh giá',
-  //                     ),
-  //                     backgroundColor: Colors.red,
-  //                   ),
-  //                 );
-  //               } else if (success && context.mounted) {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   const SnackBar(
-  //                     content: Text('Đánh giá đã được xóa thành công'),
-  //                     backgroundColor: Colors.green,
-  //                   ),
-  //                 );
-  //               }  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
   // Show the edit review modal
   void _showEditReviewModal(
     BuildContext context,

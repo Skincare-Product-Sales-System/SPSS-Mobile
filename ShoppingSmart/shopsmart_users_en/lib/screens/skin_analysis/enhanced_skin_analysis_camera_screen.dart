@@ -464,209 +464,171 @@ class _EnhancedSkinAnalysisCameraScreenState
         return shouldPop;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Chụp Ảnh Khuôn Mặt'),
-          centerTitle: true,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              // Image preview or placeholder
-              Container(
-                width: double.infinity,
-                height: 450,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child:
-                    _selectedImage != null
-                        ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            _selectedImage!,
-                            fit: BoxFit.contain,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Không thể tải ảnh',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                        : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.face, size: 80, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Chụp ảnh khuôn mặt hoặc chọn ảnh từ thư viện',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                                fontFamily: 'Roboto',
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 30),
-              // Camera and gallery buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            ),
+            child: SafeArea(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  _buildActionButton(
-                    context,
-                    icon: Icons.camera_alt,
-                    label: 'Chụp ảnh',
-                    onPressed:
-                        _isProcessingImage
-                            ? null
-                            : () => _pickImage(
-                              context,
-                              ImageSource.camera,
-                              viewModel,
-                            ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
                   ),
-                  _buildActionButton(
-                    context,
-                    icon: Icons.photo_library,
-                    label: 'Thư viện',
-                    onPressed:
-                        _isProcessingImage
-                            ? null
-                            : () => _pickImage(
-                              context,
-                              ImageSource.gallery,
-                              viewModel,
-                            ),
+                  const Center(
+                    child: Text(
+                      'Chụp Ảnh Khuôn Mặt',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
-              // Analyze button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed:
-                      _selectedImage == null ||
-                              _isAnalyzing ||
-                              _isProcessingImage
-                          ? null
-                          : () => _analyzeSkin(context, viewModel),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    disabledBackgroundColor: Theme.of(
-                      context,
-                    ).primaryColor.withOpacity(0.3),
-                  ),
-                  child:
-                      _isAnalyzing
-                          ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Đang phân tích...',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          )
-                          : const Text(
-                            'Phân tích da',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (_selectedImage != null)
-                Center(
-                  child: TextButton(
-                    onPressed:
-                        _isProcessingImage
-                            ? null
-                            : () {
-                              setState(() {
-                                _selectedImage = null;
-                              });
-
-                              // Thêm thông báo xác nhận
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Đã xóa ảnh'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                        const SizedBox(width: 4),
-                        Text('Xóa ảnh', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+                    // Image preview or placeholder
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Color(0xFFBCA7FF), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.07),
+                            blurRadius: 16,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: _selectedImage != null
+                            ? Image.file(_selectedImage!, fit: BoxFit.cover, height: 220)
+                            : Container(
+                                height: 220,
+                                color: Colors.grey[100],
+                                child: const Center(child: Text('Chưa có ảnh')),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Nút chức năng dưới đáy
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 32, top: 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.camera_alt, color: Color(0xFF8F5CFF)),
+                          label: const Text('Chụp ảnh', style: TextStyle(color: Color(0xFF8F5CFF), fontWeight: FontWeight.bold)),
+                          onPressed: () => _pickImage(context, ImageSource.camera, viewModel),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF8F5CFF), width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.photo_library, color: Color(0xFF8F5CFF)),
+                          label: const Text('Thư viện', style: TextStyle(color: Color(0xFF8F5CFF), fontWeight: FontWeight.bold)),
+                          onPressed: () => _pickImage(context, ImageSource.gallery, viewModel),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF8F5CFF), width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(22)),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isAnalyzing ? null : () => _analyzeSkin(context, viewModel),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                        ),
+                        child: const Text('Phân tích da', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                  if (_selectedImage != null) ...[
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: _isProcessingImage ? null : () {
+                        setState(() {
+                          _selectedImage = null;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã xóa ảnh'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text('Xóa ảnh', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

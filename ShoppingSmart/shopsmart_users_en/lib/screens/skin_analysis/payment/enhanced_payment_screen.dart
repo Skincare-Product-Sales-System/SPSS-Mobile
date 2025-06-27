@@ -22,9 +22,42 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Thanh toán phân tích da'),
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                ),
+                const Center(
+                  child: Text(
+                    'Thanh toán phân tích da',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Consumer<EnhancedSkinAnalysisViewModel>(
         builder: (context, viewModel, child) {
@@ -71,42 +104,56 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.payment,
               size: 50,
-              color: Theme.of(context).primaryColor,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Dịch vụ phân tích da',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
+          ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds);
+            },
+            child: const Text(
+              'Dịch vụ phân tích da',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 12),
           const Text(
-            'Để sử dụng tính năng phân tích da chuyên sâu, bạn cần thanh toán phí dịch vụ. '
-            'Sau khi thanh toán, bạn có thể chụp ảnh khuôn mặt để nhận kết quả phân tích chi tiết.',
+            'Để sử dụng tính năng phân tích da chuyên sâu, bạn cần thanh toán phí dịch vụ. Sau khi thanh toán, bạn có thể chụp ảnh khuôn mặt để nhận kết quả phân tích chi tiết.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -115,11 +162,11 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Phí dịch vụ:', style: TextStyle(fontSize: 16)),
+                    const Text('Phí dịch vụ:', style: TextStyle(fontSize: 17)),
                     Text(
                       '${CurrencyFormatter.formatNumber(20000.0)} VNĐ',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -130,50 +177,58 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Bao gồm:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 _buildServiceFeature(
                   icon: Icons.check_circle,
                   text: 'Phân tích chi tiết tình trạng da',
+                  iconColor: Colors.green,
                 ),
                 _buildServiceFeature(
                   icon: Icons.check_circle,
                   text: 'Đề xuất sản phẩm phù hợp',
+                  iconColor: Colors.green,
                 ),
                 _buildServiceFeature(
                   icon: Icons.check_circle,
                   text: 'Lộ trình chăm sóc da cá nhân hóa',
+                  iconColor: Colors.green,
                 ),
                 _buildServiceFeature(
                   icon: Icons.check_circle,
                   text: 'Lưu trữ kết quả phân tích',
+                  iconColor: Colors.green,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
           SizedBox(
             width: double.infinity,
             height: 56,
-            child: ElevatedButton(
-              onPressed:
-                  viewModel.state.status == AnalysisStatus.creatingPayment
-                      ? null
-                      : () => _createPaymentRequest(viewModel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                disabledBackgroundColor: Theme.of(
-                  context,
-                ).primaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
-              child:
-                  viewModel.state.status == AnalysisStatus.creatingPayment
-                      ? const Row(
+              child: ElevatedButton(
+                onPressed: viewModel.state.status == AnalysisStatus.creatingPayment ? null : () => _createPaymentRequest(viewModel),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: viewModel.state.status == AnalysisStatus.creatingPayment
+                    ? const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
@@ -188,13 +243,15 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
                           Text('Đang xử lý...'),
                         ],
                       )
-                      : const Text(
+                    : const Text(
                         'Thanh toán ngay',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
+              ),
             ),
           ),
         ],
@@ -462,14 +519,19 @@ class _EnhancedPaymentScreenState extends State<EnhancedPaymentScreen> {
     );
   }
 
-  Widget _buildServiceFeature({required IconData icon, required String text}) {
+  Widget _buildServiceFeature({required IconData icon, required String text, Color iconColor = const Color(0xFF8F5CFF)}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.green, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+          Icon(icon, color: iconColor, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
         ],
       ),
     );
