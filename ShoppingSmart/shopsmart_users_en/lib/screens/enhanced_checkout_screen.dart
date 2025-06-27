@@ -36,9 +36,11 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   // Process order and navigate to success screen
+                  // Note: In a real implementation, you would get the orderId from the order creation response
                   Navigator.pushReplacementNamed(
                     context,
                     EnhancedOrderSuccessScreen.routeName,
+                    arguments: "ORDER_ID_PLACEHOLDER", // Replace with actual orderId
                   );
                 },
                 style: ElevatedButton.styleFrom(

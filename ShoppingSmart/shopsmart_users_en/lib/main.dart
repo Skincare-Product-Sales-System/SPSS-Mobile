@@ -189,6 +189,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               backgroundColor: Colors.green,
             ),
           );
+          
+          // Navigate to order success screen for successful payments
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => EnhancedOrderSuccessScreen(orderId: orderId),
+            ),
+            (route) => route.isFirst,
+          );
         } else {
           // Handle cases where payment was not successful (e.g., 'awaiting payment', 'cancelled')
           ScaffoldMessenger.of(context).showSnackBar(
@@ -196,6 +204,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               content: Text('Thanh toán không thành công hoặc đang chờ xử lý.'),
               backgroundColor: Colors.orange,
             ),
+          );
+          
+          // Navigate to order detail screen for failed payments so user can retry
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
+            ),
+            (route) => route.isFirst,
           );
         }
       } else {
@@ -206,16 +222,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             backgroundColor: Colors.red,
           ),
         );
+        
+        // Navigate to order detail screen on error so user can check status
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
+          ),
+          (route) => route.isFirst,
+        );
       }
-
-      // Navigate to the order detail screen regardless of status
-      // so the user can see the final state or retry payment.
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => EnhancedOrderDetailScreen(orderId: orderId),
-        ),
-        (route) => route.isFirst,
-      );
 
     } catch (e) {
       // Handle exceptions during the process

@@ -6,8 +6,9 @@ import '../mvvm_screen_template.dart';
 
 class EnhancedOrderSuccessScreen extends StatefulWidget {
   static const routeName = '/enhanced-order-success';
+  final String? orderId;
 
-  const EnhancedOrderSuccessScreen({super.key});
+  const EnhancedOrderSuccessScreen({super.key, this.orderId});
 
   @override
   State<EnhancedOrderSuccessScreen> createState() =>
@@ -19,12 +20,20 @@ class _EnhancedOrderSuccessScreenState
   String? _orderId;
 
   @override
+  void initState() {
+    super.initState();
+    _orderId = widget.orderId;
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Get the order ID from route arguments
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args != null && args is String) {
-      _orderId = args;
+    // Get the order ID from route arguments if not provided in constructor
+    if (_orderId == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is String) {
+        _orderId = args;
+      }
     }
   }
 
