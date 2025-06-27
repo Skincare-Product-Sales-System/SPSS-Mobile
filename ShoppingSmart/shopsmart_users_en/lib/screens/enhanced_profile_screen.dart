@@ -235,89 +235,92 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
             Visibility(
               visible: viewModel.isLoggedIn,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(context).cardColor,
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.surface,
-                          width: 3,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.07),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[100],
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 2,
+                          ),
+                          image: const DecorationImage(
+                            image: NetworkImage(
+                              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png",
+                            ),
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png",
-                          ),
-                          fit: BoxFit.fill,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TitlesTextWidget(
+                              label: viewModel.userInfo?.userName ?? "User",
+                              fontSize: 20,
+                            ),
+                            const SizedBox(height: 6),
+                            SubtitleTextWidget(
+                              label: viewModel.userInfo?.email ?? "user@example.com",
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TitlesTextWidget(
-                            label: viewModel.userInfo?.userName ?? "User",
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          const SizedBox(height: 6),
-                          SubtitleTextWidget(
-                            label:
-                                viewModel.userInfo?.email ?? "user@example.com",
-                          ),
-                        ],
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white, size: 26),
+                          tooltip: 'Chỉnh sửa hồ sơ',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EnhancedEditProfileScreen(),
+                              ),
+                            ).then((result) {
+                              if (result != null && result is Map<String, dynamic>) {
+                                if (result.containsKey('userName')) {
+                                  viewModel.updateUserInfoDirectly(result['userName']);
+                                  setState(() {});
+                                }
+                                viewModel.checkLoginStatus();
+                              } else if (result == true) {
+                                viewModel.checkLoginStatus();
+                                setState(() {});
+                              }
+                            });
+                          },
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit,
-                        color: Theme.of(context).primaryColor,
-                        size: 28,
-                      ),
-                      tooltip: 'Chỉnh sửa hồ sơ',
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => const EnhancedEditProfileScreen(),
-                          ),
-                        ).then((result) {
-                          // Check if we received updated profile data
-                          if (result != null &&
-                              result is Map<String, dynamic>) {
-                            // Directly update the UI with the returned data
-                            if (result.containsKey('userName')) {
-                              // Update the user info directly in the view model
-                              viewModel.updateUserInfoDirectly(
-                                result['userName'],
-                              );
-
-                              // Force rebuild of this widget
-                              setState(() {});
-                            }
-
-                            // Also try to refresh data from the server
-                            viewModel.checkLoginStatus();
-                          } else if (result == true) {
-                            // Just refresh data from server (old behavior)
-                            viewModel.checkLoginStatus();
-
-                            // Force rebuild of this widget
-                            setState(() {});
-                          }
-                        });
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

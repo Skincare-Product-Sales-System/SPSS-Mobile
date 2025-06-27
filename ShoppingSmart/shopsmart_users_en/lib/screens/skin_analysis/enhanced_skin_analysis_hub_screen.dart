@@ -115,30 +115,74 @@ class _EnhancedSkinAnalysisHubScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Phân Tích Da'),
-        centerTitle: true,
-        bottom: TabBar(
+      backgroundColor: Colors.grey[100],
+      body: Column(
+        children: [
+          // Header với gradient và TabBar custom
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, left: 0, right: 0, bottom: 0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Phân Tích Da',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TabBar(
           controller: _tabController,
-          labelColor: theme.primaryColor,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: theme.primaryColor,
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.white70,
+                        indicator: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white.withOpacity(0.25),
+                        ),
           tabs: const [
             Tab(icon: Icon(Icons.face), text: 'Phân tích da'),
             Tab(icon: Icon(Icons.quiz), text: 'Trắc nghiệm da'),
           ],
         ),
       ),
-      body: TabBarView(
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Nội dung tab
+          Expanded(
+            child: TabBarView(
         controller: _tabController,
-        physics:
-            const ClampingScrollPhysics(), // Prevent swipe between tabs if needed
+              physics: const ClampingScrollPhysics(),
         children: [
-          // Tab 1: Phân tích da
           _buildSkinAnalysisTab(),
-
-          // Tab 2: Trắc nghiệm da
           _buildQuizTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -388,19 +432,29 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                ShaderMask(
+                  shaderCallback: (Rect bounds) {
+                    return const LinearGradient(
+                      colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds);
+                  },
+                  child: const Text(
                   'Trắc Nghiệm Da',
                   style: TextStyle(
-                    fontSize: 22,
+                      fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                      color: Colors.white, // Sẽ được che bởi gradient
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   'Làm bài trắc nghiệm để hiểu rõ hơn về làn da của bạn và nhận được các gợi ý chăm sóc phù hợp',
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  style: TextStyle(fontSize: 15, color: Colors.black87),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -415,14 +469,23 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
               horizontal: 16.0,
               vertical: 10.0,
             ),
-            child: Text(
+            child: ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return const LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds);
+              },
+              child: const Text(
               'Danh sách bài trắc nghiệm',
               style: TextStyle(
-                fontSize: 18,
+                  fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: primaryColor,
+                  color: Colors.white, // Sẽ được che bởi gradient
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
 
@@ -479,25 +542,47 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              ShaderMask(
+                                shaderCallback: (Rect bounds) {
+                                  return const LinearGradient(
+                                    colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ).createShader(bounds);
+                                },
+                                child: Text(
                                 quiz['name'] ?? '',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 18,
+                                    fontSize: 20,
+                                    color: Colors.white, // Sẽ được che bởi gradient
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 0),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor,
+                                          backgroundColor: Colors.transparent,
+                                          shadowColor: Colors.transparent,
                                     foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
+                                            borderRadius: BorderRadius.circular(30),
                                     ),
                                   ),
                                   onPressed: () {
@@ -513,11 +598,15 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                                   child: const Text(
                                     'Làm bài trắc nghiệm',
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                     ),
                                   ),
                                 ),
+                                ],
                               ),
                             ],
                           ),

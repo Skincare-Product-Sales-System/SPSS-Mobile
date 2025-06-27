@@ -138,14 +138,42 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'Chỉnh sửa hồ sơ',
-              style: TextStyle(color: Colors.white),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: SafeArea(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                    ),
+                    const Center(
+                      child: Text(
+                        'Chỉnh sửa hồ sơ',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            elevation: 0,
           ),
           body:
               isLoading
@@ -182,17 +210,26 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
     BuildContext context,
     UserProfileModel userProfile,
   ) {
-    final primaryColor = Theme.of(context).primaryColor;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 18),
-      decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.08),
-        borderRadius: const BorderRadius.only(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF5F3FF), Color(0xFFEDE7FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -218,15 +255,20 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: primaryColor,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: const Icon(
                       Icons.camera_alt,
                       color: Colors.white,
-                      size: 20,
+                      size: 22,
                     ),
                   ),
                 ),
@@ -234,17 +276,23 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TitlesTextWidget(
-            label: '${userProfile.surName} ${userProfile.lastName}',
-            fontSize: 22,
+          Text(
+            '${userProfile.surName} ${userProfile.lastName}',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D1B5A),
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             userProfile.emailAddress,
-            style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+            style: const TextStyle(
+              color: Color(0xFF6B6B6B),
               fontSize: 16,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -332,15 +380,32 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
                 minimumSize: const Size(double.infinity, 50),
+                elevation: 0,
+                padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Chỉnh sửa tất cả',
-                style: TextStyle(fontSize: 16),
+              child: Ink(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  constraints: const BoxConstraints(minHeight: 50),
+                  child: const Text(
+                    'Chỉnh sửa tất cả',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -385,7 +450,18 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
                       _editingField = fieldName;
                     });
                   },
-                  icon: Icon(Icons.edit, color: primaryColor),
+                  icon: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: const Icon(Icons.edit, color: Colors.white, size: 18),
+                  ),
                   splashRadius: 24,
                 ),
             ],
@@ -434,9 +510,32 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
                     ElevatedButton(
                       onPressed: _updateUserData,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Lưu'),
+                      child: Ink(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(16)),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          constraints: const BoxConstraints(minHeight: 40, minWidth: 80),
+                          child: const Text(
+                            'Lưu',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -471,9 +570,32 @@ class _EnhancedEditProfileScreenState extends State<EnhancedEditProfileScreen> {
                     ElevatedButton(
                       onPressed: _updateUserData,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Lưu tất cả'),
+                      child: Ink(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(16)),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          constraints: const BoxConstraints(minHeight: 44, minWidth: 100),
+                          child: const Text(
+                            'Lưu tất cả',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

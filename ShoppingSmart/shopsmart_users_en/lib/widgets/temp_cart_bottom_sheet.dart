@@ -103,17 +103,38 @@ class _TempCartBottomSheetState extends State<TempCartBottomSheet> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: Theme.of(context).primaryColor,
-                      size: 24,
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Giỏ hàng gợi ý',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                    const SizedBox(width: 10),
+                    ShaderMask(
+                      shaderCallback: (Rect bounds) {
+                        return const LinearGradient(
+                          colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds);
+                      },
+                      child: const Text(
+                        'Giỏ hàng gợi ý',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Colors.white, // Sẽ được che bởi gradient
+                        ),
                       ),
                     ),
                   ],
@@ -206,23 +227,34 @@ class _TempCartBottomSheetState extends State<TempCartBottomSheet> {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        tempCartItems.isEmpty
-                            ? null
-                            : () async {
-                              await _addAllToCart(context, tempCartItems);
-                            },
-                    icon: const Icon(Icons.shopping_cart),
-                    label: const Text('Thêm tất cả vào giỏ hàng'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 4,
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          tempCartItems.isEmpty
+                              ? null
+                              : () async {
+                                await _addAllToCart(context, tempCartItems);
+                              },
+                      icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                      label: const Text('Thêm tất cả vào giỏ hàng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -321,20 +353,37 @@ class _TempCartBottomSheetState extends State<TempCartBottomSheet> {
                 Column(
                   children: [
                     // Nút thêm vào giỏ hàng
-                    IconButton(
-                      icon: Icon(
-                        Icons.add_shopping_cart,
-                        size: 24,
-                        color: Theme.of(context).primaryColor,
+                    Container(
+                      width: 140,
+                      margin: const EdgeInsets.only(bottom: 6),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
+                        label: const Text('Thêm vào giỏ hàng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        onPressed: item.productItemId != null ? () => _addToCart(context, item) : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: item.productItemId != null
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(const Rect.fromLTWH(0, 0, 140, 40)) != null
+                                  ? Colors.transparent
+                                  : Colors.grey[300]
+                              : Colors.grey[300],
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          foregroundColor: Colors.white,
+                        ).copyWith(
+                          backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                            if (states.contains(MaterialState.disabled)) {
+                              return Colors.grey[300]!;
+                            }
+                            return Colors.transparent;
+                          }),
+                        ),
                       ),
-                      onPressed:
-                          item.productItemId != null
-                              ? () => _addToCart(context, item)
-                              : null,
-                      tooltip:
-                          item.productItemId != null
-                              ? 'Thêm vào giỏ hàng'
-                              : 'Chọn thuộc tính trước',
                     ),
                     // Nút xem chi tiết sản phẩm
                     IconButton(

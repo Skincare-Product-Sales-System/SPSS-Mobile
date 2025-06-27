@@ -76,15 +76,30 @@ class _EnhancedSkinAnalysisHistoryScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lịch Sử Phân Tích Da'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchHistories,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ],
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: const Text('Lịch Sử Phân Tích Da', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: _fetchHistories,
+              ),
+            ],
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+        ),
       ),
       body: Consumer<EnhancedSkinAnalysisViewModel>(
         builder: (context, viewModel, child) {
@@ -132,10 +147,22 @@ class _EnhancedSkinAnalysisHistoryScreenState
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchHistories,
-        tooltip: 'Làm mới',
-        child: const Icon(Icons.refresh),
+      floatingActionButton: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+        ),
+        child: FloatingActionButton(
+          onPressed: _fetchHistories,
+          tooltip: 'Làm mới',
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(Icons.refresh, color: Colors.white),
+        ),
       ),
     );
   }
@@ -161,41 +188,61 @@ class _EnhancedSkinAnalysisHistoryScreenState
     }
     healthScore = healthScore.clamp(0.0, 10.0);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF3EDFF), Color(0xFFE9E1FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.06),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () {
           _viewAnalysisDetail(history);
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(14.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      history.imageUrl,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 100,
-                          height: 100,
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.image_not_supported),
-                        );
-                      },
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        history.imageUrl,
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 90,
+                            height: 90,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image_not_supported),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,38 +252,28 @@ class _EnhancedSkinAnalysisHistoryScreenState
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: Color(0xFF8F5CFF),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(
-                              Icons.face,
-                              size: 16,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                            Icon(Icons.face, size: 16, color: Color(0xFF8F5CFF)),
                             const SizedBox(width: 4),
-                            Text(
-                              'Loại da: $skinTypeText',
-                              style: const TextStyle(fontSize: 14),
-                            ),
+                            Text('Loại da: $skinTypeText', style: const TextStyle(fontSize: 14)),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(
-                              Icons.health_and_safety,
-                              size: 16,
-                              color: _getHealthScoreColor(healthScore),
-                            ),
+                            Icon(Icons.health_and_safety, size: 16, color: _getHealthScoreColor(healthScore)),
                             const SizedBox(width: 4),
                             Text(
                               'Điểm sức khỏe da: ${healthScore.toStringAsFixed(1)}/10',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: _getHealthScoreColor(healthScore),
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -254,32 +291,49 @@ class _EnhancedSkinAnalysisHistoryScreenState
                 ),
                 const SizedBox(height: 4),
                 Wrap(
-                  spacing: 8,
-                  children:
-                      history.skinIssues.map((issue) {
-                        return Chip(
-                          label: Text(issue.issueName),
-                          backgroundColor: Colors.purple[50],
-                          padding: const EdgeInsets.all(0),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          labelStyle: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        );
-                      }).toList(),
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: history.skinIssues.map((issue) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3EDFF),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
+                      ),
+                      child: Text(
+                        issue.issueName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF8F5CFF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => _viewAnalysisDetail(history),
-                  icon: const Icon(Icons.arrow_forward, size: 16),
-                  label: const Text('Xem chi tiết'),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(30)),
+                  ),
+                  child: TextButton.icon(
+                    onPressed: () => _viewAnalysisDetail(history),
+                    icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+                    label: const Text('Xem chi tiết', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
                   ),
                 ),
               ),

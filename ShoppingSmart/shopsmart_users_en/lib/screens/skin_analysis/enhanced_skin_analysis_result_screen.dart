@@ -64,30 +64,83 @@ class _EnhancedSkinAnalysisResultScreenState
             await showDialog(
               context: context,
               builder:
-                  (context) => AlertDialog(
-                    title: const Text('Xác nhận'),
-                    content: const Text(
-                      'Bạn có muốn quay về trang chủ không? Kết quả phân tích da sẽ vẫn được lưu trong lịch sử.',
+                  (context) => Dialog(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Xác nhận',
+                            style: TextStyle(
+                              color: Color(0xFF8F5CFF),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Bạn có muốn quay về trang chủ không?\nKết quả phân tích da sẽ vẫn được lưu trong lịch sử.',
+                            style: TextStyle(fontSize: 16, color: Colors.black87),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 28),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(false);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Color(0xFF8F5CFF), width: 2),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                  ),
+                                  child: const Text(
+                                    'Ở lại trang này',
+                                    style: TextStyle(color: Color(0xFF8F5CFF), fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(true);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    ),
+                                    child: const Text(
+                                      'Về trang chủ',
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(false); // Không điều hướng
-                        },
-                        child: const Text('Ở lại trang này'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pop(true); // Điều hướng về trang chủ
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
-                        child: const Text('Về trang chủ'),
-                      ),
-                    ],
                   ),
             ) ??
             false;
@@ -105,86 +158,52 @@ class _EnhancedSkinAnalysisResultScreenState
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Kết Quả Phân Tích Da'),
-          centerTitle: true,
-          // Disable the back button in the AppBar
-          automaticallyImplyLeading:
-              false, // Add a button to go back to history if needed
-          actions: [
-            // Consumer<TempCartProvider>(
-            //   builder: (context, tempCartProvider, _) {
-            //     final itemCount = tempCartProvider.tempCartItems.length;
-
-            //     return Container(
-            //       margin: const EdgeInsets.only(right: 8),
-            //       child: Stack(
-            //         alignment: Alignment.center,
-            //         children: [
-            //           Container(
-            //             decoration: BoxDecoration(
-            //               color: Theme.of(
-            //                 context,
-            //               ).primaryColor.withOpacity(0.1),
-            //               shape: BoxShape.circle,
-            //             ),
-            //             padding: const EdgeInsets.all(4),
-            //             child: IconButton(
-            //               icon: const Icon(
-            //                 Icons.shopping_cart,
-            //                 size: 26,
-            //                 color: Colors.orange,
-            //               ),
-            //               onPressed: () {
-            //                 // Hiển thị giỏ hàng tạm thời
-            //                 _showTempCart(context);
-            //               },
-            //               tooltip: 'Xem giỏ hàng gợi ý',
-            //             ),
-            //           ),
-            //           if (itemCount > 0)
-            //             Positioned(
-            //               top: 0,
-            //               right: 0,
-            //               child: Container(
-            //                 padding: const EdgeInsets.all(5),
-            //                 decoration: BoxDecoration(
-            //                   color: Colors.red,
-            //                   shape: BoxShape.circle,
-            //                   boxShadow: [
-            //                     BoxShadow(
-            //                       color: Colors.black.withOpacity(0.2),
-            //                       blurRadius: 3,
-            //                       offset: const Offset(0, 1),
-            //                     ),
-            //                   ],
-            //                 ),
-            //                 child: Text(
-            //                   itemCount.toString(),
-            //                   style: const TextStyle(
-            //                     color: Colors.white,
-            //                     fontWeight: FontWeight.bold,
-            //                     fontSize: 12,
-            //                   ),
-            //                 ),
-            //               ),
-            //             ),
-            //         ],
-            //       ),
-            //     );
-            //   },
-            // ),
-            IconButton(
-              icon: const Icon(Icons.history),
-              onPressed: () {
-                // Navigate to history screen
-                Navigator.of(
-                  context,
-                ).pushReplacementNamed('/enhanced-skin-analysis-history');
-              },
-              tooltip: 'Xem lịch sử',
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ],
+            child: SafeArea(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                  ),
+                  const Center(
+                    child: Text(
+                      'Kết Quả Phân Tích Da',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.history, color: Colors.white),
+                      onPressed: () {
+                        Navigator.of(context).pushReplacementNamed('/enhanced-skin-analysis-history');
+                      },
+                      tooltip: 'Xem lịch sử',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         body: Consumer<EnhancedSkinAnalysisViewModel>(
           builder: (context, viewModel, child) {
@@ -451,7 +470,7 @@ class _EnhancedSkinAnalysisResultScreenState
                   Icon(
                     Icons.face,
                     size: 30,
-                    color: Theme.of(context).primaryColor,
+                    color: const Color(0xFF8F5CFF),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -546,7 +565,7 @@ class _EnhancedSkinAnalysisResultScreenState
                     label: const Text('Xem giỏ hàng gợi ý'),
                     onPressed: () => _showTempCart(context),
                     style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: const Color(0xFF8F5CFF),
                     ),
                   ),
                 ],
@@ -574,7 +593,7 @@ class _EnhancedSkinAnalysisResultScreenState
                               const Icon(
                                 Icons.check_circle,
                                 size: 20,
-                                color: Colors.green,
+                                color: Color(0xFF8F5CFF),
                               ),
                               const SizedBox(width: 8),
                               Expanded(child: Text(advice)),
@@ -678,9 +697,10 @@ class _EnhancedSkinAnalysisResultScreenState
                   ),
                   Text(
                     '${_formatPrice(product.price)}₫',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                    style: const TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF8F5CFF),
                     ),
                   ),
                 ],
@@ -693,13 +713,28 @@ class _EnhancedSkinAnalysisResultScreenState
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -813,12 +848,12 @@ class _EnhancedSkinAnalysisResultScreenState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: const Color(0xFF8F5CFF).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.warning_amber,
-                  color: Theme.of(context).primaryColor,
+                  color: Color(0xFF8F5CFF),
                 ),
               ),
               const SizedBox(width: 12),
@@ -917,10 +952,10 @@ class _EnhancedSkinAnalysisResultScreenState
                   const SizedBox(height: 4),
                   Text(
                     '${_formatPrice(product.price)}₫',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                      color: Color(0xFF8F5CFF),
                     ),
                   ),
                   const SizedBox(height: 8),
