@@ -158,13 +158,13 @@ class _EditReviewModalState extends State<EditReviewModal> {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.18)),
                         image: DecorationImage(
-                          image:
-                              widget.review.productImageSafe.isNotEmpty
-                                  ? NetworkImage(widget.review.productImageSafe)
-                                  : const AssetImage('assets/images/error.png')
-                                      as ImageProvider,
+                          image: widget.review.productImageSafe.isNotEmpty
+                              ? NetworkImage(widget.review.productImageSafe)
+                              : const AssetImage('assets/images/error.png')
+                                  as ImageProvider,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -179,6 +179,7 @@ class _EditReviewModalState extends State<EditReviewModal> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: Color(0xFF8F5CFF),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -238,8 +239,21 @@ class _EditReviewModalState extends State<EditReviewModal> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: commentController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFF8F5CFF).withOpacity(0.06),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: const Color(0xFF8F5CFF).withOpacity(0.18)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: const Color(0xFF8F5CFF).withOpacity(0.18)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: const Color(0xFF8F5CFF), width: 2),
+                    ),
                     hintText: 'Chia sẻ trải nghiệm của bạn về sản phẩm này',
                   ),
                   maxLines: 3,
@@ -271,23 +285,28 @@ class _EditReviewModalState extends State<EditReviewModal> {
                       // Add image button
                       if (viewModel.editReviewImages.length < 5)
                         GestureDetector(
-                          onTap:
-                              viewModel.isUploadingImage
-                                  ? null
-                                  : () => _pickImage(viewModel),
+                          onTap: viewModel.isUploadingImage ? null : () => _pickImage(viewModel),
                           child: Container(
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
-                            child:
-                                viewModel.isUploadingImage
-                                    ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                    : const Icon(Icons.add_photo_alternate),
+                            child: Container(
+                              margin: const EdgeInsets.all(2.5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: viewModel.isUploadingImage
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : const Icon(Icons.add_photo_alternate, color: Color(0xFF8F5CFF), size: 32),
+                            ),
                           ),
                         ),
                       const SizedBox(width: 8),
@@ -300,7 +319,8 @@ class _EditReviewModalState extends State<EditReviewModal> {
                               height: 80,
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.18)),
                                 image: DecorationImage(
                                   image: NetworkImage(imageUrl),
                                   fit: BoxFit.cover,
@@ -360,62 +380,76 @@ class _EditReviewModalState extends State<EditReviewModal> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          // Clean up any uploaded images if user cancels
-                          await viewModel.cleanupReviewImages();
-                          if (!context.mounted) return;
-                          Navigator.of(context).pop(false);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
                         ),
-                        child: const Text('Hủy'),
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await viewModel.cleanupReviewImages();
+                            if (!context.mounted) return;
+                            Navigator.of(context).pop(false);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Hủy', style: TextStyle(color: Color(0xFF8F5CFF), fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed:
-                            viewModel.isSubmittingReview
-                                ? null
-                                : () async {
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.purpleAccent,
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: viewModel.isSubmittingReview
+                              ? null
+                              : () async {
                                   if (commentController.text.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text(
-                                          'Vui lòng nhập nội dung đánh giá',
-                                        ),
+                                        content: Text('Vui lòng nhập nội dung đánh giá'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
                                     return;
                                   }
                                   try {
-                                    // Update the review and get the result
-                                    final success = await viewModel
-                                        .updateReview(
-                                          reviewId: widget.review.id,
-                                          rating: ratingValue,
-                                          comment: commentController.text,
-                                        );
-
+                                    final success = await viewModel.updateReview(
+                                      reviewId: widget.review.id,
+                                      rating: ratingValue,
+                                      comment: commentController.text,
+                                    );
                                     if (!context.mounted) return;
-
-                                    // Close the modal and return the success status
                                     Navigator.of(context).pop(success);
-
-                                    // Display a success or error message
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(
-                                          success
-                                              ? 'Đánh giá đã được cập nhật'
-                                              : viewModel.reviewError ??
-                                                  'Không thể cập nhật đánh giá',
-                                        ),
-                                        backgroundColor:
-                                            success ? Colors.green : Colors.red,
+                                        content: Text(success
+                                            ? 'Đánh giá đã được cập nhật'
+                                            : viewModel.reviewError ?? 'Không thể cập nhật đánh giá'),
+                                        backgroundColor: success ? Colors.green : Colors.red,
                                       ),
                                     );
                                   } catch (e) {
@@ -423,25 +457,27 @@ class _EditReviewModalState extends State<EditReviewModal> {
                                     Navigator.of(context).pop(false);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Lỗi: ${e.toString()}'),
+                                        content: Text('Lỗi: \\${e.toString()}'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
                                   }
                                 },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child:
-                            viewModel.isSubmittingReview
-                                ? const SizedBox(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          ),
+                          child: viewModel.isSubmittingReview
+                              ? const SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
-                                : const Text('Lưu'),
+                              : const Text('Lưu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
                       ),
                     ),
                   ],

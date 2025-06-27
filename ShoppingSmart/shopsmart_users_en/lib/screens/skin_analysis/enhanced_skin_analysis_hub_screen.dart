@@ -154,19 +154,19 @@ class _EnhancedSkinAnalysisHubScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TabBar(
-                        controller: _tabController,
+          controller: _tabController,
                         labelColor: Colors.white,
                         unselectedLabelColor: Colors.white70,
                         indicator: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.white.withOpacity(0.25),
                         ),
-                        tabs: const [
-                          Tab(icon: Icon(Icons.face), text: 'Phân tích da'),
-                          Tab(icon: Icon(Icons.quiz), text: 'Trắc nghiệm da'),
-                        ],
-                      ),
-                    ),
+          tabs: const [
+            Tab(icon: Icon(Icons.face), text: 'Phân tích da'),
+            Tab(icon: Icon(Icons.quiz), text: 'Trắc nghiệm da'),
+          ],
+        ),
+      ),
                   ],
                 ),
               ),
@@ -175,11 +175,11 @@ class _EnhancedSkinAnalysisHubScreenState
           // Nội dung tab
           Expanded(
             child: TabBarView(
-              controller: _tabController,
+        controller: _tabController,
               physics: const ClampingScrollPhysics(),
-              children: [
-                _buildSkinAnalysisTab(),
-                _buildQuizTab(),
+        children: [
+          _buildSkinAnalysisTab(),
+          _buildQuizTab(),
               ],
             ),
           ),
@@ -441,10 +441,10 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                     ).createShader(bounds);
                   },
                   child: const Text(
-                    'Trắc Nghiệm Da',
-                    style: TextStyle(
+                  'Trắc Nghiệm Da',
+                  style: TextStyle(
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                       color: Colors.white, // Sẽ được che bởi gradient
                       letterSpacing: 0.5,
                     ),
@@ -478,10 +478,10 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                 ).createShader(bounds);
               },
               child: const Text(
-                'Danh sách bài trắc nghiệm',
-                style: TextStyle(
+              'Danh sách bài trắc nghiệm',
+              style: TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
                   color: Colors.white, // Sẽ được che bởi gradient
                 ),
                 textAlign: TextAlign.center,
@@ -551,9 +551,9 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                                   ).createShader(bounds);
                                 },
                                 child: Text(
-                                  quiz['name'] ?? '',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                quiz['name'] ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                     fontSize: 20,
                                     color: Colors.white, // Sẽ được che bởi gradient
                                   ),
@@ -574,38 +574,38 @@ class _QuizTabState extends State<_QuizTab> with AutomaticKeepAliveClientMixin {
                                         ),
                                         borderRadius: BorderRadius.circular(30),
                                       ),
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.transparent,
                                           shadowColor: Colors.transparent,
-                                          foregroundColor: Colors.white,
+                                    foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 16),
                                           elevation: 0,
-                                          shape: RoundedRectangleBorder(
+                                    shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(30),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/enhanced-quiz-question',
-                                            arguments: {
-                                              'quizSetId': quiz['id'],
-                                              'quizSetName': quiz['name'] ?? '',
-                                            },
-                                          );
-                                        },
-                                        child: const Text(
-                                          'Làm bài trắc nghiệm',
-                                          style: TextStyle(
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/enhanced-quiz-question',
+                                      arguments: {
+                                        'quizSetId': quiz['id'],
+                                        'quizSetName': quiz['name'] ?? '',
+                                      },
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Làm bài trắc nghiệm',
+                                    style: TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
                                         ),
-                                      ),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                             ],

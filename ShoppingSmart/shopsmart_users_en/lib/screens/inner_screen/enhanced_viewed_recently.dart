@@ -34,26 +34,52 @@ class _EnhancedViewedRecentlyScreenState
           (viewModel) => viewModel.hasError ? viewModel.errorMessage : null,
       onRefresh: (viewModel) => viewModel.loadViewedProducts(),
       buildAppBar:
-          (context, viewModel) => AppBar(
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(AssetsManager.shoppingCart),
-            ),
-            title: TitlesTextWidget(
-              label: "Đã xem gần đây (${viewModel.viewedProducts.length})",
-            ),
-            actions: [
-              if (viewModel.viewedProducts.isNotEmpty)
-                IconButton(
-                  onPressed: () {
-                    _showDeleteConfirmationDialog(context, viewModel);
-                  },
-                  icon: const Icon(
-                    Icons.delete_forever_rounded,
-                    color: Colors.red,
-                  ),
+          (context, viewModel) => PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-            ],
+              ),
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                title: TitlesTextWidget(
+                  label: "Đã xem gần đây (${viewModel.viewedProducts.length})",
+                  color: Colors.white,
+                ),
+                centerTitle: true,
+                actions: [
+                  if (viewModel.viewedProducts.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+                      child: Material(
+                        color: Colors.white,
+                        shape: const CircleBorder(),
+                        elevation: 2,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            _showDeleteConfirmationDialog(context, viewModel);
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Icon(Icons.delete_forever_rounded, color: Colors.red, size: 26),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+                iconTheme: const IconThemeData(color: Colors.white),
+              ),
+            ),
           ),
       buildEmpty:
           (context, viewModel) => EmptyBagWidget(
@@ -63,29 +89,38 @@ class _EnhancedViewedRecentlyScreenState
                 "Có vẻ như bạn chưa xem sản phẩm nào, hãy khám phá cửa hàng",
             buttonText: "Mua sắm ngay",
           ),
-      buildContent: (context, viewModel) => _buildContent(context, viewModel),
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context,
-    EnhancedViewedProductsProvider viewModel,
-  ) {
-    final viewedProducts = viewModel.viewedProducts;
-
-    return DynamicHeightGridView(
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      builder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: EnhancedProductWidget(
-            productId: viewedProducts[index].productId,
-          ),
-        );
-      },
-      itemCount: viewedProducts.length,
-      crossAxisCount: 2,
+      buildContent: (context, viewModel) => Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        child: DynamicHeightGridView(
+          mainAxisSpacing: 18,
+          crossAxisSpacing: 18,
+          builder: (context, index) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purple.withOpacity(0.07),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: EnhancedProductWidget(
+                  productId: viewModel.viewedProducts[index].productId,
+                ),
+              ),
+            );
+          },
+          itemCount: viewModel.viewedProducts.length,
+          crossAxisCount: 2,
+        ),
+      ),
     );
   }
 

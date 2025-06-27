@@ -38,7 +38,29 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(title: const Text('Chi tiết đơn hàng'), elevation: 0);
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: const Text('Chi tiết đơn hàng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+      ),
+    );
   }
 
   Widget _buildContent(BuildContext context, EnhancedOrderViewModel viewModel) {
@@ -71,12 +93,13 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
+            color: Colors.purple.withOpacity(0.06),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -86,21 +109,10 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              Icon(
-                Icons.history,
-                color: Theme.of(context).primaryColor,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Lịch sử đơn hàng',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
+            children: const [
+              Icon(Icons.history, color: Color(0xFF8F5CFF)),
+              SizedBox(width: 8),
+              Text('Lịch sử đơn hàng', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8F5CFF), fontSize: 16)),
             ],
           ),
           const SizedBox(height: 16),
@@ -112,7 +124,6 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
               final isFirst = index == 0;
               final isLast = index == statusChanges.length - 1;
               final statusChange = statusChanges[index];
-
               return TimelineTile(
                 alignment: TimelineAlign.manual,
                 lineXY: 0.2,
@@ -120,15 +131,15 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
                 isLast: isLast,
                 indicatorStyle: IndicatorStyle(
                   width: 20,
-                  color: isLast ? Colors.green : Theme.of(context).primaryColor,
+                  color: isLast ? Colors.green : const Color(0xFF8F5CFF),
                   iconStyle: IconStyle(
                     color: Colors.white,
                     iconData: isLast ? Icons.check : Icons.circle,
                     fontSize: isLast ? 14 : 12,
                   ),
                 ),
-                beforeLineStyle: LineStyle(
-                  color: Theme.of(context).primaryColor.withOpacity(0.7),
+                beforeLineStyle: const LineStyle(
+                  color: Color(0xFF8F5CFF),
                 ),
                 endChild: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -156,9 +167,9 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
                 startChild: Center(
                   child: Text(
                     _formatTimeOnly(statusChange.date),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: Color(0xFF8F5CFF),
                     ),
                   ),
                 ),
@@ -174,15 +185,17 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     BuildContext context,
     OrderDetailModel orderDetail,
   ) {
+    final statusColor = _getStatusColor(orderDetail.status);
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue,
-        borderRadius: BorderRadius.circular(20),
+        color: statusColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: statusColor, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            blurRadius: 8,
+            color: statusColor.withOpacity(0.13),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -196,14 +209,10 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: statusColor.withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  _getStatusIcon(orderDetail.status),
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: Icon(_getStatusIcon(orderDetail.status), color: statusColor, size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -212,88 +221,52 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
                   children: [
                     Text(
                       _translateStatus(orderDetail.status),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: statusColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Cập nhật: ${_formatDateTime(orderDetail.createdTime)}',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 14,
-                      ),
+                      'Cập nhật: ${DateFormat('dd/MM/yyyy - HH:mm').format(orderDetail.createdTime)}',
+                      style: TextStyle(color: statusColor.withOpacity(0.7), fontSize: 14),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Section for order ID
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Mã đơn hàng',
-                style: TextStyle(color: Colors.white, fontSize: 14),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
+          const SizedBox(height: 18),
+          Text('Mã đơn hàng', style: TextStyle(color: statusColor.withOpacity(0.7), fontSize: 14)),
+          const SizedBox(height: 6),
+          Container(
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: statusColor.withOpacity(0.18)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    orderDetail.id,
+                    style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                IconButton(
+                  icon: Icon(Icons.copy, color: statusColor, size: 20),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: orderDetail.id));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đã sao chép mã đơn hàng'), backgroundColor: Colors.green),
+                    );
+                  },
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        orderDetail.id,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.copy,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(text: orderDetail.id),
-                        ).then((_) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Đã sao chép mã đơn hàng vào clipboard',
-                              ),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        });
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      iconSize: 22,
-                      splashRadius: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -307,71 +280,52 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
+            color: Colors.purple.withOpacity(0.06),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.receipt_long,
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.receipt_long, color: Color(0xFF8F5CFF)),
+              SizedBox(width: 8),
+              Text('Tóm tắt đơn hàng', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8F5CFF), fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Tổng tiền gốc:', style: TextStyle(fontSize: 15)),
+              Text(CurrencyFormatter.format(orderDetail.originalOrderTotal), style: const TextStyle(fontSize: 15)),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Tổng thanh toán:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                CurrencyFormatter.format(orderDetail.discountedOrderTotal),
+                style: const TextStyle(
+                  color: Color(0xFF8F5CFF),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Tóm tắt đơn hàng',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildSummaryRow(
-              context,
-              'Tổng tiền gốc:',
-              CurrencyFormatter.formatVND(orderDetail.originalOrderTotal),
-            ),
-            if (orderDetail.voucherCode != null) ...[
-              const SizedBox(height: 8),
-              _buildSummaryRow(
-                context,
-                'Mã giảm giá:',
-                orderDetail.voucherCode!,
-                valueColor: Colors.green,
-              ),
-              const SizedBox(height: 8),
-              _buildSummaryRow(
-                context,
-                'Giảm giá:',
-                '- ${CurrencyFormatter.formatVND(orderDetail.discountAmount)}',
-                valueColor: Colors.green,
               ),
             ],
-            const Divider(height: 24),
-            _buildSummaryRow(
-              context,
-              'Tổng thanh toán:',
-              CurrencyFormatter.formatVND(orderDetail.discountedOrderTotal),
-              isTotal: true,
-              valueColor: Colors.red,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -383,12 +337,13 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
+            color: Colors.purple.withOpacity(0.06),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -399,21 +354,10 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Địa chỉ giao hàng',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
+              children: const [
+                Icon(Icons.location_on, color: Color(0xFF8F5CFF)),
+                SizedBox(width: 8),
+                Text('Địa chỉ giao hàng', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8F5CFF), fontSize: 16)),
               ],
             ),
             const SizedBox(height: 16),
@@ -444,12 +388,13 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF8F5CFF).withOpacity(0.13)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
+            color: Colors.purple.withOpacity(0.06),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -460,21 +405,10 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.shopping_bag,
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Sản phẩm đã mua',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
+              children: const [
+                Icon(Icons.shopping_bag, color: Color(0xFF8F5CFF)),
+                SizedBox(width: 8),
+                Text('Sản phẩm đã mua', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8F5CFF), fontSize: 16)),
               ],
             ),
             const SizedBox(height: 16),
@@ -1001,12 +935,28 @@ class EnhancedOrderDetailScreen extends StatelessWidget {
     final vietnamTime = dateTime.add(const Duration(hours: 7));
     return DateFormat('HH:mm').format(vietnamTime);
   }
-  // Method removed as it's not used
 
   bool _canCancelOrder(String status) {
     final lowerStatus = status.toLowerCase();
     return lowerStatus == 'awaiting payment' ||
         lowerStatus == 'processing' ||
         lowerStatus == 'confirmed';
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return const Color(0xFFFFA500); // Orange
+      case 'processing':
+        return const Color(0xFF1E90FF); // Dodger Blue
+      case 'shipped':
+        return const Color(0xFF4169E1); // Royal Blue
+      case 'delivered':
+        return const Color(0xFF32CD32); // Lime Green
+      case 'cancelled':
+        return const Color(0xFFFF0000); // Red
+      default:
+        return const Color(0xFF808080); // Gray
+    }
   }
 }
