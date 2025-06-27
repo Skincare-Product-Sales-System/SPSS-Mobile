@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../../consts/validator.dart';
 import '../../providers/enhanced_auth_view_model.dart';
@@ -42,7 +42,7 @@ class _EnhancedRegisterScreenState extends State<EnhancedRegisterScreen> {
 
   final _formkey = GlobalKey<FormState>();
   XFile? _pickedImage;
-
+  bool _showPhoneRequirements = false;
   @override
   void initState() {
     _userNameController = TextEditingController();
@@ -346,7 +346,6 @@ class _EnhancedRegisterScreenState extends State<EnhancedRegisterScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Email Field
                     Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
@@ -362,10 +361,11 @@ class _EnhancedRegisterScreenState extends State<EnhancedRegisterScreen> {
                         focusNode: _emailFocusNode,
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.emailAddress,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         decoration: InputDecoration(
                           hintText: "Địa chỉ email",
                           prefixIcon: Icon(
-                            IconlyLight.message,
+                            Icons.email,
                             color: Theme.of(context).primaryColor,
                           ),
                           border: InputBorder.none,
@@ -374,56 +374,121 @@ class _EnhancedRegisterScreenState extends State<EnhancedRegisterScreen> {
                             vertical: 16,
                           ),
                         ),
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         onFieldSubmitted: (value) {
                           FocusScope.of(
                             context,
                           ).requestFocus(_phoneNumberFocusNode);
                         },
-                        validator: (value) {
-                          return MyValidators.emailValidator(value);
-                        },
                       ),
                     ),
+                    if (_emailController.text.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 12),
+                        child: Row(
+                          children: [
+                            Icon(
+                              RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} ?$',
+                                  ).hasMatch(_emailController.text.trim())
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color:
+                                  RegExp(
+                                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} ?$',
+                                      ).hasMatch(_emailController.text.trim())
+                                      ? Colors.green
+                                      : Colors.red,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} ?$',
+                                  ).hasMatch(_emailController.text.trim())
+                                  ? "Email hợp lệ"
+                                  : "Email không hợp lệ",
+                              style: TextStyle(
+                                color:
+                                    RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} ?$',
+                                        ).hasMatch(_emailController.text.trim())
+                                        ? Colors.green
+                                        : Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 16),
 
-                    // Phone Number Field
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).dividerColor.withOpacity(0.2),
+                    // Phone
+                    TextFormField(
+                      controller: _phoneNumberController,
+                      focusNode: _phoneNumberFocusNode,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: "Số điện thoại",
+                        prefixIcon: Icon(
+                          Icons.phone,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
-                      child: TextFormField(
-                        controller: _phoneNumberController,
-                        focusNode: _phoneNumberFocusNode,
-                        textInputAction: TextInputAction.next,
-                        keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(
-                          hintText: "Số điện thoại",
-                          prefixIcon: Icon(
-                            Icons.phone,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                        ),
-                        onFieldSubmitted: (value) {
-                          FocusScope.of(
+                      inputFormatters: [
+                        // Chỉ cho phép nhập số
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onChanged: (value) {
+                        setState(() {
+                          _showPhoneRequirements = true;
+                        });
+                      },
+                      onFieldSubmitted:
+                          (_) => FocusScope.of(
                             context,
-                          ).requestFocus(_passwordFocusNode);
-                        },
-                        validator: (value) {
-                          return null; // Không bắt buộc
-                        },
-                      ),
+                          ).requestFocus(_passwordFocusNode),
                     ),
+                    if (_showPhoneRequirements)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 12),
+                        child: Row(
+                          children: [
+                            Icon(
+                              RegExp(
+                                    r'^0\d{9,10} ?$',
+                                  ).hasMatch(_phoneNumberController.text.trim())
+                                  ? Icons.check_circle
+                                  : Icons.cancel,
+                              color:
+                                  RegExp(r'^0\d{9,10} ?$').hasMatch(
+                                        _phoneNumberController.text.trim(),
+                                      )
+                                      ? Colors.green
+                                      : Colors.red,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Số điện thoại phải có 10 hoặc 11 chữ số",
+                              style: TextStyle(
+                                color:
+                                    RegExp(r'^0\d{9,10} ?$').hasMatch(
+                                          _phoneNumberController.text.trim(),
+                                        )
+                                        ? Colors.green
+                                        : Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 16),
 
                     // Password Field

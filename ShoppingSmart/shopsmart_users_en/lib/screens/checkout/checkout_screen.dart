@@ -369,21 +369,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         _selectedPaymentMethod = method;
                                       });
                                     },
-                                    leading: Image.network(
-                                      method.imageUrl,
-                                      width: 40,
-                                      height: 40,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return const Icon(
-                                          Icons.payment,
-                                          size: 40,
-                                        );
-                                      },
-                                    ),
+                                    leading:
+                                        method.imageUrl.isNotEmpty
+                                            ? Image.network(
+                                              method.imageUrl,
+                                              width: 40,
+                                              height: 40,
+                                              errorBuilder: (
+                                                context,
+                                                error,
+                                                stackTrace,
+                                              ) {
+                                                return const Icon(
+                                                  Icons.payment,
+                                                  size: 40,
+                                                );
+                                              },
+                                            )
+                                            : const Icon(
+                                              Icons.payment,
+                                              size: 40,
+                                            ),
                                     title: Text(
                                       method.paymentType,
                                       style: const TextStyle(

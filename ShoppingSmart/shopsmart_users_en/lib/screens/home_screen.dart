@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +6,6 @@ import 'package:shopsmart_users_en/widgets/products/latest_arrival.dart';
 import 'package:shopsmart_users_en/widgets/products/category_widget.dart';
 import 'package:shopsmart_users_en/widgets/blog_section.dart';
 import 'package:shopsmart_users_en/screens/simple_search_screen.dart';
-
 import '../providers/products_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/assets_manager.dart';
@@ -27,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final productsProvider = Provider.of<ProductsProvider>(
         context,
@@ -38,16 +34,19 @@ class _HomeScreenState extends State<HomeScreen> {
         listen: false,
       );
 
-      // Load categories first
       if (categoriesProvider.getCategories.isEmpty) {
         categoriesProvider.loadCategories();
       }
-
-      // Load best sellers for arrival section
       if (productsProvider.getProducts.isEmpty) {
         productsProvider.loadBestSellers(refresh: true);
       }
     });
+  }
+
+  int getCrossAxisCount(double width) {
+    if (width >= 900) return 4;
+    if (width >= 600) return 3;
+    return 2;
   }
 
   @override
@@ -56,10 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset(AssetsManager.shoppingCart),
-        ),
+        leading: Image.asset(AssetsManager.shoppingCart),
         title: const AppNameTextWidget(fontSize: 20),
         actions: [
           IconButton(
@@ -99,9 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
-                    Text(
+                    const Text(
                       'Lỗi Kết Nối',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -113,34 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Khắc phục sự cố:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 4),
-                          Text('• Đảm bảo máy chủ API đang chạy'),
-                          Text(
-                            '• Kiểm tra xem https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/products hoạt động trong trình duyệt',
-                          ),
-                          Text(
-                            '• Đối với máy ảo Android: API nên được truy cập tại https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net',
-                          ),
-                          Text(
-                            '• Kiểm tra bảng điều khiển để biết nhật ký lỗi chi tiết',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed:
                           () => productsProvider.loadBestSellers(refresh: true),
@@ -149,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     OutlinedButton(
                       onPressed: () async {
-                        // Test API connection
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Đang kiểm tra kết nối API...'),
@@ -194,12 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ]);
             },
             child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 15),
 
-                  // Banner Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: SizedBox(
@@ -225,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          'Lỗi: ${error.toString().substring(0, math.min(error.toString().length, 50))}',
+                                          'Lỗi: \${error.toString().substring(0, math.min(error.toString().length, 50))}',
                                         ),
                                       ],
                                     ),
@@ -247,11 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Categories Section (moved to top)
                   const CategorySection(),
                   const SizedBox(height: 20),
 
-                  // Best Sellers section (moved below categories)
                   Consumer<CategoriesProvider>(
                     builder: (context, categoriesProvider, child) {
                       return Padding(
@@ -262,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             TitlesTextWidget(
                               label:
                                   categoriesProvider.selectedCategoryId != null
-                                      ? "Sản phẩm trong ${categoriesProvider.getSelectedCategoryName()}"
+                                      ? "Sản phẩm trong \${categoriesProvider.getSelectedCategoryName()}"
                                       : "Bán Chạy Nhất",
                             ),
                             TextButton(
@@ -292,41 +257,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 15.0),
 
-                  if (productsProvider.getProducts.isEmpty)
-                    SizedBox(
-                      height: size.height * 0.25,
-                      child: const Center(child: Text('Không có sản phẩm')),
-                    )
-                  else
-                    SizedBox(
-                      height: 330,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        scrollDirection: Axis.horizontal,
-                        itemCount:
-                            productsProvider.getProducts.length > 10
-                                ? 10
-                                : productsProvider.getProducts.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: SizedBox(
-                              width: 200,
-                              child: ChangeNotifierProvider.value(
-                                value: productsProvider.getProducts[index],
-                                child: const LatestArrivalProductsWidget(),
+                  const SizedBox(height: 15),
+
+                  productsProvider.getProducts.isEmpty
+                      ? SizedBox(
+                        height: size.height * 0.25,
+                        child: const Center(child: Text('Không có sản phẩm')),
+                      )
+                      : SizedBox(
+                        height: 330,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          scrollDirection: Axis.horizontal,
+                          itemCount:
+                              productsProvider.getProducts.length > 10
+                                  ? 10
+                                  : productsProvider.getProducts.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
                               ),
-                            ),
-                          );
-                        },
+                              child: SizedBox(
+                                width: 200,
+                                child: ChangeNotifierProvider.value(
+                                  value: productsProvider.getProducts[index],
+                                  child: const LatestArrivalProductsWidget(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 20),
 
-                  // All Products Section
+                  // ✅ Fixed All Products Grid Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Row(
@@ -353,45 +320,45 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 15.0),
+                  const SizedBox(height: 15),
 
-                  if (productsProvider.getProducts.isEmpty)
-                    SizedBox(
-                      height: size.height * 0.3,
-                      child: const Center(child: Text('Không có sản phẩm')),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 15,
-                              childAspectRatio: 0.65,
-                            ),
-                        itemCount:
-                            productsProvider.getProducts.length > 10
-                                ? 10
-                                : productsProvider.getProducts.length,
-                        itemBuilder: (context, index) {
-                          return ChangeNotifierProvider.value(
-                            value: productsProvider.getProducts[index],
-                            child: const LatestArrivalProductsWidget(),
-                          );
-                        },
+                  productsProvider.getProducts.isEmpty
+                      ? SizedBox(
+                        height: size.height * 0.3,
+                        child: const Center(child: Text('Không có sản phẩm')),
+                      )
+                      : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: GridView.builder(
+                          itemCount:
+                              productsProvider.getProducts.length > 10
+                                  ? 10
+                                  : productsProvider.getProducts.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: getCrossAxisCount(
+                                  size.width,
+                                ), // responsive
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 15,
+                                childAspectRatio: 0.65,
+                              ),
+                          itemBuilder: (context, index) {
+                            return ChangeNotifierProvider.value(
+                              value: productsProvider.getProducts[index],
+                              child: const LatestArrivalProductsWidget(),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 20),
 
-                  // Blog Section
                   const BlogSection(),
 
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),

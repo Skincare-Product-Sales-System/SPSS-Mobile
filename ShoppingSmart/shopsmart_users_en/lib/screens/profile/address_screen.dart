@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shopsmart_users_en/services/jwt_service.dart';
+import 'package:flutter/services.dart';
 
 class AddressScreen extends StatefulWidget {
   const AddressScreen({super.key});
@@ -59,7 +60,9 @@ class _AddressScreenState extends State<AddressScreen> {
   Future<void> deleteAddress(String id) async {
     final token = await JwtService.getStoredToken();
     final res = await http.delete(
-      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id'),
+      Uri.parse(
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id',
+      ),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -80,7 +83,9 @@ class _AddressScreenState extends State<AddressScreen> {
   Future<void> setDefault(String id) async {
     final token = await JwtService.getStoredToken();
     final res = await http.patch(
-      Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id/set-default'),
+      Uri.parse(
+        'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses/$id/set-default',
+      ),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -390,7 +395,9 @@ class _AddressFormState extends State<AddressForm> {
     http.Response res;
     if (widget.address == null) {
       res = await http.post(
-        Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses'),
+        Uri.parse(
+          'https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/addresses',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -556,20 +563,85 @@ class _AddressFormState extends State<AddressForm> {
   }
 
   Widget _buildTextField(String key, String label, IconData icon) {
+    final isPhone = key == 'phoneNumber';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: _ctrl[key],
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        validator:
-            (val) =>
-                (label.contains('*') && (val == null || val.isEmpty))
-                    ? 'Trường này là bắt buộc'
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _ctrl[key],
+            decoration: InputDecoration(
+              labelText: label,
+              prefixIcon: Icon(icon),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            keyboardType: isPhone ? TextInputType.phone : null,
+            inputFormatters:
+                isPhone
+                    ? [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ]
                     : null,
+            autovalidateMode:
+                isPhone ? AutovalidateMode.onUserInteraction : null,
+            onChanged: isPhone ? (value) => setState(() {}) : null,
+            validator: (val) {
+              if (label.contains('*') && (val == null || val.isEmpty)) {
+                return 'Trường này là bắt buộc';
+              }
+              if (isPhone &&
+                  val != null &&
+                  val.isNotEmpty &&
+                  !RegExp(r'^0\d{9,10}\u0000?$').hasMatch(val.trim())) {
+                return 'Số điện thoại phải có 10 hoặc 11 chữ số';
+              }
+              return null;
+            },
+          ),
+          if (isPhone && _ctrl[key]!.text.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    RegExp(
+                          r'^0\d{9,10}\u0000?$',
+                        ).hasMatch(_ctrl[key]!.text.trim())
+                        ? Icons.check_circle
+                        : Icons.cancel,
+                    color:
+                        RegExp(
+                              r'^0\d{9,10}\u0000?$',
+                            ).hasMatch(_ctrl[key]!.text.trim())
+                            ? Colors.green
+                            : Colors.red,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    RegExp(
+                          r'^0\d{9,10}\u0000?$',
+                        ).hasMatch(_ctrl[key]!.text.trim())
+                        ? 'Số điện thoại hợp lệ'
+                        : 'Số điện thoại phải có 10 hoặc 11 chữ số',
+                    style: TextStyle(
+                      color:
+                          RegExp(
+                                r'^0\d{9,10}\u0000?$',
+                              ).hasMatch(_ctrl[key]!.text.trim())
+                              ? Colors.green
+                              : Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
