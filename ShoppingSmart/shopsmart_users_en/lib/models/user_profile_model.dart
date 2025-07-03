@@ -28,7 +28,7 @@ class UserProfileModel {
   // Tạo mới từ JSON
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
     return UserProfileModel(
-      id: json['id'] ?? '',
+      id: json['userId'] ?? '',
       userName: json['userName'] ?? '',
       surName: json['surName'] ?? '',
       lastName: json['lastName'] ?? '',
@@ -38,7 +38,7 @@ class UserProfileModel {
       roles: json['roles'] != null ? List<String>.from(json['roles']) : null,
       isActive: json['isActive'] ?? true,
       createdAt:
-          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+          json['createdTime'] != null ? DateTime.parse(json['createdTime']) : null,
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
