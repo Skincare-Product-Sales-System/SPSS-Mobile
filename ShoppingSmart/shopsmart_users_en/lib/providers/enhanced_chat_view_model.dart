@@ -9,11 +9,19 @@ import 'base_view_model.dart';
 import 'chat_state.dart';
 import '../models/chat_message.dart' as model;
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'enhanced_profile_view_model.dart';
+import '../services/jwt_service.dart';
 
 /// ViewModel cải tiến cho Chat, kế thừa từ BaseViewModel
 class EnhancedChatViewModel extends BaseViewModel<ChatState> {
   final ChatService _chatService;
   static const int MAX_RETRY_ATTEMPTS = 3;
+  String? _sessionId;
+  String? get sessionId => _sessionId;
+  bool _isNewSession = false;
+  bool get isNewSession => _isNewSession;
 
   /// Constructor với dependency injection cho service
   EnhancedChatViewModel({ChatService? chatService})
@@ -41,6 +49,7 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
   Future<void> _initialize() async {
     await _chatService.initialize();
     _chatService.onMessageReceived = _handleMessageReceived;
+    await _initSessionId();
   }
 
   /// Mở/đóng chat
@@ -488,39 +497,80 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
   }
 
   /// Phương thức cho ChatAI
+  @override
   Future<void> initChatAI() async {
-    updateState(
-      state.copyWith(isInitializingAI: true, messages: ViewState.loading()),
-    );
+    await _initSessionId();
+    // Reset mentionedProducts về null ngay khi vào chat
+    updateState(state.copyWith(isInitializingAI: true, messages: ViewState.loading(), mentionedProducts: null));
     try {
-      // Lấy danh sách sản phẩm từ API
+      final profileVM = sl<EnhancedProfileViewModel>();
+      if (profileVM.userProfile == null) {
+        await profileVM.fetchUserProfile();
+      }
+      if (profileVM.userProfile == null) {
+        final errorMessage = model.ChatMessage(
+          content: 'Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại!',
+          type: model.MessageType.system,
+          timestamp: DateTime.now(),
+        );
+        updateState(
+          state.copyWith(
+            messages: ViewState.loaded([errorMessage]),
+            isInitializingAI: false,
+            errorMessage: 'Không có user profile',
+          ),
+        );
+        return;
+      }
+      final userId = profileVM.userProfile!.id;
+      final chatHistory = await loadChatHistoryByUserAndSession(userId);
+      if (chatHistory.isNotEmpty) {
+        final messages = chatHistory.map((e) => model.ChatMessage(
+          content: e['messageContent'] ?? '',
+          type: e['senderType'] == 'sender' ? model.MessageType.user : model.MessageType.staff,
+          timestamp: DateTime.parse(e['timestamp']),
+        )).toList();
+        // Thêm tin nhắn chào quay lại
+        final welcomeBack = model.ChatMessage(
+          content: 'Rất vui được gặp lại bạn! Skincede luôn sẵn sàng hỗ trợ bạn. Bạn cần tư vấn gì thêm không ạ?',
+          type: model.MessageType.staff,
+          timestamp: DateTime.now(),
+        );
+        final updatedMessages = [...messages, welcomeBack];
+        // Luôn set mentionedProducts = null khi load lại lịch sử
+        updateState(state.copyWith(messages: ViewState.loaded(updatedMessages), isInitializingAI: false, mentionedProducts: null));
+        return;
+      }
+      // Nếu không có lịch sử, là session mới
+      _isNewSession = true;
       final products = await _fetchProducts();
-      // Tạo prompt giới thiệu
       final introPrompt = _buildIntroPrompt(products);
-      // Gửi prompt cho Gemini để AI chào khách
       final aiReply = await _callGeminiAPI(introPrompt);
-
+      final mentioned = _extractMentionedProducts(aiReply, products);
       final aiMessage = model.ChatMessage(
         content: aiReply,
         type: model.MessageType.staff,
         timestamp: DateTime.now(),
+        mentionedProducts: mentioned.isNotEmpty ? mentioned : null,
       );
-
       updateState(
         state.copyWith(
           messages: ViewState.loaded([aiMessage]),
           isInitializingAI: false,
         ),
       );
+      await _saveChatHistory(
+        messageContent: aiReply,
+        senderType: 'receiver',
+        timestamp: DateTime.now(),
+      );
     } catch (e) {
       handleError(e, source: 'ChatViewModel.initChatAI');
-
       final errorMessage = model.ChatMessage(
-        content: 'Lỗi khi lấy dữ liệu sản phẩm hoặc chào AI: ${e.toString()}',
+        content: 'Lỗi khi lấy dữ liệu sản phẩm hoặc chào AI:  ${e.toString()}',
         type: model.MessageType.system,
         timestamp: DateTime.now(),
       );
-
       updateState(
         state.copyWith(
           messages: ViewState.loaded([errorMessage]),
@@ -550,7 +600,8 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
         .map((p) => '${p['name']}: ${p['description'] ?? ''}')
         .join('\n');
     return '''
-Bạn là trợ lý ảo của Skincede - một website thương mại điện tử chuyên bán đồ skincare chính hãng. 
+Bạn là trợ lý ảo của Skincede. Dưới đây là toàn bộ lịch sử hội thoại giữa bạn và khách hàng. Hãy luôn ghi nhớ các thông tin đã trao đổi trước đó trong lịch sử chat để trả lời các câu hỏi tiếp theo một cách chính xác, nhất quán và không lặp lại thông tin đã trả lời. Tuyệt đối không bỏ qua context hội thoại cũ.
+
 Tên web/app là Skincede. Khi khách hỏi về sản phẩm, chỉ được trả lời dựa trên danh sách sản phẩm dưới đây, không được bịa ra sản phẩm khác, không trả lời về thương hiệu khác, không nói mình là AI của Google.
 
 Danh sách sản phẩm hiện có:
@@ -565,7 +616,7 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
   }
 
   Future<String> _callGeminiAPI(String prompt) async {
-    const apiKey = 'AIzaSyBDX1bPxSJl5U3riYSjS9JCs1pyfb3B4AE';
+    const apiKey = 'AIzaSyAqFraen_KRiz3waSAJ-9Hb9l1gh99x7F0';
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
     );
@@ -592,12 +643,33 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     }
   }
 
+  @override
   Future<void> sendMessageToAI() async {
     if (state.newMessage.trim().isEmpty) return;
-
+    await _initSessionId();
+    final profileVM = sl<EnhancedProfileViewModel>();
+    if (profileVM.userProfile == null) {
+      await profileVM.fetchUserProfile();
+    }
+    if (profileVM.userProfile == null) {
+      final errorMessage = model.ChatMessage(
+        content: 'Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại!',
+        type: model.MessageType.system,
+        timestamp: DateTime.now(),
+      );
+      final updatedMessages = [...messages, errorMessage];
+      updateState(
+        state.copyWith(
+          messages: ViewState.loaded(updatedMessages),
+          isSending: false,
+          errorMessage: 'Không có user profile',
+        ),
+      );
+      return;
+    }
+    final userId = profileVM.userProfile!.id;
     final text = state.newMessage.trim();
     updateState(state.copyWith(newMessage: '', isSending: true));
-
     try {
       // Thêm tin nhắn người dùng vào danh sách
       final userMessage = model.ChatMessage(
@@ -605,15 +677,18 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
         type: model.MessageType.user,
         timestamp: DateTime.now(),
       );
-
       final updatedMessages = [...messages, userMessage];
       updateState(state.copyWith(messages: ViewState.loaded(updatedMessages)));
-
-      // Lấy lại sản phẩm mới nhất mỗi lần gửi
+      await _saveChatHistory(
+        messageContent: text,
+        senderType: 'sender',
+        timestamp: userMessage.timestamp,
+      );
+      // Lấy lại context hội thoại (lịch sử chat session hiện tại)
+      final chatHistory = await loadChatHistoryByUserAndSession(userId);
       final products = await _fetchProducts();
       final introPrompt = _buildIntroPrompt(products);
-
-      // Tạo danh sách messages gửi lên Gemini: prompt hệ thống + hội thoại
+      // Tạo context hội thoại từ lịch sử
       final List<Map<String, dynamic>> geminiMessages = [
         {
           "role": "user",
@@ -622,17 +697,14 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
           ],
         },
       ];
-
-      // Thêm tin nhắn trước đó vào danh sách
-      for (final msg in messages) {
+      for (final msg in chatHistory) {
         geminiMessages.add({
-          "role": msg.type == model.MessageType.user ? "user" : "model",
+          "role": msg['senderType'] == 'sender' ? "user" : "model",
           "parts": [
-            {"text": msg.content},
+            {"text": msg['messageContent'] ?? ''},
           ],
         });
       }
-
       // Thêm tin nhắn mới
       geminiMessages.add({
         "role": "user",
@@ -640,39 +712,35 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
           {"text": text},
         ],
       });
-
       final aiReply = await _callGeminiAPIWithMessages(geminiMessages);
-
-      // Tìm các sản phẩm được nhắc đến trong câu trả lời
       final mentioned = _extractMentionedProducts(aiReply, products);
-
-      // Thêm tin nhắn AI vào danh sách
       final aiMessage = model.ChatMessage(
         content: aiReply,
         type: model.MessageType.staff,
         timestamp: DateTime.now(),
+        mentionedProducts: mentioned.isNotEmpty ? mentioned : null,
       );
-
       updatedMessages.add(aiMessage);
-
       updateState(
         state.copyWith(
           messages: ViewState.loaded(updatedMessages),
           isSending: false,
-          mentionedProducts: mentioned,
+          mentionedProducts: mentioned.isNotEmpty ? mentioned : null,
         ),
+      );
+      await _saveChatHistory(
+        messageContent: aiReply,
+        senderType: 'receiver',
+        timestamp: aiMessage.timestamp,
       );
     } catch (e) {
       handleError(e, source: 'ChatViewModel.sendMessageToAI');
-
       final errorMessage = model.ChatMessage(
         content: 'Lỗi khi gọi AI: ${e.toString()}',
         type: model.MessageType.system,
         timestamp: DateTime.now(),
       );
-
       final updatedMessages = [...messages, errorMessage];
-
       updateState(
         state.copyWith(
           messages: ViewState.loaded(updatedMessages),
@@ -686,7 +754,7 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
   Future<String> _callGeminiAPIWithMessages(
     List<Map<String, dynamic>> messages,
   ) async {
-    const apiKey = 'AIzaSyBDX1bPxSJl5U3riYSjS9JCs1pyfb3B4AE';
+    const apiKey = 'AIzaSyAqFraen_KRiz3waSAJ-9Hb9l1gh99x7F0';
     final url = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
     );
@@ -719,10 +787,96 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     return mentioned;
   }
 
+  Future<void> _saveChatHistory({
+    required String messageContent,
+    required String senderType, // 'sender' hoặc 'receiver'
+    required DateTime timestamp,
+  }) async {
+    try {
+      // Lấy userId từ EnhancedProfileViewModel
+      final profileVM = sl<EnhancedProfileViewModel>();
+      final userId = profileVM.userProfile?.id;
+      if (userId == null) {
+        print('[ChatHistory] userId is null, không lưu lịch sử chat!');
+        return;
+      }
+      if (_sessionId == null) {
+        print('[ChatHistory] sessionId is null, không lưu lịch sử chat!');
+        return;
+      }
+      print('[ChatHistory] Gửi lưu lịch sử: userId=$userId, sessionId=$_sessionId, senderType=$senderType, content=$messageContent');
+      final url = Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/chat-history');
+      final body = {
+        'userId': userId,
+        'messageContent': messageContent,
+        'senderType': senderType,
+        'timestamp': timestamp.toIso8601String(),
+        'sessionId': _sessionId,
+      };
+      final token = await JwtService.getStoredToken();
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+      print('[ChatHistory] API response: ${response.statusCode} - ${response.body}');
+    } catch (e) {
+      print('[ChatHistory] Lỗi khi lưu lịch sử chat: $e');
+    }
+  }
+
+  Future<void> _initSessionId() async {
+    final prefs = await SharedPreferences.getInstance();
+    _sessionId = prefs.getString('chat_session_id');
+    if (_sessionId == null) {
+      _sessionId = const Uuid().v4();
+      await prefs.setString('chat_session_id', _sessionId!);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> loadChatHistoryByUserAndSession(String userId) async {
+    if (_sessionId == null) return [];
+    final url = Uri.parse('https://spssapi-hxfzbchrcafgd2hg.southeastasia-01.azurewebsites.net/api/chat-history/user/$userId/session/$_sessionId');
+    final token = await JwtService.getStoredToken();
+    final res = await http.get(url, headers: {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      final items = data['data'] as List<dynamic>;
+      return items.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
   /// Giải phóng tài nguyên
   @override
   void dispose() {
     _chatService.disconnect();
     super.dispose();
+  }
+
+  Future<void> createNewSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    _sessionId = const Uuid().v4();
+    await prefs.setString('chat_session_id', _sessionId!);
+    _isNewSession = true;
+    updateState(state.copyWith(messages: ViewState.loading()));
+  }
+
+  void resetChatState() {
+    _sessionId = null;
+    _isNewSession = false;
+    updateState(state.copyWith(
+      messages: ViewState.loaded([]),
+      mentionedProducts: null,
+      isInitializingAI: false,
+      isSending: false,
+      errorMessage: null,
+    ));
   }
 }

@@ -126,7 +126,7 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => EnhancedProfileViewModel(userRepository: sl<UserRepository>()),
   );
 

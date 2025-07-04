@@ -9,6 +9,7 @@ import '../../widgets/title_text.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/service_locator.dart';
 import '../../widgets/auth/google_btn.dart';
+import '../../providers/enhanced_profile_view_model.dart';
 
 class EnhancedLoginScreen extends StatefulWidget {
   static const routeName = '/EnhancedLoginScreen';
@@ -357,6 +358,9 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
       // Handle login result
       if (result.success && result.data != null) {
         // Login successful
+        // Gọi lại checkAuthentication và fetchUserProfile cho profile
+        await sl<EnhancedProfileViewModel>().checkAuthentication();
+        await sl<EnhancedProfileViewModel>().fetchUserProfile();
         if (fromScreen == 'checkout') {
           Navigator.of(context).pushReplacementNamed('/enhanced-checkout');
         } else {
