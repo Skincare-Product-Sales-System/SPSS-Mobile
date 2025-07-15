@@ -220,13 +220,16 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
   }
 
   /// Thêm tin nhắn hệ thống
-  void _addSystemMessage(String content) {
+  void _addSystemMessage(String content, {bool isAI = false}) {
+    // Nếu là lỗi quá tải Gemini nhưng không phải chat AI thì không hiển thị
+    if (!isAI && (content.contains('Skincede tạm thời quá tải') || content.contains('Skincede hiện đang gặp sự cố kết nối với AI'))) {
+      return;
+    }
     final systemMessage = model.ChatMessage(
       content: content,
       type: model.MessageType.system,
       timestamp: DateTime.now(),
     );
-
     final updatedMessages = [...messages, systemMessage];
     updateState(state.copyWith(messages: ViewState.loaded(updatedMessages)));
   }
@@ -567,14 +570,10 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
     } catch (e) {
       handleError(e, source: 'ChatViewModel.initChatAI');
       String friendlyMsg = _getFriendlyGeminiError(e);
-      final errorMessage = model.ChatMessage(
-        content: friendlyMsg,
-        type: model.MessageType.system,
-        timestamp: DateTime.now(),
-      );
+      _addSystemMessage(friendlyMsg, isAI: true);
       updateState(
         state.copyWith(
-          messages: ViewState.loaded([errorMessage]),
+          messages: ViewState.loaded([...messages]),
           isInitializingAI: false,
           errorMessage: friendlyMsg,
         ),
@@ -737,15 +736,10 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
     } catch (e) {
       handleError(e, source: 'ChatViewModel.sendMessageToAI');
       String friendlyMsg = _getFriendlyGeminiError(e);
-      final errorMessage = model.ChatMessage(
-        content: friendlyMsg,
-        type: model.MessageType.system,
-        timestamp: DateTime.now(),
-      );
-      final updatedMessages = [...messages, errorMessage];
+      _addSystemMessage(friendlyMsg, isAI: true);
       updateState(
         state.copyWith(
-          messages: ViewState.loaded(updatedMessages),
+          messages: ViewState.loaded([...messages]),
           isSending: false,
           errorMessage: friendlyMsg,
         ),

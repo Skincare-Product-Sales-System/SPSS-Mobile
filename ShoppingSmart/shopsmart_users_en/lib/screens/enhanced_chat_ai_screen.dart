@@ -16,6 +16,9 @@ class EnhancedChatAIScreen extends StatefulWidget {
 }
 
 class _EnhancedChatAIScreenState extends State<EnhancedChatAIScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -105,18 +108,30 @@ class _EnhancedChatAIScreenState extends State<EnhancedChatAIScreen> {
                       children: [
                         Expanded(
                           child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
                             decoration: const InputDecoration(
                               hintText: 'Nhập tin nhắn cho AI...',
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
                             onChanged: viewModel.setNewMessage,
-                            onSubmitted: (_) => viewModel.sendMessageToAI(),
+                            onSubmitted: (_) async {
+                              await viewModel.sendMessageToAI();
+                              _controller.clear();
+                              viewModel.setNewMessage('');
+                              _focusNode.unfocus();
+                            },
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.send_rounded, color: Color(0xFF8F5CFF), size: 28),
-                          onPressed: viewModel.isSending ? null : viewModel.sendMessageToAI,
+                          onPressed: viewModel.isSending ? null : () async {
+                            await viewModel.sendMessageToAI();
+                            _controller.clear();
+                            viewModel.setNewMessage('');
+                            _focusNode.unfocus();
+                          },
                         ),
                       ],
                     ),
