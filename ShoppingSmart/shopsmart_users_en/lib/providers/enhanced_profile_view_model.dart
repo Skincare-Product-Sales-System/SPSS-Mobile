@@ -11,6 +11,7 @@ import 'package:shopsmart_users_en/services/service_locator.dart';
 import 'base_view_model.dart';
 import 'enhanced_cart_view_model.dart';
 import 'profile_state.dart';
+import 'enhanced_chat_view_model.dart';
 
 /// ViewModel cải tiến cho Profile, kế thừa từ BaseViewModel
 class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
@@ -56,8 +57,9 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
 
     try {
       final isAuth = await JwtService.isAuthenticated();
+      final token = await JwtService.getStoredToken();
+      print('[Profile] Token: $token, isAuth: $isAuth');
       if (isAuth) {
-        final token = await JwtService.getStoredToken();
         if (token != null) {
           final tokenData = JwtService.getUserFromToken(token);
           if (tokenData != null) {
@@ -105,6 +107,7 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
           errorMessage: 'Bạn cần đăng nhập để xem thông tin profile',
         ),
       );
+      print('[Profile] Không đăng nhập, không fetch user profile!');
       return;
     }
 
@@ -117,7 +120,9 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
 
     try {
       final response = await _userRepository.getUserProfile();
+      print('[Profile] API response: success=${response.success}, message=${response.message}, data=${response.data}');
       if (response.success && response.data != null) {
+        print('[Profile] UserProfileModel: id=${response.data?.id}, userName=${response.data?.userName}, email=${response.data?.emailAddress}');
         updateState(
           state.copyWith(
             userProfile: ViewState<UserProfileModel>.loaded(response.data!),
@@ -133,6 +138,7 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
             errorMessage: response.message,
           ),
         );
+        print('[Profile] Không thể tải user profile: ${response.message}');
         handleError(
           response.message ?? 'Không thể tải thông tin profile',
           source: 'fetchUserProfile',
@@ -146,7 +152,7 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
       } else {
         errorMessage = 'Lỗi khi tải thông tin profile: ${e.toString()}';
       }
-
+      print('[Profile] Exception khi fetch user profile: $errorMessage');
       updateState(
         state.copyWith(
           userProfile: ViewState<UserProfileModel>.error(errorMessage),
@@ -306,6 +312,10 @@ class EnhancedProfileViewModel extends BaseViewModel<ProfileState> {
     // Clear cart data only locally - get the CartViewModel instance
     final cartViewModel = sl<EnhancedCartViewModel>();
     await cartViewModel.clearLocalCart();
+
+    // Reset chat state để tránh dính context/thẻ sản phẩm user cũ
+    final chatVM = sl<EnhancedChatViewModel>();
+    chatVM.resetChatState();
   }
 
   /// Fetch user addresses

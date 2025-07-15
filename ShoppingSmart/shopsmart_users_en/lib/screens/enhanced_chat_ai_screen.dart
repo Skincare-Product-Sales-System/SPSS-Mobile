@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/enhanced_chat_view_model.dart';
 import '../screens/inner_screen/enhanced_product_detail.dart';
 import '../models/chat_message.dart';
+import '../widgets/app_name_text.dart';
+import '../services/assets_manager.dart';
 
 class EnhancedChatAIScreen extends StatefulWidget {
   static const routeName = '/enhanced-chat-ai';
@@ -28,10 +30,53 @@ class _EnhancedChatAIScreenState extends State<EnhancedChatAIScreen> {
     return Consumer<EnhancedChatViewModel>(
       builder: (context, viewModel, _) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Chat với AI Gemini'),
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF6F3FF),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(70),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 8),
+                      child: Image.asset(
+                        AssetsManager.shoppingCart,
+                        width: 32,
+                        height: 32,
+                      ),
+                    ),
+                    const Expanded(
+                      child: AppNameTextWidget(
+                        fontSize: 22,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      tooltip: 'Tạo phiên chat mới',
+                      onPressed: () async {
+                        await viewModel.createNewSession();
+                        await viewModel.initChatAI();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
           body: Column(
             children: [
@@ -43,29 +88,38 @@ class _EnhancedChatAIScreenState extends State<EnhancedChatAIScreen> {
                 ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            hintText: 'Nhập tin nhắn cho AI...',
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                          onChanged: viewModel.setNewMessage,
-                          onSubmitted: (_) => viewModel.sendMessageToAI(),
+                  padding: const EdgeInsets.all(12.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.send, color: Colors.deepPurple),
-                        onPressed:
-                            viewModel.isSending
-                                ? null
-                                : viewModel.sendMessageToAI,
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'Nhập tin nhắn cho AI...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            ),
+                            onChanged: viewModel.setNewMessage,
+                            onSubmitted: (_) => viewModel.sendMessageToAI(),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.send_rounded, color: Color(0xFF8F5CFF), size: 28),
+                          onPressed: viewModel.isSending ? null : viewModel.sendMessageToAI,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -89,50 +143,67 @@ class _EnhancedChatAIScreenState extends State<EnhancedChatAIScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       itemCount: viewModel.messages.length,
       itemBuilder: (context, idx) {
         final msg = viewModel.messages[idx];
         final isLastMessage = idx == viewModel.messages.length - 1;
-
+        final isUser = msg.type == MessageType.user;
         return Column(
           crossAxisAlignment:
-              msg.type == MessageType.user
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Align(
               alignment:
-                  msg.type == MessageType.user
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  isUser ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 4),
+                margin: const EdgeInsets.symmetric(vertical: 6),
                 padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 14,
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.8,
                 ),
                 decoration: BoxDecoration(
-                  color:
-                      msg.type == MessageType.user
-                          ? Colors.deepPurple.withOpacity(0.1)
-                          : Colors.deepPurple.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  color: isUser
+                      ? Colors.white
+                      : const Color(0xFFE6DEFF),
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(18),
+                    topRight: const Radius.circular(18),
+                    bottomLeft: Radius.circular(isUser ? 18 : 6),
+                    bottomRight: Radius.circular(isUser ? 6 : 18),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.07),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: Text(msg.content),
+                child: Text(
+                  msg.content,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isUser ? Colors.deepPurple : Colors.black87,
+                    fontWeight: isUser ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
               ),
             ),
             if (isLastMessage &&
-                msg.type != MessageType.user &&
-                viewModel.mentionedProducts != null &&
-                viewModel.mentionedProducts!.isNotEmpty)
+                !isUser &&
+                msg.mentionedProducts != null &&
+                msg.mentionedProducts!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 6, bottom: 8),
+                padding: const EdgeInsets.only(top: 8, bottom: 10),
                 child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: 14,
+                  runSpacing: 14,
                   children:
-                      viewModel.mentionedProducts!
+                      msg.mentionedProducts!
                           .map((prod) => _ProductCard(product: prod))
                           .toList(),
                 ),

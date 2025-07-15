@@ -6,11 +6,13 @@ class ChatMessage {
   final String content;
   final MessageType type;
   final DateTime timestamp;
+  final List<Map<String, dynamic>>? mentionedProducts;
 
   ChatMessage({
     required this.content,
     required this.type,
     required this.timestamp,
+    this.mentionedProducts,
   });
 
   /// Chuyển đổi tin nhắn thành JSON để lưu trữ

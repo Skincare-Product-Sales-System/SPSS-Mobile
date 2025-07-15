@@ -8,7 +8,7 @@ import '../../widgets/subtitle_text.dart';
 import '../../widgets/title_text.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/service_locator.dart';
-import '../../widgets/auth/google_btn.dart';
+import '../../providers/enhanced_profile_view_model.dart';
 
 class EnhancedLoginScreen extends StatefulWidget {
   static const routeName = '/EnhancedLoginScreen';
@@ -261,29 +261,29 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
                     const SizedBox(height: 16),
 
                     // Or continue with
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(thickness: 1)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            "Hoặc tiếp tục với",
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider(thickness: 1)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    // Row(
+                    //   children: [
+                    //     const Expanded(child: Divider(thickness: 1)),
+                    //     Padding(
+                    //       padding: const EdgeInsets.symmetric(horizontal: 16),
+                    //       child: Text(
+                    //         "Hoặc tiếp tục với",
+                    //         style: TextStyle(
+                    //           color: Theme.of(
+                    //             context,
+                    //           ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    //           fontSize: 14,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     const Expanded(child: Divider(thickness: 1)),
+                    //   ],
+                    // ),
+                    // const SizedBox(height: 16),
 
                     // Google Button
-                    const GoogleButton(),
-                    const SizedBox(height: 24),
+                    // const GoogleButton(), // Đã xóa nút đăng nhập với Google
+                    // const SizedBox(height: 24),
 
                     // Register
                     Row(
@@ -357,6 +357,9 @@ class _EnhancedLoginScreenState extends State<EnhancedLoginScreen> {
       // Handle login result
       if (result.success && result.data != null) {
         // Login successful
+        // Gọi lại checkAuthentication và fetchUserProfile cho profile
+        await sl<EnhancedProfileViewModel>().checkAuthentication();
+        await sl<EnhancedProfileViewModel>().fetchUserProfile();
         if (fromScreen == 'checkout') {
           Navigator.of(context).pushReplacementNamed('/enhanced-checkout');
         } else {

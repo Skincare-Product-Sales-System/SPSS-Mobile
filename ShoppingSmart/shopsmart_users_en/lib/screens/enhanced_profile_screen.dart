@@ -99,48 +99,9 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
           body:
               viewModel.isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : viewModel.errorMessage != null
-                  ? _buildErrorWidget(context, viewModel)
                   : _buildContent(context, viewModel),
         );
       },
-    );
-  }
-
-  Widget _buildErrorWidget(
-    BuildContext context,
-    EnhancedProfileViewModel viewModel,
-  ) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: Theme.of(context).colorScheme.error,
-            size: 60,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Không thể tải thông tin',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              viewModel.errorMessage ?? 'Đã xảy ra lỗi không xác định',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadProfileData,
-            child: const Text('Thử lại'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -227,8 +188,15 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen>
               visible: !viewModel.isLoggedIn,
               child: const Padding(
                 padding: EdgeInsets.all(18.0),
-                child: TitlesTextWidget(
-                  label: "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
+                child: Text(
+                  "Vui lòng đăng nhập để có quyền truy cập đầy đủ",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.visible,
                 ),
               ),
             ),
