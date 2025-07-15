@@ -50,8 +50,10 @@ class ErrorHandlingService {
         break;
 
       case ErrorSeverity.medium:
-        // Hiển thị snackbar nếu có context
-        if (_navigationService.navigatorKey.currentContext != null) {
+        // Nếu là lỗi Gemini API 503 hoặc Gemini API trả về lỗi, chỉ log, không hiển thị gì cho người dùng
+        if (errorMessage.contains('Gemini API trả về lỗi') || (errorMessage.contains('503') && errorMessage.contains('overloaded'))) {
+          // Do nothing (just log)
+        } else if (_navigationService.navigatorKey.currentContext != null) {
           ScaffoldMessenger.of(
             _navigationService.navigatorKey.currentContext!,
           ).showSnackBar(

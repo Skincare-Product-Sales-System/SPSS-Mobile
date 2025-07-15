@@ -21,7 +21,7 @@ class EnhancedChatScreen extends StatelessWidget {
       isLoading:
           (viewModel) => viewModel.isLoading && viewModel.messages.isEmpty,
       getErrorMessage:
-          (viewModel) => viewModel.hasError ? viewModel.errorMessage : null,
+          (viewModel) => null,
       buildAppBar: (context, viewModel) => _buildAppBar(context, viewModel),
       buildContent: (context, viewModel) => _buildContent(context, viewModel),
     );

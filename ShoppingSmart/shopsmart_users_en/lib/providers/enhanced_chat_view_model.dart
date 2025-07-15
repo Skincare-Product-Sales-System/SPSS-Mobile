@@ -566,8 +566,9 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
       );
     } catch (e) {
       handleError(e, source: 'ChatViewModel.initChatAI');
+      String friendlyMsg = _getFriendlyGeminiError(e);
       final errorMessage = model.ChatMessage(
-        content: 'Lỗi khi lấy dữ liệu sản phẩm hoặc chào AI:  ${e.toString()}',
+        content: friendlyMsg,
         type: model.MessageType.system,
         timestamp: DateTime.now(),
       );
@@ -575,7 +576,7 @@ class EnhancedChatViewModel extends BaseViewModel<ChatState> {
         state.copyWith(
           messages: ViewState.loaded([errorMessage]),
           isInitializingAI: false,
-          errorMessage: e.toString(),
+          errorMessage: friendlyMsg,
         ),
       );
     }
@@ -735,8 +736,9 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
       );
     } catch (e) {
       handleError(e, source: 'ChatViewModel.sendMessageToAI');
+      String friendlyMsg = _getFriendlyGeminiError(e);
       final errorMessage = model.ChatMessage(
-        content: 'Lỗi khi gọi AI: ${e.toString()}',
+        content: friendlyMsg,
         type: model.MessageType.system,
         timestamp: DateTime.now(),
       );
@@ -745,7 +747,7 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
         state.copyWith(
           messages: ViewState.loaded(updatedMessages),
           isSending: false,
-          errorMessage: e.toString(),
+          errorMessage: friendlyMsg,
         ),
       );
     }
@@ -878,5 +880,16 @@ Luôn xưng là Skincede, trả lời thân thiện, ngắn gọn, đúng trọn
       isSending: false,
       errorMessage: null,
     ));
+  }
+
+  String _getFriendlyGeminiError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('503') && msg.contains('overloaded')) {
+      return 'Skincede tạm thời quá tải, bạn vui lòng thử lại sau ít phút nhé!';
+    }
+    if (msg.contains('Gemini API trả về lỗi')) {
+      return 'Skincede hiện đang gặp sự cố kết nối với AI. Bạn vui lòng thử lại sau nhé!';
+    }
+    return 'Đã xảy ra lỗi không xác định. Bạn vui lòng thử lại sau!';
   }
 }
