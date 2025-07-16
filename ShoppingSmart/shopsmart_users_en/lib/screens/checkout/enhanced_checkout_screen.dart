@@ -555,6 +555,8 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
               'Tổng tiền hàng',
               '${CurrencyFormatter.format(totalAmount)} đ',
             ),
+            // Phí vận chuyển
+            _buildSummaryRow('Phí vận chuyển', '0 đ', valueColor: Colors.green),
             if (discount > 0)
               _buildSummaryRow(
                 'Giảm giá',
