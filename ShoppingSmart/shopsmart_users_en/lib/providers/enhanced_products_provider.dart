@@ -59,10 +59,8 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.loaded(loadedProducts),
             currentPage: refresh ? 2 : _state.currentPage + 1,
-            totalPages: paginatedData.totalPages,
-            totalCount: paginatedData.totalCount,
             hasMoreData: loadedProducts.length < paginatedData.totalCount,
-            sortOption: sortBy ?? _state.sortOption,
+            sortOption: sortBy,
           ),
         );
       } else {
@@ -70,7 +68,6 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.error(
               response.message ?? 'Failed to load products',
-              response.errors,
             ),
           ),
         );
@@ -124,8 +121,6 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.loaded(loadedProducts),
             currentPage: refresh ? 2 : _state.currentPage + 1,
-            totalPages: paginatedData.totalPages,
-            totalCount: paginatedData.totalCount,
             hasMoreData: loadedProducts.length < paginatedData.totalCount,
           ),
         );
@@ -134,7 +129,6 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.error(
               response.message ?? 'Failed to load products for category',
-              response.errors,
             ),
           ),
         );
@@ -183,8 +177,6 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.loaded(loadedProducts),
             currentPage: refresh ? 2 : _state.currentPage + 1,
-            totalPages: paginatedData.totalPages,
-            totalCount: paginatedData.totalCount,
             hasMoreData: loadedProducts.length < paginatedData.totalCount,
           ),
         );
@@ -193,7 +185,6 @@ class EnhancedProductsProvider with ChangeNotifier {
           _state.copyWith(
             products: ViewState.error(
               response.message ?? 'Failed to load best sellers',
-              response.errors,
             ),
           ),
         );

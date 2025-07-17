@@ -8,6 +8,7 @@ import '../services/error_handling_service.dart';
 import '../services/service_locator.dart';
 import 'base_view_model.dart';
 import 'products_state.dart';
+import '../models/product_image_model.dart';
 
 /// ViewModel cải tiến cho Products, kế thừa từ BaseViewModel
 class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
@@ -42,6 +43,10 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
   int? get selectedRatingFilter => state.selectedRatingFilter;
   String? get selectedBrandId => state.selectedBrandId;
   String? get selectedSkinTypeId => state.selectedSkinTypeId;
+  List<ProductImage> get productImages => state.productImages.data ?? [];
+  bool get isProductImagesLoading => state.productImages.isLoading;
+  String? get productImagesErrorMessage => state.productImages.message;
+  bool get hasProductImagesError => state.productImages.hasError;
 
   /// Get product by ID for QuizProductCard
   Future<Map<String, dynamic>?> getProductById(String productId) async {
@@ -441,7 +446,7 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
 
       if (response.success && response.data != null) {
         updateState(
-          state.copyWith(detailedProduct: ViewState.loaded(response.data)),
+          state.copyWith(detailedProduct: ViewState.loaded(response.data!)),
         );
       } else {
         // Check if this could be an authentication error
@@ -464,9 +469,7 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
         }
 
         updateState(
-          state.copyWith(
-            detailedProduct: ViewState.error(errorMessage, response.errors),
-          ),
+          state.copyWith(detailedProduct: ViewState.error(errorMessage)),
         );
 
         handleError(
@@ -584,6 +587,42 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
     }
   }
 
+  /// Fetch product images by product ID
+  Future<void> getProductImages(String productId) async {
+    updateState(state.copyWith(productImages: ViewState.loading()));
+
+    try {
+      final response = await _productRepository.getProductImages(productId);
+
+      if (response.success && response.data != null) {
+        updateState(
+          state.copyWith(productImages: ViewState.loaded(response.data!)),
+        );
+      } else {
+        updateState(
+          state.copyWith(
+            productImages: ViewState.error(
+              response.message ?? 'Failed to load product images',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      updateState(
+        state.copyWith(
+          productImages: ViewState.error(
+            'Error loading product images: ${e.toString()}',
+          ),
+        ),
+      );
+      handleError(
+        e,
+        source: 'getProductImages',
+        severity: ErrorSeverity.medium,
+      );
+    }
+  }
+
   /// Reset trạng thái tìm kiếm về mặc định
   void resetSearch() {
     // Đảm bảo xóa triệt để searchQuery và kết quả tìm kiếm
@@ -601,21 +640,7 @@ class EnhancedProductsViewModel extends BaseViewModel<ProductsState> {
     if (state.searchQuery != null) {
       // Force another update to ensure searchQuery is null
       updateState(
-        ProductsState(
-          // Preserve other state properties
-          products: state.products,
-          detailedProduct: state.detailedProduct,
-          productReviews: state.productReviews,
-          selectedCategoryId: state.selectedCategoryId,
-          selectedBrandId: state.selectedBrandId,
-          selectedSkinTypeId: state.selectedSkinTypeId,
-          sortOption: state.sortOption,
-          currentPage: state.currentPage,
-          pageSize: state.pageSize,
-          totalPages: state.totalPages,
-          totalCount: state.totalCount,
-          hasMoreData: state.hasMoreData,
-          selectedRatingFilter: state.selectedRatingFilter,
+        state.copyWith(
           // Explicitly set search properties to initial values
           searchQuery: null,
           searchResults: ViewState.loaded([]),

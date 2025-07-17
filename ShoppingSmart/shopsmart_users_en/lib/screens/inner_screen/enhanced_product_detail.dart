@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../models/detailed_product_model.dart';
 import '../../models/review_models.dart';
+import '../../models/product_image_model.dart';
 import '../../providers/enhanced_products_view_model.dart';
 import '../../widgets/products/heart_btn.dart';
 import '../auth/enhanced_login.dart';
@@ -81,6 +82,9 @@ class _EnhancedProductDetailsScreenState
     await viewModel.getProductDetails(productId);
     await viewModel.getProductReviews(productId);
 
+    // Also fetch product images
+    await viewModel.getProductImages(productId);
+
     // Set first product item as default if available
     final product = viewModel.detailedProduct;
     if (product != null && product.productItems.isNotEmpty) {
@@ -125,6 +129,18 @@ class _EnhancedProductDetailsScreenState
   List<String> _getProductImages(DetailedProductModel? product) {
     if (product == null) return [];
 
+    // Use the product images from API if available
+    final viewModel = Provider.of<EnhancedProductsViewModel>(
+      context,
+      listen: false,
+    );
+    final apiImages = viewModel.productImages;
+
+    if (apiImages.isNotEmpty) {
+      return apiImages.map((img) => img.url).toList();
+    }
+
+    // Fallback to product thumbnail and product items images
     List<String> images = [product.thumbnail];
 
     // Add images from product items
@@ -334,51 +350,73 @@ class _EnhancedProductDetailsScreenState
           flexibleSpace: FlexibleSpaceBar(
             background: Stack(
               children: [
-                CarouselSlider(
-                  items:
-                      productImages.map((imageUrl) {
-                        return FancyShimmerImage(
-                          imageUrl: imageUrl,
-                          boxFit: BoxFit.contain,
-                          errorWidget: Image.asset('assets/images/error.png'),
-                        );
-                      }).toList(),
-                  options: CarouselOptions(
-                    height: 300,
-                    viewportFraction: 1.0,
-                    autoPlay: false,
-                    onPageChanged: (index, reason) {
-                      // Simply update the ValueNotifier value - no setState required
-                      _currentImageIndex.value = index;
-                    },
-                  ),
+                Consumer<EnhancedProductsViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.isProductImagesLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final productImages = _getProductImages(product);
+
+                    if (productImages.isEmpty) {
+                      return const Center(child: Text('No images available'));
+                    }
+
+                    return CarouselSlider(
+                      items:
+                          productImages.map((imageUrl) {
+                            return FancyShimmerImage(
+                              imageUrl: imageUrl,
+                              boxFit: BoxFit.contain,
+                              errorWidget: Image.asset(
+                                'assets/images/error.png',
+                              ),
+                            );
+                          }).toList(),
+                      options: CarouselOptions(
+                        height: 300,
+                        viewportFraction: 1.0,
+                        autoPlay: false,
+                        onPageChanged: (index, reason) {
+                          // Simply update the ValueNotifier value - no setState required
+                          _currentImageIndex.value = index;
+                        },
+                      ),
+                    );
+                  },
                 ),
                 Positioned(
                   bottom: 10,
                   left: 0,
                   right: 0,
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: _currentImageIndex,
-                    builder: (context, currentIndex, _) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children:
-                            productImages.asMap().entries.map((entry) {
-                              return Container(
-                                width: 8,
-                                height: 8,
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      currentIndex == entry.key
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.grey.withOpacity(0.5),
-                                ),
-                              );
-                            }).toList(),
+                  child: Consumer<EnhancedProductsViewModel>(
+                    builder: (context, viewModel, _) {
+                      final productImages = _getProductImages(product);
+
+                      return ValueListenableBuilder<int>(
+                        valueListenable: _currentImageIndex,
+                        builder: (context, currentIndex, _) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children:
+                                productImages.asMap().entries.map((entry) {
+                                  return Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          currentIndex == entry.key
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey.withOpacity(0.5),
+                                    ),
+                                  );
+                                }).toList(),
+                          );
+                        },
                       );
                     },
                   ),
