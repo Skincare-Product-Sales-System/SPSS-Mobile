@@ -17,6 +17,7 @@ import '../models/payment_method_model.dart';
 import '../models/transaction_model.dart';
 import '../models/cart_model.dart';
 import 'package:flutter/foundation.dart';
+import '../models/product_image_model.dart';
 
 class ApiService {
   // Use different base URLs for different platforms
@@ -2705,6 +2706,70 @@ class ApiService {
       return ApiResponse<VoucherModel>(
         success: false,
         message: 'An unexpected error occurred: ${e.toString()}',
+        errors: [e.toString()],
+      );
+    }
+  }
+
+  // Get product images by product ID
+  static Future<ApiResponse<List<ProductImage>>> getProductImages(
+    String productId,
+  ) async {
+    try {
+      // Try to get token but proceed even if it's null
+      final token = await JwtService.getStoredToken();
+      final headers = {'Content-Type': 'application/json'};
+
+      // Only add Authorization header if token exists
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/product-images/$productId'),
+            headers: headers,
+          )
+          .timeout(timeout);
+
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        final List<dynamic> imagesJson = responseData['data'] ?? [];
+        final List<ProductImage> images =
+            imagesJson
+                .map((imageJson) => ProductImage.fromJson(imageJson))
+                .toList();
+
+        return ApiResponse<List<ProductImage>>(
+          success: true,
+          data: images,
+          message: responseData['message'],
+        );
+      } else {
+        return ApiResponse<List<ProductImage>>(
+          success: false,
+          data: null,
+          message: responseData['message'] ?? 'Failed to get product images',
+          errors: responseData['errors'],
+        );
+      }
+    } on SocketException {
+      return ApiResponse<List<ProductImage>>(
+        success: false,
+        message: 'Connection failed. Please check your internet connection.',
+        errors: ['Cannot connect to server at $baseUrl'],
+      );
+    } on TimeoutException {
+      return ApiResponse<List<ProductImage>>(
+        success: false,
+        message: 'Request timed out after ${timeout.inSeconds} seconds',
+        errors: ['Request timed out'],
+      );
+    } catch (e) {
+      return ApiResponse<List<ProductImage>>(
+        success: false,
+        message: 'Error fetching product images: ${e.toString()}',
         errors: [e.toString()],
       );
     }

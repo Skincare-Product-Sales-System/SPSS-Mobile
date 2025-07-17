@@ -5,6 +5,7 @@ import 'package:shopsmart_users_en/models/detailed_product_model.dart';
 import 'package:shopsmart_users_en/models/api_response_model.dart';
 import 'package:shopsmart_users_en/models/review_models.dart';
 import 'package:shopsmart_users_en/services/api_service.dart';
+import 'package:shopsmart_users_en/models/product_image_model.dart';
 
 class ProductRepository {
   // Get all products with pagination
@@ -136,5 +137,12 @@ class ProductRepository {
       ratingValue: rating,
       comment: comment,
     );
+  }
+
+  // Get product images by product ID
+  Future<ApiResponse<List<ProductImage>>> getProductImages(
+    String productId,
+  ) async {
+    return ApiService.getProductImages(productId);
   }
 }
