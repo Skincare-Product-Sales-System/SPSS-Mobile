@@ -247,11 +247,7 @@ class _EnhancedProductDetailsScreenState
                 },
                 child: const Padding(
                   padding: EdgeInsets.all(6.0),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child: Icon(Icons.arrow_back, color: Colors.white, size: 28),
                 ),
               ),
             ),
@@ -275,11 +271,7 @@ class _EnhancedProductDetailsScreenState
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(6.0),
-                    child: Icon(
-                      Icons.home,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                    child: Icon(Icons.home, color: Colors.white, size: 28),
                   ),
                 ),
               ),
@@ -297,9 +289,9 @@ class _EnhancedProductDetailsScreenState
                     child: InkWell(
                       borderRadius: BorderRadius.circular(100),
                       onTap: () {
-                        Navigator.of(context).pushNamed(
-                          EnhancedCartScreen.routeName,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamed(EnhancedCartScreen.routeName);
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(6.0),
@@ -486,24 +478,34 @@ class _EnhancedProductDetailsScreenState
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? const LinearGradient(
-                                        colors: [Color(0xFF8F5CFF), Color(0xFFBCA7FF)],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
-                                    : null,
+                                gradient:
+                                    isSelected
+                                        ? const LinearGradient(
+                                          colors: [
+                                            Color(0xFF8F5CFF),
+                                            Color(0xFFBCA7FF),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                        : null,
                                 color: isSelected ? null : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: isSelected ? Colors.transparent : const Color(0xFF8F5CFF),
+                                  color:
+                                      isSelected
+                                          ? Colors.transparent
+                                          : const Color(0xFF8F5CFF),
                                   width: 1.2,
                                 ),
                               ),
                               child: Text(
                                 displayName,
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : const Color(0xFF8F5CFF),
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF8F5CFF),
                                   fontWeight:
                                       isSelected
                                           ? FontWeight.bold
@@ -714,12 +716,12 @@ class _EnhancedProductDetailsScreenState
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('Chưa có đánh giá nào cho sản phẩm này'),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _navigateToReviewsScreen(context, product),
-              icon: const Icon(Icons.add_comment),
-              label: const Text('Viết đánh giá đầu tiên'),
-            ),
+            // const SizedBox(height: 16),
+            // ElevatedButton.icon(
+            //   onPressed: () => _navigateToReviewsScreen(context, product),
+            //   icon: const Icon(Icons.add_comment),
+            //   label: const Text('Viết đánh giá đầu tiên'),
+            // ),
           ],
         ),
       );
