@@ -321,10 +321,25 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
                     const Text('Bạn chưa có địa chỉ nào'),
                     const SizedBox(height: 8),
                     TextButton.icon(
-                      onPressed: () {
-                        Navigator.of(
+                      onPressed: () async {
+                        await Navigator.of(
                           context,
                         ).pushNamed(EnhancedAddressScreen.routeName);
+
+                        // Sau khi quay lại từ màn hình địa chỉ, tải lại địa chỉ
+                        await profileViewModel.fetchAddresses();
+
+                        // Kiểm tra và cập nhật địa chỉ đã chọn
+                        final updatedAddresses = profileViewModel.addresses;
+                        if (updatedAddresses.isNotEmpty) {
+                          final defaultAddress = updatedAddresses.firstWhere(
+                            (address) => address.isDefault,
+                            orElse: () => updatedAddresses.first,
+                          );
+                          setState(() {
+                            _selectedAddressId = defaultAddress.id;
+                          });
+                        }
                       },
                       icon: const Icon(Icons.add),
                       label: const Text('Thêm địa chỉ mới'),
@@ -360,10 +375,25 @@ class _EnhancedCheckoutScreenState extends State<EnhancedCheckoutScreen> {
             const Divider(),
             Center(
               child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(
+                onPressed: () async {
+                  await Navigator.of(
                     context,
                   ).pushNamed(EnhancedAddressScreen.routeName);
+
+                  // Sau khi quay lại từ màn hình địa chỉ, tải lại địa chỉ
+                  await profileViewModel.fetchAddresses();
+
+                  // Kiểm tra và cập nhật địa chỉ đã chọn
+                  final updatedAddresses = profileViewModel.addresses;
+                  if (updatedAddresses.isNotEmpty) {
+                    final defaultAddress = updatedAddresses.firstWhere(
+                      (address) => address.isDefault,
+                      orElse: () => updatedAddresses.first,
+                    );
+                    setState(() {
+                      _selectedAddressId = defaultAddress.id;
+                    });
+                  }
                 },
                 icon: const Icon(Icons.edit_location_alt),
                 label: const Text('Quản lý địa chỉ'),
